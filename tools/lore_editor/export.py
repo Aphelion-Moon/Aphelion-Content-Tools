@@ -1,23 +1,22 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path
 import shutil
 import tempfile
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+
+from webapp.game_repository import validate_game_repository
+from webapp.git_adapter import repository_revision, repository_status
+from webapp.json_storage import canonical_json_bytes
 
 from .app.manifest import ExportManifest, sha256_bytes
 from .catalog import read_current_targets
 from .generate import generate_dm
 from .source import load_corpus
 from .validation import validate_corpus
-from .workspace import WorkspaceLayout
-from webapp.game_repository import validate_game_repository
-from webapp.git_adapter import repository_revision, repository_status
-from webapp.json_storage import canonical_json_bytes
-
 
 ARTIFACT_RELATIVE_PATH = Path("modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm")
 MANIFEST_FILENAME = "manifest.json"
@@ -81,7 +80,7 @@ def _catalog_snapshot(tool_root: Path) -> bytes:
 def _new_stage_directory(stage_root: Path, generated_hash: str) -> Path:
 	stage_root = stage_root.resolve()
 	stage_root.mkdir(parents=True, exist_ok=True)
-	stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+	stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 	base_name = f"{stamp}-{generated_hash[:12]}"
 	stage_directory = stage_root / base_name
 	for suffix in range(100):

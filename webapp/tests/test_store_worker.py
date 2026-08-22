@@ -11,7 +11,6 @@ from webapp import store_worker
 from webapp.store_worker import JobCancelled, Worker, _RunOutputStream, pipe_address
 from webapp.tooling import ToolDefinition
 
-
 FAST_DEFINITION = ToolDefinition(
 	id="fast", label="Fast", description="", tool_root="tools/lore_editor", commands=(("fast",),)
 )

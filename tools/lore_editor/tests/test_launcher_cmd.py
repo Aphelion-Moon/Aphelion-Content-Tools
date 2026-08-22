@@ -5,7 +5,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 LAUNCHER_CMD_PATH = Path(__file__).resolve().parents[3] / "Launch Aphelion Content Tools.cmd"
 
 

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 
 from tools.content_graph.graph import (
 	build_content_graph,

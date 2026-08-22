@@ -52,7 +52,7 @@ class _RunOutputStream(io.TextIOBase):
 	stop has to be noticed here instead.
 	"""
 
-	def __init__(self, worker: "Worker", run_id: str) -> None:
+	def __init__(self, worker: Worker, run_id: str) -> None:
 		super().__init__()
 		self._worker = worker
 		self._run_id = run_id

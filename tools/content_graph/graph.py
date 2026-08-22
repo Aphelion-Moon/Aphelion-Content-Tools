@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from webapp.game_repository import validate_game_repository
@@ -9,6 +9,7 @@ from webapp.json_storage import canonical_json_bytes
 from webapp.manifest_base import sha256_bytes
 from webapp.store import db
 from webapp.store.schema import decode, encode, table
+
 from .manifest import GraphManifest
 from .markers import MarkerEdge
 from .references import find_text_references
@@ -255,7 +256,7 @@ def scan_and_cache_content_graph(repo_root: Path, game_repo_root: Path) -> Graph
 	manifest = GraphManifest(
 		snapshot_sha256=sha256_bytes(graph_bytes),
 		game_repo_revision=game_revision,
-		generated_at=datetime.now(timezone.utc).isoformat(),
+		generated_at=datetime.now(UTC).isoformat(),
 		node_count=len(graph["nodes"]),
 		edge_count=len(graph["edges"]),
 		module_count=counts["module_count"],

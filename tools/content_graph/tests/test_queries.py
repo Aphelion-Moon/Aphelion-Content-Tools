@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 from tools.content_graph.graph import build_content_graph
 from tools.content_graph.queries import edits_for_core_file, modules_missing_readme, unresolved_markers
-
 from tools.content_graph.tests.test_graph import make_fixture_game_repo
 
 

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
 from webapp.store import db

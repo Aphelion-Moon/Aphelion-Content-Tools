@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-from typing import Mapping
-
+from collections.abc import Mapping
 
 MANIFEST_FORMAT_VERSION = 1
 

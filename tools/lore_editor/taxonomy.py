@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-import re
 
 from webapp.store import db
 from webapp.store.schema import decode, encode, table

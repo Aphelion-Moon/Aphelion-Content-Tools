@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from webapp.tooling import ToolDefinition
 
-
 TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
 	ToolDefinition(
 		id="scan-content",

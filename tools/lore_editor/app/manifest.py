@@ -4,9 +4,13 @@ from dataclasses import dataclass
 
 from webapp.manifest_base import (
 	MANIFEST_FORMAT_VERSION,
-	required_string as _required_string,
-	required_string_list as _required_string_list,
 	sha256_bytes,
+)
+from webapp.manifest_base import (
+	required_string as _required_string,
+)
+from webapp.manifest_base import (
+	required_string_list as _required_string_list,
 )
 
 __all__ = ["MANIFEST_FORMAT_VERSION", "sha256_bytes", "CatalogManifest", "ExportManifest"]
@@ -30,7 +34,7 @@ class CatalogManifest:
 		}
 
 	@classmethod
-	def from_dict(cls, payload: object) -> "CatalogManifest":
+	def from_dict(cls, payload: object) -> CatalogManifest:
 		if not isinstance(payload, dict):
 			raise ValueError("Catalog manifest must be a JSON object.")
 		if payload.get("format_version") != MANIFEST_FORMAT_VERSION:
@@ -73,7 +77,7 @@ class ExportManifest:
 		}
 
 	@classmethod
-	def from_dict(cls, payload: object) -> "ExportManifest":
+	def from_dict(cls, payload: object) -> ExportManifest:
 		if not isinstance(payload, dict):
 			raise ValueError("Export manifest must be a JSON object.")
 		if payload.get("format_version") != MANIFEST_FORMAT_VERSION:

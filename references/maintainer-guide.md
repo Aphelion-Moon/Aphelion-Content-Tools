@@ -27,12 +27,27 @@ Each tool registers its own `ToolDefinition`s (see `tool_definitions.py` in each
 shell combines them into one background-job registry so File Management's "Database and Git" panel and
 `/api/tools` list every tool's actions together, without either tool importing the other's code.
 
-Each page's `.js` file is a plain script (no bundler, no `<script type="module">`), but ends with a
-guarded block —`if (typeof module !== 'undefined' && module.exports) { module.exports = {...}; }`— that
-exports its pure, DOM-free functions for testing. This only activates under Node's CommonJS `require()`;
-browsers never see it. The matching top-level browser-only calls (element lookups, the auto-init call)
-are guarded the same way (`typeof document !== 'undefined'`) so `require()`-ing the file under Node
-doesn't throw. See `web/tests/*.test.js` next to each page's script, run via `node --test`.
+### Frontend architecture — being replaced, do not extend
+
+> **Status: the no-build-step frontend described below is on its way out.** An approved rewrite moves the
+> UI to Vite + Solid + TypeScript with a single composed app shell, a tool-manifest registry, generated
+> API types, and a WebSocket-fed shared store; the backend moves from `http.server` to FastAPI with typed
+> Pydantic records. **Do not build new pages against the pattern described below** — it is documented here
+> only so existing code remains readable while the migration is in progress. This section will be
+> rewritten to describe the new architecture once it lands.
+>
+> Specifically, the following are known dead ends and should not be copied into new work: hand-duplicating
+> the sidebar markup across page HTML files; adding a tool by editing `shell.js`'s `TOOL_ROUTES` /
+> `TOOL_SCRIPTS` / `TOOL_STYLES` / `TOOL_TITLES` / `SEARCH_PAGES`; declaring another local copy of
+> `requestJson` / `formatBytes` / `escapeHtml` / the announce helpers; or writing unscoped bare-element
+> CSS rules (`button { … }`) in a per-tool stylesheet.
+
+Each page's `.js` file is currently a plain script (no bundler, no `<script type="module">`), but ends
+with a guarded block —`if (typeof module !== 'undefined' && module.exports) { module.exports = {...}; }`—
+that exports its pure, DOM-free functions for testing. This only activates under Node's CommonJS
+`require()`; browsers never see it. The matching top-level browser-only calls (element lookups, the
+auto-init call) are guarded the same way (`typeof document !== 'undefined'`) so `require()`-ing the file
+under Node doesn't throw. See `web/tests/*.test.js` next to each page's script, run via `node --test`.
 
 ## Parsec: the app's standard feedback-reporting surface
 

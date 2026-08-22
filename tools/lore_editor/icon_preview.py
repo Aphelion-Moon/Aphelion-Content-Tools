@@ -4,7 +4,6 @@ from io import BytesIO
 from pathlib import Path
 
 from tools.dmi import Dmi
-
 from webapp.path_safety import resolve_repo_path
 
 

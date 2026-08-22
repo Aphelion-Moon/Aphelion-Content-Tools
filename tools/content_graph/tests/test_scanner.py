@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 
 from tools.content_graph.scanner import ModuleNode, scan_core_file_texts, scan_full_tree, scan_module_file_texts
 
@@ -71,7 +71,7 @@ class ScanCoreFileTextsTests(unittest.TestCase):
 
 			self.assertEqual(("code/a.dm",), tuple(contents.keys()))
 			self.assertEqual(2, contents["code/a.dm"].line_count)
-			self.assertEqual(len("line one\nline two\n".encode("utf-8")), contents["code/a.dm"].size_bytes)
+			self.assertEqual(len(b"line one\nline two\n"), contents["code/a.dm"].size_bytes)
 
 	def test_skips_a_path_that_does_not_exist(self) -> None:
 		with tempfile.TemporaryDirectory() as temp_dir:

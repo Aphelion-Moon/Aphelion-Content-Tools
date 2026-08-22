@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from webapp.git_adapter import RepositoryStatus
 from tools.content_graph.marker_edit import apply_marker_label_edit
+from webapp.git_adapter import RepositoryStatus
 
 
 def run_git(repo_root: Path, *arguments: str) -> None:

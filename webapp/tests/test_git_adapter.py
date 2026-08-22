@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from pathlib import Path
-from tempfile import TemporaryDirectory
 import subprocess
 import threading
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from webapp import git_adapter
 from webapp.git_adapter import (
 	GitAdapterError,
 	create_branch,
+	find_line_in_tracked_files,
 	git_diff,
 	github_blob_url,
-	find_line_in_tracked_files,
 	line_history,
 	list_branches,
 	list_tracked_files,

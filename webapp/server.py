@@ -8,7 +8,6 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
-
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 
 
@@ -26,9 +25,25 @@ def _query_int(query: dict[str, list[str]], name: str, *, default: int | None = 
 
 
 def _load_api_functions():
-	from tools.lore_editor.api import catalog_response, find_type_definition, generate_output, groups_response, icon_files_response, icon_states_response, list_entries_response, list_icon_choices, list_review_response
-	from tools.lore_editor.api import create_entry, delete_entry, list_entity_files, save_group_response, save_review_response
-	from tools.lore_editor.api import save_entry, validate_entries, validate_entry
+	from tools.lore_editor.api import (
+		catalog_response,
+		create_entry,
+		delete_entry,
+		find_type_definition,
+		generate_output,
+		groups_response,
+		icon_files_response,
+		icon_states_response,
+		list_entity_files,
+		list_entries_response,
+		list_icon_choices,
+		list_review_response,
+		save_entry,
+		save_group_response,
+		save_review_response,
+		validate_entries,
+		validate_entry,
+	)
 	from tools.lore_editor.icon_preview import IconPreviewNotFound, render_icon_preview
 	return {
 		"catalog_response": catalog_response,

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import subprocess
-from tempfile import TemporaryDirectory
 import threading
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from urllib.request import Request, urlopen
 
 from tools.content_graph.graph import scan_and_cache_content_graph

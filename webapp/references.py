@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from webapp.store import db
@@ -52,7 +52,7 @@ def add_reference(repo_root: Path, payload: object) -> dict[str, object]:
 		"label": label,
 		"path": path,
 		"note": note or "",
-		"created_at": datetime.now(timezone.utc).isoformat(),
+		"created_at": datetime.now(UTC).isoformat(),
 	}
 	references_table = table(repo_root, "references")
 	db.upsert_rows(references_table, "id", [{

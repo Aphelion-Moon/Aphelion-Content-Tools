@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from tempfile import TemporaryDirectory
 import subprocess
 import threading
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
-from unittest.mock import patch
 
 from PIL import Image
 
 from tools.dmi import Dmi
-from webapp.server import create_server
 from tools.lore_editor.app.manifest import ExportManifest, sha256_bytes
 from tools.lore_editor.export import PreparedExport
 from tools.lore_editor.tests.store_helpers import seed_targets
+from webapp.server import create_server
 
 
 def run_git(repo_root: Path, *arguments: str) -> None:

@@ -1,0 +1,32 @@
+{
+  "name": "aphelion-content-tools-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "gen:api": "openapi-typescript http://127.0.0.1:8765/openapi.json -o src/lib/api-schema.d.ts"
+  },
+  "dependencies": {
+    "@solidjs/router": "^0.15.3",
+    "solid-js": "^1.9.4"
+  },
+  "devDependencies": {
+    "@tanstack/solid-virtual": "^3.11.2",
+    "@types/node": "^22.20.1",
+    "jsdom": "^26.0.0",
+    "openapi-typescript": "^7.6.1",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11",
+    "vite-plugin-solid": "^2.11.1",
+    "vitest": "^3.0.5"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

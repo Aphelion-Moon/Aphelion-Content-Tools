@@ -6,6 +6,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["webapp/serve.py", "--repo-root", ".", "--port", "8642", "--game-repo", "C:/Users/Zoe/Documents/GitHub/Meridian-Rift"],
       "port": 8642
+    },
+    {
+      "name": "backend-for-frontend",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["webapp/serve.py", "--repo-root", ".", "--port", "8765", "--game-repo", "C:/Users/Zoe/Documents/GitHub/Meridian-Rift"],
+      "port": 8765
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "webapp/frontend", "run", "dev"],
+      "port": 5173
     }
   ]
 }

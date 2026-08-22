@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 
 from tools.lore_editor.generate import write_generated_dm
 from tools.lore_editor.tests.store_helpers import seed_override, seed_targets

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
-from tempfile import TemporaryDirectory
 import subprocess
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from tools.lore_editor.api import find_type_definition
 

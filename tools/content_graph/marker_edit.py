@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 from webapp.git_adapter import repository_status
 from webapp.path_safety import resolve_repo_path
-from .markers import render_marker_line
 
+from .markers import render_marker_line
 
 _LINE_ENDINGS = ("\r\n", "\n", "\r")
 

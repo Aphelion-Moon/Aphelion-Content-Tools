@@ -6,10 +6,10 @@ from webapp.store import db
 from webapp.store.schema import decode, table
 
 from .model import (
+    SUPPORTED_ICON_KEYS,
     CatalogTarget,
     LoreCorpus,
     LoreEntry,
-    SUPPORTED_ICON_KEYS,
     WikiRecord,
     as_bool,
     as_object,

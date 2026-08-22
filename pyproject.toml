@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aphelion-content-tools"
+version = "0.1.0"
+description = "Local authoring and maintenance tools for Meridian-Rift's modular content."
+requires-python = ">=3.11"
+dependencies = [
+    "Pillow==11.3.0",
+    "lancedb==0.37.1",
+    "fastembed==0.8.0",
+    "numpy==2.2.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyright==1.1.406",
+    "ruff==0.14.2",
+]
+
+[tool.setuptools]
+# `webapp` and `tools` are both real packages rooted at the repository root. Declaring them here is what
+# makes `import webapp.store.db` resolve identically whether a module was reached via `python -m`, a
+# console script, or an editable install -- which is what lets the dual-import shims
+# (`if __package__ in (None, ""): import webapp.x else: from .x import ...`) be deleted.
+packages = ["webapp", "tools"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+indent-width = 4
+
+[tool.ruff.format]
+# This codebase is tab-indented throughout (inherited from the game repository's DM style). Keep it.
+indent-style = "tab"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# E501 (line-too-long) is measured against tab-expanded width, which flags ~100 lines that are well under
+# the limit as written. The codebase's real p95 line length is 94 characters. Correctness lints (F, B) and
+# import hygiene (I) are the value here; re-enable E501 if the frontend rewrite ever normalises indentation.
+ignore = ["E501"]
+
+[tool.pyright]
+include = ["webapp", "tools"]
+exclude = ["**/__pycache__", "**/node_modules", "webapp/frontend"]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
+# lancedb/pyarrow/fastembed ship partial or absent type stubs; without this every call into them is an
+# error rather than the intended `Unknown`, which would bury real findings in third-party noise.
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false

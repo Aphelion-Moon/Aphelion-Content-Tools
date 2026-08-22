@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 
 from tools.lore_editor.workspace import GENERATED_DM_PATH, WorkspaceLayout
 

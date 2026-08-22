@@ -89,7 +89,9 @@ def with_embedding(row: dict[str, object]) -> dict[str, object]:
 def with_embeddings(rows: list[dict[str, object]]) -> list[dict[str, object]]:
 	texts = [row.get("text") or "" for row in rows]
 	vectors = embed_texts(texts)
-	return [{**row, "vector": vector} for row, vector in zip(rows, vectors)]
+	# strict=True: a short vector list would otherwise silently truncate the write, dropping rows with no
+	# error -- data loss that only shows up later as a missing search result.
+	return [{**row, "vector": vector} for row, vector in zip(rows, vectors, strict=True)]
 
 
 def upsert_rows(table, key_field: str, rows: list[dict[str, object]]) -> None:
@@ -176,7 +178,8 @@ def optimize_all_tables(repo_root: Path, *, on_progress=None) -> list[str]:
 	concurrently in flight, which isn't worth the marginal extra disk space for a local desktop store.
 
 	Returns the list of table names optimized, in order, for the caller to report."""
-	from .schema import TABLE_SCHEMAS, table as open_table
+	from .schema import TABLE_SCHEMAS
+	from .schema import table as open_table
 
 	names = list(TABLE_SCHEMAS)
 	for index, name in enumerate(names):

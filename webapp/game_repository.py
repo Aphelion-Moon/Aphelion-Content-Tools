@@ -4,7 +4,6 @@ from pathlib import Path
 
 from .git_adapter import repository_remote_url
 
-
 GAME_REPOSITORY_MARKER_PATH = Path("tgstation.dme")
 EXPECTED_GAME_REPOSITORY_REMOTE_HINT = "meridian-rift"
 

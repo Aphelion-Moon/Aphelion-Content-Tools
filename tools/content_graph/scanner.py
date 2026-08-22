@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from webapp.git_adapter import GitAdapterError, list_tracked_files
-from .markers import MarkerEdge, parse_markers
 
+from .markers import MarkerEdge, parse_markers
 
 MODULE_ROOTS = (
 	("nova", Path("modular_nova/modules")),

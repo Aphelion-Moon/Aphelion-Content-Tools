@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-
 GENERATED_DM_PATH = Path("tools/lore_editor/stages/current/generated_lore_overrides.dm")
 
 
@@ -17,5 +16,5 @@ class WorkspaceLayout:
 	generated_dm_path: Path = GENERATED_DM_PATH
 
 	@classmethod
-	def from_root(cls, repo_root: Path) -> "WorkspaceLayout":
+	def from_root(cls, repo_root: Path) -> WorkspaceLayout:
 		return cls()

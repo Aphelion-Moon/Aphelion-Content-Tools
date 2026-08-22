@@ -6,7 +6,6 @@ import re
 import tempfile
 from pathlib import Path
 
-
 RECORD_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 

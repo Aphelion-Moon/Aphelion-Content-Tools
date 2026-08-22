@@ -4,18 +4,18 @@ import re
 from pathlib import Path
 
 from tools.dmi import Dmi
+from webapp.path_safety import resolve_repo_path
 
 from .model import (
-	FrozenJson,
-	LoreCorpus,
-	LoreEntry,
-	SUPPORTED_ICON_KEYS,
-	SUPPORTED_SPECIAL_DESC_REQUIREMENTS,
-	ValidationIssue,
-	as_object,
-	as_string,
+    SUPPORTED_ICON_KEYS,
+    SUPPORTED_SPECIAL_DESC_REQUIREMENTS,
+    FrozenJson,
+    LoreCorpus,
+    LoreEntry,
+    ValidationIssue,
+    as_object,
+    as_string,
 )
-from webapp.path_safety import resolve_repo_path
 
 TYPE_PATH_PATTERN = re.compile(r"^/(?:[A-Za-z0-9_]+)(?:/[A-Za-z0-9_]+)*$")
 WIKI_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")

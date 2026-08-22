@@ -9,7 +9,6 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SERVE_PATH = REPO_ROOT / "webapp" / "serve.py"
 

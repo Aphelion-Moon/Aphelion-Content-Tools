@@ -4,8 +4,10 @@ from dataclasses import dataclass
 
 from webapp.manifest_base import (
 	MANIFEST_FORMAT_VERSION,
-	required_string as _required_string,
 	sha256_bytes,
+)
+from webapp.manifest_base import (
+	required_string as _required_string,
 )
 
 __all__ = ["MANIFEST_FORMAT_VERSION", "sha256_bytes", "GraphManifest"]
@@ -43,7 +45,7 @@ class GraphManifest:
 		}
 
 	@classmethod
-	def from_dict(cls, payload: object) -> "GraphManifest":
+	def from_dict(cls, payload: object) -> GraphManifest:
 		if not isinstance(payload, dict):
 			raise ValueError("Graph manifest must be a JSON object.")
 		if payload.get("format_version") != MANIFEST_FORMAT_VERSION:

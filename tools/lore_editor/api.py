@@ -1,23 +1,40 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from dataclasses import dataclass
-from pathlib import Path
 import re
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 from threading import Lock
 
 from tools.dmi import Dmi
-
 from webapp.git_adapter import find_line_in_tracked_files
 from webapp.path_safety import resolve_repo_path
 from webapp.store import db
-from webapp.store.schema import decode, encode, table
+from webapp.store.schema import encode, table
 
 from .generate import write_generated_dm
 from .icon_preview import list_icon_files, list_icon_states
-from .model import DEFAULT_KEYWORD_SCOPE, GroupConfig, GroupRecord, LoreCorpus, LoreEntry, ReviewRecord, ValidationIssue, thaw_json
-from .source import group_for_source_path, list_entity_files as _list_entity_files, load_corpus, make_lore_entry, source_path_for_group
-from .taxonomy import REVIEW_STATUSES, classify_target_details, load_groups, load_reviews, save_group, save_group_assignments, save_review
+from .model import (
+	DEFAULT_KEYWORD_SCOPE,
+	GroupConfig,
+	GroupRecord,
+	LoreCorpus,
+	LoreEntry,
+	ReviewRecord,
+	ValidationIssue,
+	thaw_json,
+)
+from .source import group_for_source_path, load_corpus, make_lore_entry, source_path_for_group
+from .source import list_entity_files as _list_entity_files
+from .taxonomy import (
+	REVIEW_STATUSES,
+	classify_target_details,
+	load_groups,
+	load_reviews,
+	save_group,
+	save_group_assignments,
+	save_review,
+)
 from .validation import validate_corpus
 from .workspace import WorkspaceLayout
 
@@ -681,7 +698,7 @@ def save_review_response(repo_root: Path, type_path: str, payload: object) -> di
 	record = ReviewRecord(
 		status=payload["status"],
 		reviewed_by=reviewed_by.strip(),
-		reviewed_at=datetime.now(timezone.utc).isoformat(),
+		reviewed_at=datetime.now(UTC).isoformat(),
 		notes=payload.get("notes", "") if isinstance(payload.get("notes", ""), str) else "",
 	)
 	save_review(repo_root, type_path, record)
@@ -691,7 +708,7 @@ def save_review_response(repo_root: Path, type_path: str, payload: object) -> di
 def catalog_response(repo_root: Path) -> dict[str, object]:
 	return {
 		"targets": list_catalog(repo_root),
-		"generated_at": datetime.now(timezone.utc).isoformat(),
+		"generated_at": datetime.now(UTC).isoformat(),
 		"standalone": True,
 	}
 

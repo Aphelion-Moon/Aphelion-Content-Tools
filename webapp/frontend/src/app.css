@@ -1,0 +1,84 @@
+/* The ONE global stylesheet: design tokens and the small set of genuinely app-wide element defaults.
+   Everything else is a component-scoped *.module.css.
+
+   This scoping rule is not stylistic. Pre-rewrite, tools/content_graph/web/graph.css declared a bare
+   `button { width: auto }` that overrode styles.css's `button { width: 100% }`. Because the SPA appended
+   that stylesheet to <head> permanently, visiting Content Graph once silently changed every other tool's
+   buttons for the rest of the session. Bare element selectors do not belong in a per-tool stylesheet. */
+
+:root {
+	color-scheme: dark;
+	font-family: system-ui, sans-serif;
+
+	--void: #17072e;
+	--hull: #310047;
+	--violet: #660094;
+	--orchid: #9614d0;
+	--magenta: #bb44f0;
+	--plasma: #d16aff;
+	--muted: #c7a9d4;
+	--border: #6c278d;
+	--ink: #f8eaff;
+
+	--ok: #52f0b0;
+	--warn: #f2a93c;
+	--danger: #f2a9dd;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: radial-gradient(circle at top, var(--hull), var(--void) 62%);
+	color: var(--ink);
+}
+
+a {
+	color: var(--plasma);
+}
+
+/* Shared form/control defaults. Tools needing different button metrics scope the change to their own
+   module rather than redefining `button` globally. */
+input,
+textarea,
+select,
+button {
+	width: 100%;
+	border: 1px solid var(--border);
+	border-radius: 0.4rem;
+	background: rgba(23, 7, 46, 0.9);
+	color: inherit;
+	padding: 0.6rem;
+	font: inherit;
+}
+
+button {
+	cursor: pointer;
+	background: var(--orchid);
+	border-color: var(--magenta);
+	color: #fff;
+}
+
+button:hover:not(:disabled) {
+	background: var(--magenta);
+}
+
+button:disabled {
+	cursor: wait;
+	opacity: 0.55;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}

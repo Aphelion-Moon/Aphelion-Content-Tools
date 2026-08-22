@@ -1,0 +1,26 @@
+.card {
+	background: rgba(49, 0, 71, 0.92);
+	border: 1px solid var(--border);
+	border-radius: 0.8rem;
+	padding: 1rem;
+	box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.28);
+}
+
+.eyebrow {
+	color: var(--plasma);
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	font-size: 0.75rem;
+	margin: 0 0 0.25rem;
+}
+
+.heading {
+	margin: 0 0 0.5rem;
+	font-size: 1.2rem;
+}
+
+.metadata {
+	color: var(--muted);
+	font-size: 0.85rem;
+	overflow-wrap: anywhere;
+}

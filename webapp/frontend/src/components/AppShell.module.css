@@ -1,0 +1,115 @@
+/* Scoped to the shell. No bare element selectors -- see the note in app.css. */
+
+.layout {
+	display: flex;
+	align-items: flex-start;
+	gap: 1.5rem;
+	padding: 1.5rem clamp(1.5rem, 3vw, 3rem);
+}
+
+/* width/min/max are pinned alongside the flex shorthand: a flex item's automatic minimum size can
+   otherwise let the sidebar grow past its basis to fit a long word. */
+.sidebar {
+	position: sticky;
+	top: 1.5rem;
+	flex: 0 0 18rem;
+	width: 18rem;
+	min-width: 18rem;
+	max-width: 18rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.content {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.eyebrow {
+	color: var(--plasma);
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	font-size: 0.75rem;
+	margin: 0 0 0.25rem;
+}
+
+.hero h1 {
+	margin: 0 0 0.4rem;
+	font-size: 1.6rem;
+}
+
+.hero p {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
+.nav {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.pill {
+	display: block;
+	width: 100%;
+	padding: 0.5rem 1rem;
+	border-radius: 0.6rem;
+	border: 1px solid var(--border);
+	background: rgba(23, 7, 46, 0.68);
+	color: var(--muted);
+	text-decoration: none;
+	font-size: 0.9rem;
+}
+
+.pill:hover {
+	border-color: var(--magenta);
+	color: var(--ink);
+}
+
+/* Accent comes from the tool manifest as inline custom properties, so a new tool's colour is declared
+   once in registry.ts rather than as another hand-written .tool-pill-<id> rule here. */
+.pillActive {
+	background: var(--pill-accent, var(--orchid));
+	color: var(--pill-contrast, #fff);
+	border-color: var(--pill-accent, var(--magenta));
+	font-weight: 600;
+}
+
+.connection {
+	font-size: 0.75rem;
+	color: var(--muted);
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background: var(--danger);
+	flex: none;
+}
+
+.dotLive {
+	background: var(--ok);
+}
+
+@media (max-width: 900px) {
+	.layout {
+		flex-direction: column;
+	}
+
+	.sidebar {
+		position: static;
+		flex-basis: auto;
+		width: 100%;
+		min-width: 0;
+		max-width: none;
+	}
+}

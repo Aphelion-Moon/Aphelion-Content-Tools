@@ -1,6 +1,7 @@
 # Tools for working with modern DreamMaker icon files (PNGs + metadata)
 
 import math
+
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 

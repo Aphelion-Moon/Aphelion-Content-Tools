@@ -6,18 +6,19 @@ import socket
 import subprocess
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-from .model import SUPPORTED_ICON_KEYS
-from .app.manifest import CatalogManifest, sha256_bytes
-from .validation import TYPE_PATH_PATTERN
 from webapp.game_repository import validate_game_repository
 from webapp.git_adapter import repository_revision
 from webapp.json_storage import canonical_json_bytes
 from webapp.path_safety import read_json_file, resolve_repo_path
 from webapp.store import db
 from webapp.store.schema import decode, encode, table
+
+from .app.manifest import CatalogManifest, sha256_bytes
+from .model import SUPPORTED_ICON_KEYS
+from .validation import TYPE_PATH_PATTERN
 
 PROBE_OUTPUT_PATH = Path("data/lore_overhaul_targets.json")
 BUILD_ENTRYPOINT = Path("tools/build/build.bat")
@@ -209,7 +210,7 @@ def _write_catalog_manifest(repo_root: Path, game_repo_root: Path, targets_bytes
 	manifest = CatalogManifest(
 		snapshot_sha256=sha256_bytes(targets_bytes),
 		game_repo_revision=game_revision,
-		generated_at=datetime.now(timezone.utc).isoformat(),
+		generated_at=datetime.now(UTC).isoformat(),
 		target_count=target_count,
 	)
 	manifests_table = table(repo_root, "manifests")
