@@ -1,0 +1,110 @@
+import { For, Show, createEffect, onMount } from 'solid-js';
+import { createVirtualizer } from '@tanstack/solid-virtual';
+import { cx } from '~/lib/cx';
+import type { ReviewEntry } from './reviewFeed';
+import { PAGE_SIZE, createReviewFeed } from './reviewFeed';
+import styles from './LoreEditor.module.css';
+
+const ROW_HEIGHT = 46;
+// Start fetching the next page while this many rows are still ahead of the viewport, so scrolling
+// rarely reaches an unloaded region.
+const PREFETCH_ROWS = 40;
+
+function entryTitle(entry: ReviewEntry): string {
+	return entry.name || entry.base_name || entry.label || entry.type_path || entry.id;
+}
+
+interface ReviewListProps {
+	readonly feed: ReturnType<typeof createReviewFeed>;
+	readonly selectedId: string | null;
+	readonly onSelect: (entry: ReviewEntry) => void;
+}
+
+/**
+ * The catalog review list.
+ *
+ * Virtualised: only the rows in view exist in the DOM, so the list stays responsive at any length. This
+ * is what removes the old 500-row cap -- combined with paged fetching in reviewFeed, a writer can reach
+ * every matching entry instead of the first 500.
+ */
+export default function ReviewList(props: ReviewListProps) {
+	// A plain ref, not a signal: solid-virtual resolves the scroll element once inside its own onMount,
+	// which runs after Solid has assigned refs. Passing a signal accessor here instead leaves the
+	// virtualizer holding a null element -- it still reports a total size, but never produces any virtual
+	// items, so the list renders empty.
+	let scroller!: HTMLDivElement;
+
+	const virtualizer = createVirtualizer({
+		get count() {
+			return props.feed.entries().length;
+		},
+		getScrollElement: () => scroller,
+		estimateSize: () => ROW_HEIGHT,
+		overscan: 12,
+	});
+
+	// Fetch the next page as the rendered window approaches the end of what is loaded.
+	createEffect(() => {
+		const items = virtualizer.getVirtualItems();
+		const last = items[items.length - 1];
+		if (!last) return;
+		if (last.index >= props.feed.entries().length - PREFETCH_ROWS) {
+			props.feed.loadMore();
+		}
+	});
+
+	onMount(() => props.feed.reload());
+
+	return (
+		<>
+			<div ref={scroller} class={styles.scroller}>
+				<div class={styles.rows} style={{ height: `${virtualizer.getTotalSize()}px` }}>
+					<For each={virtualizer.getVirtualItems()}>
+						{(item) => {
+							const entry = () => props.feed.entries()[item.index];
+							return (
+								<Show when={entry()}>
+									{(current) => (
+										<div
+											class={cx(styles.row, props.selectedId === current().id && styles.rowSelected)}
+											style={{ height: `${item.size}px`, transform: `translateY(${item.start}px)` }}
+											onClick={() => props.onSelect(current())}
+										>
+											<span class={styles.rowTitle}>
+												<Show when={current().approved}>
+													<span class={cx(styles.badge, styles.badgeApproved)}>ok</span>
+												</Show>
+												<Show when={current().has_override}>
+													<span class={cx(styles.badge, styles.badgeOverride)}>override</span>
+												</Show>
+												<Show when={current().issues.length > 0}>
+													<span class={cx(styles.badge, styles.badgeIssue)}>issue</span>
+												</Show>
+												{entryTitle(current())}
+											</span>
+											<span class={styles.rowMeta}>{current().type_path}</span>
+										</div>
+									)}
+								</Show>
+							);
+						}}
+					</For>
+				</div>
+			</div>
+
+			<div class={styles.footer}>
+				<span>
+					Showing {props.feed.entries().length.toLocaleString()} of{' '}
+					{props.feed.matchedCount().toLocaleString()} matching
+					<Show when={props.feed.loading()}> · loading…</Show>
+					<Show when={props.feed.isExhausted() && props.feed.entries().length > 0}> · all loaded</Show>
+				</span>
+				<Show when={!props.feed.isExhausted()}>
+					<button type="button" disabled={props.feed.loading()} onClick={() => props.feed.loadMore()}>
+						Load {PAGE_SIZE} more
+					</button>
+				</Show>
+			</div>
+		</>
+	);
+}
