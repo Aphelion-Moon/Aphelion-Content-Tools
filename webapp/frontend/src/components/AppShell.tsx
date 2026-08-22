@@ -2,6 +2,7 @@ import { For, Show, type JSX } from 'solid-js';
 import { A, useLocation } from '@solidjs/router';
 import { TOOLS, type ToolManifest } from '~/tools/registry';
 import { appState } from '~/store/appStore';
+import GlobalSearch from './GlobalSearch';
 import styles from './AppShell.module.css';
 
 // The single layout. Pre-rewrite this markup was hand-duplicated verbatim across five HTML files, so
@@ -33,6 +34,8 @@ export default function AppShell(props: AppShellProps) {
 					<span classList={{ [styles.dot!]: true, [styles.dotLive!]: appState.connected }} />
 					{appState.connected ? 'Live' : 'Reconnecting…'}
 				</p>
+
+				<GlobalSearch />
 
 				<nav class={styles.nav} aria-label="Tools">
 					<For each={TOOLS}>

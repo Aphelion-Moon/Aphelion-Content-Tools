@@ -12,13 +12,21 @@ dependencies = [
     "lancedb==0.37.1",
     "fastembed==0.8.0",
     "numpy==2.2.4",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.10",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pyright==1.1.406",
     "ruff==0.14.2",
+    # Starlette's TestClient drives the app in-process for webapp/tests/test_api.py.
+    "httpx>=0.28",
 ]
+
+[project.scripts]
+aphelion-serve = "webapp.serve_api:main"
 
 [tool.setuptools]
 # `webapp` and `tools` are both real packages rooted at the repository root. Declaring them here is what

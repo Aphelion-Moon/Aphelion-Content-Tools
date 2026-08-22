@@ -1,4 +1,5 @@
 import { createStore, produce } from 'solid-js/store';
+import type { components } from '~/lib/api-schema';
 
 // The one source of truth for cross-tool state. This replaces three separate ad hoc mechanisms from the
 // pre-rewrite frontend: `window.__aphelionParsecShared` (a global object that existed only because every
@@ -16,20 +17,11 @@ export interface Announcement {
 	readonly at: number;
 }
 
-export interface ActiveRun {
-	readonly run_id: string;
-	readonly tool_id: string;
-	readonly tool_label?: string;
-	readonly status: 'queued' | 'running' | 'succeeded' | 'failed' | 'stopped';
-	readonly queued_at: number;
-}
-
-export interface StoreHealth {
-	readonly total_rows: number;
-	readonly disk_bytes: number;
-	readonly tables: Readonly<Record<string, number>>;
-	readonly last_write_time: number | null;
-}
+// Sourced from the backend's OpenAPI schema (`npm run gen:api`), not hand-written. A renamed Pydantic
+// field now fails `tsc` here instead of arriving in the UI as `undefined`.
+export type ActiveRun = components['schemas']['ActiveRun'];
+export type StoreHealth = components['schemas']['StoreHealth'];
+export type SearchResult = components['schemas']['SearchResult'];
 
 export type ParsecState = 'idle' | 'working' | 'happy' | 'twerking';
 

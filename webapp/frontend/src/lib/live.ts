@@ -13,7 +13,6 @@ import { setActiveRuns, setConnected, setHealth, type ActiveRun, type StoreHealt
 const POLL_INTERVAL_MS = 5000;
 const RECONNECT_DELAY_MS = 2000;
 
-interface HealthPayload extends StoreHealth {}
 interface ActivePayload {
 	readonly active_runs: readonly ActiveRun[];
 }
@@ -21,7 +20,7 @@ interface ActivePayload {
 async function pollOnce(): Promise<void> {
 	try {
 		const [health, active] = await Promise.all([
-			api.get<HealthPayload>('/api/store/health'),
+			api.get<StoreHealth>('/api/store/health'),
 			api.get<ActivePayload>('/api/tools/active'),
 		]);
 		setHealth(health);
@@ -83,9 +82,11 @@ function startSocket(url: string): () => void {
 
 /** Begin receiving live backend state. Returns a disposer. */
 export function connectLiveUpdates(): () => void {
-	// Feature-detected rather than hardcoded: this lets the frontend land before the WebSocket endpoint
-	// does, without a second code path to delete later.
-	if (import.meta.env['VITE_USE_WEBSOCKET'] === 'true' && typeof WebSocket !== 'undefined') {
+	// The socket is the normal path. Polling remains as the fallback for environments without WebSocket
+	// support, and can be forced with VITE_USE_WEBSOCKET=false to isolate socket problems during
+	// development.
+	const socketDisabled = import.meta.env['VITE_USE_WEBSOCKET'] === 'false';
+	if (!socketDisabled && typeof WebSocket !== 'undefined') {
 		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 		return startSocket(`${protocol}//${window.location.host}/ws`);
 	}

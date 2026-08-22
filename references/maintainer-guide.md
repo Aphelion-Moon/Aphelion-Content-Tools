@@ -27,27 +27,68 @@ Each tool registers its own `ToolDefinition`s (see `tool_definitions.py` in each
 shell combines them into one background-job registry so File Management's "Database and Git" panel and
 `/api/tools` list every tool's actions together, without either tool importing the other's code.
 
-### Frontend architecture — being replaced, do not extend
+## Architecture
 
-> **Status: the no-build-step frontend described below is on its way out.** An approved rewrite moves the
-> UI to Vite + Solid + TypeScript with a single composed app shell, a tool-manifest registry, generated
-> API types, and a WebSocket-fed shared store; the backend moves from `http.server` to FastAPI with typed
-> Pydantic records. **Do not build new pages against the pattern described below** — it is documented here
-> only so existing code remains readable while the migration is in progress. This section will be
-> rewritten to describe the new architecture once it lands.
->
-> Specifically, the following are known dead ends and should not be copied into new work: hand-duplicating
-> the sidebar markup across page HTML files; adding a tool by editing `shell.js`'s `TOOL_ROUTES` /
-> `TOOL_SCRIPTS` / `TOOL_STYLES` / `TOOL_TITLES` / `SEARCH_PAGES`; declaring another local copy of
-> `requestJson` / `formatBytes` / `escapeHtml` / the announce helpers; or writing unscoped bare-element
-> CSS rules (`button { … }`) in a per-tool stylesheet.
+The app is a Solid single-page frontend over a FastAPI backend. A migration is in progress: the new
+stack is authoritative for anything you build, while the legacy pages continue to serve users until each
+tool is ported.
 
-Each page's `.js` file is currently a plain script (no bundler, no `<script type="module">`), but ends
-with a guarded block —`if (typeof module !== 'undefined' && module.exports) { module.exports = {...}; }`—
-that exports its pure, DOM-free functions for testing. This only activates under Node's CommonJS
-`require()`; browsers never see it. The matching top-level browser-only calls (element lookups, the
-auto-init call) are guarded the same way (`typeof document !== 'undefined'`) so `require()`-ing the file
-under Node doesn't throw. See `web/tests/*.test.js` next to each page's script, run via `node --test`.
+### Frontend (`webapp/frontend/`)
+
+Vite + Solid + TypeScript, strict `tsconfig`. Build with `npm run build`; develop with `npm run dev`,
+which serves the UI on `:5173` and proxies `/api` and `/ws` to the Python server.
+
+Four rules carry most of the design, and each exists because its absence caused a specific bug:
+
+- **One implementation per concern, in `src/lib/`.** `api.ts` owns the only `requestJson`; `format.ts`
+  owns `formatBytes` / `formatElapsed` / `escapeHtml`; `notify.ts` owns the announce surface. Before the
+  rewrite `requestJson` existed in seven copies and `formatBytes` in three. Import them; never redeclare.
+- **One layout, in `src/components/AppShell.tsx`.** The sidebar chrome was previously duplicated verbatim
+  across five HTML files, so every nav change meant editing all five.
+- **One registry, in `src/tools/registry.ts`.** A tool's route, label, accent, page component, and search
+  entry all come from a single manifest object. **Adding a tool is a one-file change.** The same facts
+  used to live in nine hand-synchronised places and had already drifted.
+- **Styles scoped by default.** `src/app.css` holds design tokens and app-wide element defaults; every
+  other rule lives in a component-scoped `*.module.css`. A bare element selector in a per-tool stylesheet
+  is a bug: `graph.css`'s `button { width: auto }` used to leak to every other tool for the rest of the
+  session once Content Graph had been visited, because the SPA appended that stylesheet permanently.
+
+Cross-tool state lives in `src/store/appStore.ts` (Solid `createStore`) and is fed by one WebSocket
+connection (`src/lib/live.ts`). This replaced `window.__aphelionParsecShared`, per-widget cache
+variables, and several independent 5-second polling timers.
+
+Tests are Vitest, colocated as `*.test.ts` next to what they cover. Run with `npm test`.
+
+### Backend (`webapp/api/`)
+
+FastAPI, created per repository-root pair by `create_app()` so tests can run several apps against
+separate temporary directories. `webapp/serve_api.py` is the ASGI entry point.
+
+- **Pydantic models in `models.py` are the single definition of every shape crossing HTTP.** They serve
+  as request validation, response schema, OpenAPI documentation, and — via `npm run gen:api` — the
+  TypeScript types the frontend compiles against. A renamed field breaks the build rather than arriving
+  in the UI as `undefined`. Regenerate after changing a model.
+- **`errors.py` is a real taxonomy.** `BadRequest`, `NotFound`, `Conflict`, `GameRepositoryUnavailable`,
+  `StoreUnavailable` each carry a status and a stable `code` the frontend can branch on. The old server
+  answered every failure with the same `400`, repeated 56 times, so a missing game checkout was
+  indistinguishable from malformed input. Raise the specific class; don't add another blanket handler.
+- **Domain logic is untouched and framework-agnostic.** Routers import `tools/lore_editor/api.py`,
+  `tools/content_graph/*`, `webapp/git_adapter.py`, `webapp/tooling.py`, and `webapp/store/*` directly.
+  Those modules must stay free of HTTP concerns — they signal invalid input with `ValueError`, which the
+  app maps to a 400.
+- **`/ws` pushes health and active-run changes** to every connected client. Job state lives in the
+  separate `store_worker.py` process behind a request/response pipe that cannot push, so the server polls
+  it centrally and fans out; adding a real push channel later changes only `live.py`.
+
+The package is installable (`pip install -e .`), which is what lets modules use plain absolute imports.
+`pyproject.toml` also configures `ruff` and `pyright` — run both before calling a change done.
+
+### Legacy pages (`webapp/web/`, `tools/*/web/`) — do not extend
+
+The original no-build-step pages still serve users via `webapp/server.py` and are removed tool by tool as
+each is ported. They use plain scripts with a guarded
+`if (typeof module !== 'undefined' && module.exports)` block exporting DOM-free functions for `node --test`.
+**Do not add pages or features here** — build them in `webapp/frontend/` instead.
 
 ## Parsec: the app's standard feedback-reporting surface
 
