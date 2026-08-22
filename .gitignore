@@ -1,18 +1,23 @@
+# Python
 __pycache__/
 *.py[cod]
 *.tmp
 
+# Node / frontend build
 node_modules/
 webapp/frontend/dist/
-webapp/frontend/src/lib/api-schema.d.ts
 .vite/
 *.tsbuildinfo
+# Generated from the backend's OpenAPI schema by `npm run gen:api`; regenerated, never hand-edited.
+webapp/frontend/src/lib/api-schema.d.ts
 
+# Generated data and local caches -- rebuilt by their own tool jobs, never committed.
 tools/lore_editor/stages/*
 !tools/lore_editor/stages/.gitkeep
 tools/logs/
 tools/content_graph/cache/
 webapp/store/data/
-.agents/AGENTS.md
-.agents/SKILLS.md
-.agents/CLAUDE.md
+
+# NOTE: .agents/*.md is deliberately tracked. Those files carry the framing that distinguishes
+# Meridian-Rift game-checkout conventions from this repository's own, which only helps if it reaches
+# every machine and every agent that opens the repo.
