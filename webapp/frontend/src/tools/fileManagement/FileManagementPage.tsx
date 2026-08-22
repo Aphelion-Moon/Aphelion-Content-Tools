@@ -1,11 +1,22 @@
-import Card, { cardStyles } from '~/components/Card';
+import ExportPanel from './ExportPanel';
+import RepositoryPanel from './RepositoryPanel';
+import ToolRunner from './ToolRunner';
 
-// Placeholder. Ported in step 4 of the rewrite; the legacy page at /file-management remains authoritative
-// until then.
 export default function FileManagementPage() {
 	return (
-		<Card eyebrow="Repository operations" heading="File Management">
-			<p class={cardStyles.metadata}>Not yet ported to the new shell.</p>
-		</Card>
+		<>
+			<ToolRunner />
+			<RepositoryPanel
+				repository="tool"
+				heading="Aphelion Content Tools"
+				blurb="This tool's own checkout — override JSON, group configuration, and the generated lore artifact live here."
+			/>
+			<RepositoryPanel
+				repository="game"
+				heading="Meridian-Rift"
+				blurb="The game checkout. Pushes, pull requests, and complex merges stay in GitHub Desktop — this only makes local commits."
+			/>
+			<ExportPanel />
+		</>
 	);
 }

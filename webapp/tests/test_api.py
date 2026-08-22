@@ -110,6 +110,47 @@ class ApiContractTests(unittest.TestCase):
 		self.assertIsInstance(body["error"], str)
 
 
+class ResponseModelMatchesDomainTests(unittest.TestCase):
+	"""Response models must match what the domain layer actually returns.
+
+	Added after RepositoryStatus was written with a guessed shape -- `changed_files` as a list of
+	{path, status} objects -- when git_adapter really returns plain path strings, and omitted `dirty`,
+	`upstream`, and `conflict_files` entirely. Nothing caught it, because no test exercised the endpoint
+	against a real repository. These tests compare the model against the dataclass directly.
+	"""
+
+	def test_repository_status_model_covers_every_dataclass_field(self) -> None:
+		from dataclasses import fields
+
+		from webapp.api.models import RepositoryStatus as StatusModel
+		from webapp.git_adapter import RepositoryStatus as StatusDataclass
+
+		dataclass_fields = {field.name for field in fields(StatusDataclass)}
+		model_fields = set(StatusModel.model_fields)
+		missing = dataclass_fields - model_fields
+		self.assertFalse(missing, f"RepositoryStatus model is missing: {sorted(missing)}")
+
+	def test_repository_status_accepts_a_real_adapter_payload(self) -> None:
+		from dataclasses import asdict
+
+		from webapp.api.models import RepositoryStatus as StatusModel
+		from webapp.git_adapter import RepositoryStatus as StatusDataclass
+
+		status = StatusDataclass(
+			branch="main",
+			upstream="origin/main",
+			ahead=1,
+			behind=2,
+			dirty=True,
+			changed_files=("webapp/server.py", "README.md"),
+			conflict_files=(),
+		)
+		parsed = StatusModel.model_validate(asdict(status) | {"conflicted": status.conflicted})
+		self.assertEqual(parsed.changed_files, ["webapp/server.py", "README.md"])
+		self.assertTrue(parsed.dirty)
+		self.assertFalse(parsed.conflicted)
+
+
 class ExportStagePathTests(unittest.TestCase):
 	"""Stage names arrive from the client, so containment is enforced rather than assumed."""
 

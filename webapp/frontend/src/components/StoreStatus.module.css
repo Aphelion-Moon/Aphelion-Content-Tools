@@ -1,0 +1,60 @@
+.wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.summary {
+	width: 100%;
+	text-align: left;
+	background: rgba(23, 7, 46, 0.68);
+	border: 1px solid var(--border);
+	border-radius: 0.4rem;
+	padding: 0.45rem 0.55rem;
+	font-size: 0.82rem;
+	color: inherit;
+}
+
+.summary:hover {
+	border-color: var(--magenta);
+	background: rgba(23, 7, 46, 0.9);
+}
+
+.pill {
+	width: 100%;
+	text-align: left;
+	border-radius: 0.4rem;
+	padding: 0.35rem 0.55rem;
+	font-size: 0.78rem;
+	background: transparent;
+}
+
+.idle {
+	border: 1px solid var(--border);
+	color: var(--muted);
+}
+
+.running {
+	border: 1px solid var(--magenta);
+	color: var(--plasma);
+}
+
+.connection {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.72rem;
+	color: var(--muted);
+}
+
+.dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background: var(--danger);
+	flex: none;
+}
+
+.dotLive {
+	background: var(--ok);
+}

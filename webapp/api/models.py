@@ -86,17 +86,25 @@ class ToolRun(BaseModel):
 # ---- Git ------------------------------------------------------------------------------------------
 
 
-class ChangedFile(BaseModel):
-	path: str
-	status: str
-
-
 class RepositoryStatus(BaseModel):
+	"""Mirrors webapp.git_adapter.RepositoryStatus, plus its derived `conflicted` flag.
+
+	`changed_files` and `conflict_files` are repository-relative path strings, not objects -- kept that
+	way because that is what the adapter produces and what every consumer wants.
+	"""
+
+	# Every field is required: this is built from `asdict()` of the adapter's frozen dataclass, so the
+	# server always supplies all of them. Giving them defaults would mark them optional in the schema and
+	# force every TypeScript consumer to null-check a value that is never absent.
 	branch: str
-	changed_files: list[ChangedFile] = Field(default_factory=list)
-	conflicted: list[str] = Field(default_factory=list)
-	ahead: int = 0
-	behind: int = 0
+	upstream: str | None
+	ahead: int
+	behind: int
+	dirty: bool
+	changed_files: list[str]
+	conflict_files: list[str]
+	truncated_change_count: int = Field(description="Changes omitted from `changed_files` because the list was capped.")
+	conflicted: bool = Field(description="True when conflict_files is non-empty.")
 
 
 class BranchListResponse(BaseModel):

@@ -1,0 +1,50 @@
+.box {
+	position: relative;
+	height: 72px;
+	overflow: hidden;
+	background: rgba(13, 3, 27, 0.55);
+	border: 1px solid var(--border);
+	border-radius: 0.4rem;
+	cursor: pointer;
+	/* Rapid pats read as double/triple-clicks, which would otherwise select the box's text. */
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.sprite {
+	position: absolute;
+	left: 0;
+	/* Clears the box's 6.4px border-radius: any lower and her feet clip into the rounded corner when
+	   she is flush against the left or right wall. */
+	bottom: 8px;
+	width: 72px;
+	height: 51px;
+	background-repeat: no-repeat;
+	image-rendering: pixelated;
+	pointer-events: none;
+}
+
+.bubble {
+	position: absolute;
+	left: 0.4rem;
+	right: 0.4rem;
+	top: 0.35rem;
+	z-index: 2;
+	padding: 0.3rem 0.45rem;
+	background: rgba(13, 3, 27, 0.96);
+	border: 1px solid var(--border);
+	border-radius: 0.4rem;
+	font-size: 0.72rem;
+	line-height: 1.25;
+	pointer-events: none;
+	overflow-wrap: anywhere;
+}
+
+.bubbleSuccess {
+	border-color: var(--ok);
+}
+
+.bubbleError {
+	border-color: var(--danger);
+	color: var(--danger);
+}

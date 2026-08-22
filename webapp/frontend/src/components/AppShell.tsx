@@ -1,8 +1,10 @@
 import { For, Show, type JSX } from 'solid-js';
 import { A, useLocation } from '@solidjs/router';
 import { TOOLS, type ToolManifest } from '~/tools/registry';
-import { appState } from '~/store/appStore';
+import { cx } from '~/lib/cx';
 import GlobalSearch from './GlobalSearch';
+import Parsec from './Parsec';
+import StoreStatus from './StoreStatus';
 import styles from './AppShell.module.css';
 
 // The single layout. Pre-rewrite this markup was hand-duplicated verbatim across five HTML files, so
@@ -30,11 +32,8 @@ export default function AppShell(props: AppShellProps) {
 					<Show when={activeTool()}>{(tool) => <p>{tool().description}</p>}</Show>
 				</header>
 
-				<p class={styles.connection}>
-					<span classList={{ [styles.dot!]: true, [styles.dotLive!]: appState.connected }} />
-					{appState.connected ? 'Live' : 'Reconnecting…'}
-				</p>
-
+				<StoreStatus />
+				<Parsec />
 				<GlobalSearch />
 
 				<nav class={styles.nav} aria-label="Tools">
@@ -44,8 +43,7 @@ export default function AppShell(props: AppShellProps) {
 							return (
 								<A
 									href={tool.route}
-									class={styles.pill}
-									classList={{ [styles.pillActive!]: isActive() }}
+									class={cx(styles.pill, isActive() && styles.pillActive)}
 									style={accentStyle(tool)}
 									aria-current={isActive() ? 'page' : undefined}
 								>

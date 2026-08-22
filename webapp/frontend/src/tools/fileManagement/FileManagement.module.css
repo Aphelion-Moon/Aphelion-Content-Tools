@@ -1,0 +1,128 @@
+/* Scoped to File Management. No bare element selectors -- see app.css. */
+
+.clean {
+	color: var(--ok);
+	margin: 0.4rem 0 0.2rem;
+}
+
+.dirty {
+	color: var(--warn);
+	margin: 0.4rem 0 0.2rem;
+}
+
+.fileList {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	margin: 0.5rem 0;
+	max-height: 18rem;
+	overflow-y: auto;
+}
+
+.changedFile {
+	border: 1px solid var(--border);
+	border-radius: 0.4rem;
+	padding: 0.35rem 0.5rem;
+	font-size: 0.82rem;
+}
+
+.changedFile summary {
+	cursor: pointer;
+	overflow-wrap: anywhere;
+}
+
+.diff,
+.output {
+	max-height: 16rem;
+	overflow: auto;
+	margin: 0.6rem 0 0;
+	padding: 0.75rem;
+	background: #0d031b;
+	border: 1px solid var(--violet);
+	border-radius: 0.5rem;
+	white-space: pre-wrap;
+	font-size: 0.8rem;
+}
+
+.output {
+	min-height: 3rem;
+}
+
+.controls {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	margin-top: 0.8rem;
+}
+
+.row {
+	display: flex;
+	align-items: flex-end;
+	gap: 0.5rem;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+
+.row button {
+	width: auto;
+	flex: none;
+	white-space: nowrap;
+}
+
+.group {
+	margin: 0.8rem 0;
+}
+
+.group h3 {
+	margin: 0 0 0.2rem;
+	font-size: 0.95rem;
+}
+
+.toolList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: 0.4rem;
+}
+
+.toolList button {
+	width: auto;
+	flex: none;
+}
+
+.advanced {
+	margin-top: 0.5rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+
+.advanced summary {
+	cursor: pointer;
+}
+
+.stopRow {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.6rem;
+}
+
+.stopRow button {
+	width: auto;
+}
+
+.health {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+	font-size: 0.78rem;
+	color: var(--muted);
+}
