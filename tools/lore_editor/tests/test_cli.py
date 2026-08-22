@@ -10,6 +10,10 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
+from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
+
+GENERATED_DM_PATH = "tools/lore_editor/stages/current/generated_lore_overrides.dm"
+
 
 def write_json(path: Path, payload: object) -> None:
 	path.parent.mkdir(parents=True, exist_ok=True)
@@ -21,26 +25,22 @@ class CliTests(unittest.TestCase):
 		temp_dir = tempfile.TemporaryDirectory()
 		self.addCleanup(temp_dir.cleanup)
 		repo_root = Path(temp_dir.name)
-		write_json(
-			repo_root / "config/aphelion/lore_overhaul/targets.json",
-			[
-				{
-					"type_path": "/obj/item/radio",
-					"label": "Handheld Radio",
-					"editable_root": "/obj/item/radio",
-					"parent_type": "/obj/item",
-					"field_profile": "atom_like",
-					"base_values": {"name": "radio", "description": "A radio."},
-					"icon_metadata": {},
-				}
-			],
-		)
-		entry = {
+		seed_targets(repo_root, [
+			{
+				"type_path": "/obj/item/radio",
+				"label": "Handheld Radio",
+				"editable_root": "/obj/item/radio",
+				"parent_type": "/obj/item",
+				"field_profile": "atom_like",
+				"base_values": {"name": "radio", "description": "A radio."},
+				"icon_metadata": {},
+			}
+		])
+		seed_override(repo_root, "items", {
 			"id": "fixture.radio",
 			"type_path": "/obj/item/radio" if valid_entry else "/obj/item/unknown",
 			"name": "fixture radio",
-		}
-		write_json(repo_root / "config/aphelion/lore_overhaul/entities/items.json", [entry])
+		})
 		return repo_root
 
 	def run_cli(self, *arguments: str) -> tuple[int, str, str]:
@@ -69,34 +69,17 @@ class CliTests(unittest.TestCase):
 		self.assertIn("valid", stdout.lower())
 		self.assertEqual(stderr, "")
 
-	def test_validate_returns_nonzero_without_writing_invalid_repository(self) -> None:
-		from tools.lore_editor.generate import write_generated_dm
-
-		repo_root = self.make_repo()
-		write_generated_dm(repo_root)
-		generated_path = repo_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
-		before = generated_path.read_bytes()
-		write_json(
-			repo_root / "config/aphelion/lore_overhaul/entities/items.json",
-			[
-				{
-					"id": "fixture.radio",
-					"type_path": "/obj/item/unknown",
-					"name": "invalid fixture",
-				}
-			],
-		)
+	def test_validate_returns_nonzero_for_an_invalid_repository(self) -> None:
+		repo_root = self.make_repo(valid_entry=False)
 
 		status, stdout, stderr = self.run_cli(
 			"validate",
 			"--repo-root",
 			str(repo_root),
-			"--check-generated",
 		)
 
 		self.assertNotEqual(status, 0)
 		self.assertIn("fixture.radio", stdout + stderr)
-		self.assertEqual(generated_path.read_bytes(), before)
 
 	def test_generate_dispatch_writes_generated_artifact(self) -> None:
 		repo_root = self.make_repo()
@@ -106,16 +89,16 @@ class CliTests(unittest.TestCase):
 		self.assertEqual(status, 0)
 		self.assertIn("generated", stdout.lower())
 		self.assertEqual(stderr, "")
-		self.assertTrue(
-			(repo_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm").exists()
-		)
+		self.assertTrue((repo_root / GENERATED_DM_PATH).exists())
 
 	def test_catalog_refresh_dispatches_and_reports_errors(self) -> None:
 		repo_root = self.make_repo()
 		with patch("tools.lore_editor.cli.refresh_catalog", return_value=[{"type_path": "/obj/item/radio"}]) as refresh:
 			status, stdout, stderr = self.run_cli("catalog-refresh", "--repo-root", str(repo_root))
 
-		refresh.assert_called_once_with(repo_root.resolve())
+		refresh.assert_called_once()
+		self.assertEqual(refresh.call_args.args, (repo_root.resolve(),))
+		self.assertTrue(callable(refresh.call_args.kwargs.get("on_progress")))
 		self.assertEqual(status, 0)
 		self.assertIn("catalog", stdout.lower())
 		self.assertEqual(stderr, "")

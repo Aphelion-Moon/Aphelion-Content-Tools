@@ -77,10 +77,14 @@ def main(argv: list[str] | None = None) -> int:
 		if args.command == "catalog-refresh":
 			assert repo_root is not None
 			old_targets = read_current_targets(repo_root)
+
+			def _report_progress(done: int, total: int) -> None:
+				print(f"Embedded {done}/{total} changed target(s)...", flush=True)
+
 			if args.game_repo:
-				targets = refresh_catalog(repo_root, game_repo_root=args.game_repo.resolve())
+				targets = refresh_catalog(repo_root, game_repo_root=args.game_repo.resolve(), on_progress=_report_progress)
 			else:
-				targets = refresh_catalog(repo_root)
+				targets = refresh_catalog(repo_root, on_progress=_report_progress)
 			print(f"Refreshed lore target catalog ({len(targets)} targets).")
 			entry_type_paths = frozenset(
 				entry.type_path for entry in load_corpus(repo_root).entries if entry.type_path is not None

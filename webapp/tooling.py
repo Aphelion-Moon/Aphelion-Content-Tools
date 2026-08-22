@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import subprocess
 import sys
 import threading
-import uuid
+import time
+from dataclasses import dataclass
+from multiprocessing.connection import Client
 from pathlib import Path
-
-
-MAX_OUTPUT_CHARACTERS = 64_000
-MAX_LOG_CHARACTERS = 1_000_000
-MAX_RETAINED_RUNS = 200
-LOG_ROOT = Path("tools/logs")
 
 
 @dataclass(frozen=True)
@@ -24,10 +19,6 @@ class ToolDefinition:
 	game_repo_commands: frozenset[str] = frozenset()
 
 
-_RUNS: dict[str, dict[str, object]] = {}
-_RUNS_LOCK = threading.Lock()
-
-
 def list_tools(definitions: tuple[ToolDefinition, ...]) -> list[dict[str, str]]:
 	return [
 		{"id": definition.id, "label": definition.label, "description": definition.description}
@@ -35,95 +26,135 @@ def list_tools(definitions: tuple[ToolDefinition, ...]) -> list[dict[str, str]]:
 	]
 
 
-def _find_definition(definitions: tuple[ToolDefinition, ...], tool_id: str) -> ToolDefinition:
-	for definition in definitions:
-		if definition.id == tool_id:
-			return definition
-	raise ValueError(f"Unknown tool '{tool_id}'.")
+# Every tool run happens inside one persistent, warm worker process per repo root (see
+# `webapp/store_worker.py`) instead of a fresh `python cli.py` subprocess per click -- spawning a whole
+# interpreter and re-loading the ~130MB embedding model from scratch on every button click was the real
+# cost behind "the python app is pulling a significant cpu and memory load", independent of how little
+# data actually changed. This module is the client half: it starts/reconnects to that worker over a
+# local named pipe and forwards requests to it, translating its responses back into the same shape
+# (and exceptions) callers already expect.
+WORKER_START_TIMEOUT_SECONDS = 20.0
+WORKER_POLL_INTERVAL_SECONDS = 0.05
+WORKER_SHUTDOWN_TIMEOUT_SECONDS = 5.0
 
 
-def build_tool_command(
-	repo_root: Path,
-	definition: ToolDefinition,
-	command_index: int = 0,
-	*,
-	game_repo_root: Path | None = None,
-) -> list[str]:
-	if command_index < 0 or command_index >= len(definition.commands):
-		raise ValueError(f"Tool '{definition.id}' has no command at index {command_index}.")
-	resolved_root = repo_root.resolve()
-	cli_path = (resolved_root / definition.tool_root / "cli.py").resolve()
-	if not cli_path.is_relative_to(resolved_root):
-		raise ValueError("Tool CLI must remain inside the repository root.")
-	command = [sys.executable, str(cli_path), *definition.commands[command_index], "--repo-root", str(resolved_root)]
-	if game_repo_root is not None and any(
-		command_name in definition.game_repo_commands for command_name in definition.commands[command_index]
-	):
-		command.extend(("--game-repo", str(game_repo_root.resolve())))
-	return command
+class _WorkerHandle:
+	def __init__(self, repo_root: Path) -> None:
+		self.repo_root = repo_root
+		self.process: subprocess.Popen | None = None
+		self.lock = threading.Lock()
 
+	@property
+	def address(self) -> str:
+		from .store_worker import pipe_address
+		return pipe_address(self.repo_root)
 
-def _append_log(repo_root: Path, run_id: str, text: str) -> None:
-	log_path = repo_root.resolve() / LOG_ROOT / f"{run_id}.log"
-	try:
-		log_path.parent.mkdir(parents=True, exist_ok=True)
-		if log_path.exists() and log_path.stat().st_size >= MAX_LOG_CHARACTERS:
-			return
-		with log_path.open("a", encoding="utf-8", newline="") as log_file:
-			log_file.write(text)
-	except OSError:
-		return
-
-
-def _append_output(repo_root: Path, run_id: str, text: str) -> None:
-	with _RUNS_LOCK:
-		run = _RUNS.get(run_id)
-		if run is None:
-			return
-		current_output = str(run.get("output", ""))
-		run["output"] = (current_output + text)[-MAX_OUTPUT_CHARACTERS:]
-	_append_log(repo_root, run_id, text)
-
-
-def _execute_tool(repo_root: Path, run_id: str, definition: ToolDefinition, game_repo_root: Path | None) -> None:
-	with _RUNS_LOCK:
-		_RUNS[run_id]["status"] = "running"
-	_append_output(repo_root, run_id, f"Starting {definition.id}.\n")
-	try:
-		for command_index, _command in enumerate(definition.commands):
-			command = build_tool_command(repo_root, definition, command_index, game_repo_root=game_repo_root)
-			_append_output(repo_root, run_id, f"Command {command_index + 1}: {subprocess.list2cmdline(command)}\n")
-			process = subprocess.Popen(
-				command,
-				cwd=str(repo_root.resolve()),
-				stdin=subprocess.DEVNULL,
-				stdout=subprocess.PIPE,
-				stderr=subprocess.STDOUT,
-				text=True,
-				encoding="utf-8",
-				errors="replace",
-				shell=False,
-			)
-			if process.stdout is not None:
-				for line in process.stdout:
-					_append_output(repo_root, run_id, line)
-				process.stdout.close()
-			return_code = process.wait()
-			if return_code != 0:
-				_append_output(repo_root, run_id, f"Command exited with code {return_code}.\n")
-				with _RUNS_LOCK:
-					_RUNS[run_id]["status"] = "failed"
-					_RUNS[run_id]["exit_code"] = return_code
+	def ensure_started(self) -> None:
+		with self.lock:
+			if self.process is not None and self.process.poll() is None:
 				return
-		with _RUNS_LOCK:
-			_RUNS[run_id]["status"] = "succeeded"
-			_RUNS[run_id]["exit_code"] = 0
-		_append_output(repo_root, run_id, "Completed successfully.\n")
-	except Exception as exc:
-		_append_output(repo_root, run_id, f"error: {exc}\n")
-		with _RUNS_LOCK:
-			_RUNS[run_id]["status"] = "failed"
-			_RUNS[run_id]["exit_code"] = None
+			# Run store_worker.py by path, not "-m webapp.store_worker": the worker's job is to operate
+			# on `self.repo_root` (which may be an arbitrary --repo-root, including a temp directory in
+			# tests) -- it must not be confused with *this* installation's own directory, which is what
+			# the child process actually needs on its import path to find the `webapp`/`tools` packages.
+			worker_script = Path(__file__).resolve().with_name("store_worker.py")
+			self.process = subprocess.Popen(
+				[sys.executable, str(worker_script), "--repo-root", str(self.repo_root)],
+				stdin=subprocess.DEVNULL,
+				stdout=subprocess.DEVNULL,
+				stderr=subprocess.DEVNULL,
+			)
+			self._wait_until_reachable()
+
+	def _wait_until_reachable(self) -> None:
+		from .store_worker import AUTH_KEY
+
+		deadline = _now() + WORKER_START_TIMEOUT_SECONDS
+		last_error: Exception | None = None
+		while _now() < deadline:
+			if self.process.poll() is not None:
+				raise RuntimeError("The store worker process exited immediately on startup.")
+			try:
+				with Client(self.address, family="AF_PIPE", authkey=AUTH_KEY):
+					return
+			except OSError as exc:
+				last_error = exc
+				_sleep(WORKER_POLL_INTERVAL_SECONDS)
+		raise RuntimeError(f"Store worker did not become reachable in time: {last_error}")
+
+	def shut_down(self) -> None:
+		with self.lock:
+			if self.process is None:
+				return
+			try:
+				_send(self.address, {"action": "shutdown"})
+			except OSError:
+				pass
+			try:
+				self.process.wait(timeout=WORKER_SHUTDOWN_TIMEOUT_SECONDS)
+			except subprocess.TimeoutExpired:
+				self.process.kill()
+				self.process.wait(timeout=WORKER_SHUTDOWN_TIMEOUT_SECONDS)
+			self.process = None
+
+
+def _now() -> float:
+	return time.monotonic()
+
+
+def _sleep(seconds: float) -> None:
+	time.sleep(seconds)
+
+
+def _send(address: str, message: dict[str, object]) -> dict[str, object]:
+	from .store_worker import AUTH_KEY
+	with Client(address, family="AF_PIPE", authkey=AUTH_KEY) as conn:
+		conn.send(message)
+		return conn.recv()
+
+
+_workers: dict[str, _WorkerHandle] = {}
+_workers_lock = threading.Lock()
+_default_repo_root: Path | None = None
+
+
+def _get_worker(repo_root: Path) -> _WorkerHandle:
+	global _default_repo_root
+	resolved = repo_root.resolve()
+	key = str(resolved)
+	with _workers_lock:
+		handle = _workers.get(key)
+		if handle is None:
+			handle = _WorkerHandle(resolved)
+			_workers[key] = handle
+		_default_repo_root = resolved
+	return handle
+
+
+def _default_worker() -> _WorkerHandle:
+	if _default_repo_root is None:
+		raise ValueError("No tool run has been started in this process yet.")
+	return _get_worker(_default_repo_root)
+
+
+def _request(handle: _WorkerHandle, message: dict[str, object]) -> dict[str, object]:
+	handle.ensure_started()
+	try:
+		response = _send(handle.address, message)
+	except (OSError, EOFError):
+		# The worker died between calls (crashed, was killed) -- respawn once and retry. This is the
+		# actual payoff of moving execution into its own process: a bug in job code can only take down
+		# the worker, never the always-on HTTP server, and the server can recover instead of every
+		# subsequent click just failing forever.
+		handle.ensure_started()
+		response = _send(handle.address, message)
+	if not response.get("ok"):
+		error_type = response.get("error_type")
+		error_message = str(response.get("error") or "Unknown store worker error.")
+		if error_type == "ValueError":
+			raise ValueError(error_message)
+		raise RuntimeError(error_message)
+	return response["result"]  # type: ignore[return-value]
 
 
 def start_tool(
@@ -133,44 +164,52 @@ def start_tool(
 	*,
 	game_repo_root: Path | None = None,
 ) -> dict[str, object]:
-	definition = _find_definition(definitions, tool_id)
-	run_id = uuid.uuid4().hex
-	log_path = LOG_ROOT / f"{run_id}.log"
-	with _RUNS_LOCK:
-		_RUNS[run_id] = {
-			"run_id": run_id,
-			"tool_id": tool_id,
-			"status": "queued",
-			"output": "",
-			"exit_code": None,
-			"log_path": log_path.as_posix(),
-		}
-		_evict_old_runs_locked()
-	_append_log(repo_root.resolve(), run_id, f"Queued {tool_id}.\n")
-	thread = threading.Thread(
-		target=_execute_tool,
-		args=(repo_root.resolve(), run_id, definition, game_repo_root.resolve() if game_repo_root else None),
-		daemon=True,
-	)
-	thread.start()
-	return get_tool_run(run_id)
+	if not any(definition.id == tool_id for definition in definitions):
+		raise ValueError(f"Unknown tool '{tool_id}'.")
+	handle = _get_worker(repo_root)
+	message = {"action": "start", "tool_id": tool_id}
+	if game_repo_root is not None:
+		message["game_repo_root"] = str(game_repo_root.resolve())
+	return _request(handle, message)
 
 
-def _evict_old_runs_locked() -> None:
-	"""Drop the oldest finished runs once the retained-run count exceeds MAX_RETAINED_RUNS.
-
-	Must be called while holding _RUNS_LOCK. Queued/running runs are never evicted.
-	"""
-	if len(_RUNS) <= MAX_RETAINED_RUNS:
-		return
-	finished_ids = [run_id for run_id, run in _RUNS.items() if run["status"] in ("succeeded", "failed")]
-	excess = len(_RUNS) - MAX_RETAINED_RUNS
-	for run_id in finished_ids[:excess]:
-		del _RUNS[run_id]
+def list_active_runs(repo_root: Path) -> list[dict[str, object]]:
+	"""Currently queued/running jobs for `repo_root`, for a sidebar "what's happening right now" widget
+	shown on every page -- unlike `start_tool`, this must never spawn a worker as a side effect of merely
+	checking: most pages never start a job, and a status widget polling every few seconds would otherwise
+	spin up (and keep alive) a store worker just by existing. Returns `[]` whenever there's nothing to
+	ask -- no worker ever started for this repo root, or its process has already exited -- without any
+	IPC or subprocess spawn."""
+	key = str(repo_root.resolve())
+	with _workers_lock:
+		handle = _workers.get(key)
+	if handle is None or handle.process is None or handle.process.poll() is not None:
+		return []
+	try:
+		response = _send(handle.address, {"action": "list_active"})
+	except (OSError, EOFError):
+		return []
+	if not response.get("ok"):
+		return []
+	return response["result"]  # type: ignore[return-value]
 
 
 def get_tool_run(run_id: str) -> dict[str, object]:
-	with _RUNS_LOCK:
-		if run_id not in _RUNS:
-			raise ValueError(f"Unknown tool run '{run_id}'.")
-		return dict(_RUNS[run_id])
+	return _request(_default_worker(), {"action": "status", "run_id": run_id})
+
+
+def stop_tool(run_id: str) -> dict[str, object]:
+	return _request(_default_worker(), {"action": "stop", "run_id": run_id})
+
+
+def shut_down_worker(repo_root: Path) -> None:
+	"""Cleanly stop the worker for `repo_root`, if one was ever started.
+
+	Must be called when the main server shuts down: an unmanaged leftover worker process is exactly the
+	orphaned-process failure mode this project has already hit once with a hung `catalog-refresh` -- the
+	fix here must not reintroduce a new variant of the same bug."""
+	key = str(repo_root.resolve())
+	with _workers_lock:
+		handle = _workers.get(key)
+	if handle is not None:
+		handle.shut_down()

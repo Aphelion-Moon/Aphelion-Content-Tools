@@ -4,7 +4,7 @@
     {
       "name": "webapp",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["webapp/serve.py", "--repo-root", ".", "--port", "8642"],
+      "runtimeArgs": ["webapp/serve.py", "--repo-root", ".", "--port", "8642", "--game-repo", "C:/Users/Zoe/Documents/GitHub/Meridian-Rift"],
       "port": 8642
     }
   ]

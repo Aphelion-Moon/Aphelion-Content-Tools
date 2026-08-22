@@ -17,6 +17,10 @@
           <p>Repository status, local Git actions, game-repository export, and cache/storage management, all in one place.</p>
         </header>
 
+        <div id="store-status-widget" class="store-status-widget"></div>
+
+        <div id="reference-panel" class="reference-panel"></div>
+
         <div class="sidebar-search">
           <label for="global-search" class="sidebar-search-label">Search</label>
           <input id="global-search" class="global-search-input" type="search" placeholder="Search catalog entries or pages…">
@@ -26,27 +30,51 @@
         <nav class="tool-nav" aria-label="Tools">
           <a class="tool-pill tool-pill-home" href="/">Home</a>
           <span class="tool-pill tool-pill-filemgmt active" aria-current="page">File Management</span>
+          <a class="tool-pill tool-pill-parsec" href="/parsec">Parsec</a>
           <a class="tool-pill" href="/lore-editor">Lore Editor</a>
           <a class="tool-pill" href="/graph">Content Graph</a>
         </nav>
       </aside>
 
       <div class="page-content">
-    <section class="card tools-card" aria-label="Cache and storage management">
+    <section class="card tools-card" aria-label="Database and Git">
       <div class="section-heading">
         <div>
           <p class="eyebrow">Repository operations</p>
-          <h2>Cache and Storage Management</h2>
+          <h2>Database and Git</h2>
           <p class="metadata">
-            Background jobs that keep the Lore Editor's Catalog and the Content Graph's cache in sync with
-            the game checkout. None of these run automatically — the Catalog, generated DM artifact, and
-            content graph are all snapshots on disk, so re-run the relevant job here after pulling new
-            game-repo changes or hand-editing files outside the app, before trusting what the other pages show.
-            Hover a button below for what it does and when to use it.
+            Background jobs that keep the shared data store (Lore Editor's Catalog, the Content Graph's
+            cache, and search) in sync with the game checkout, plus the store's own health. Nothing here
+            runs on its own except one automatic database optimize shortly after this app starts —
+            everything else is a snapshot that only updates when you run the matching job below.
           </p>
         </div>
       </div>
-      <div id="tool-list" class="tool-list"></div>
+
+      <div class="tool-group">
+        <h3>1. Catalog &amp; validation</h3>
+        <p class="metadata">Run after pulling game-repo changes, or after hand-editing override JSON outside the Lore Editor UI.</p>
+        <div id="tool-list-catalog" class="tool-list"></div>
+        <details class="tool-advanced">
+          <summary>Run an individual step instead</summary>
+          <div id="tool-list-catalog-advanced" class="tool-list"></div>
+        </details>
+      </div>
+
+      <div class="tool-group">
+        <h3>2. Content graph</h3>
+        <p class="metadata">Run after pulling game-repo changes, or after editing marker comments or master_files overrides directly.</p>
+        <div id="tool-list-graph" class="tool-list"></div>
+      </div>
+
+      <div class="tool-group">
+        <h3>3. Database maintenance</h3>
+        <p class="metadata">Rebuild embeddings only after changing the embedding model or recovering from an offline run. Optimize compacts and prunes the store and also runs once automatically shortly after startup.</p>
+        <div id="tool-list-maintenance" class="tool-list"></div>
+        <div id="store-health" class="metadata store-health"></div>
+      </div>
+
+      <button id="stop-tool-button" class="secondary-button" type="button" hidden>Stop</button>
       <pre id="tool-output" class="tool-output" aria-live="polite"></pre>
       <p id="tool-log-path" class="metadata"></p>
     </section>
@@ -164,6 +192,12 @@
     </div>
   </main>
   <script src="/shell.js"></script>
+  <script src="/floating-ui-core.umd.min.js"></script>
+  <script src="/floating-ui-dom.umd.min.js"></script>
+  <script src="/info-tooltip.js"></script>
+  <script src="/parsec.js"></script>
+  <script src="/store-status-widget.js"></script>
+  <script src="/references-panel.js"></script>
   <script src="/file-management.js"></script>
 </body>
 </html>

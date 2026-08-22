@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-import json
-import os
 from pathlib import Path
-import tempfile
 
 from webapp.game_repository import validate_game_repository
 from webapp.git_adapter import repository_revision
 from webapp.json_storage import canonical_json_bytes
-from webapp.path_safety import resolve_repo_path
-from .manifest import GraphManifest, sha256_bytes
+from webapp.manifest_base import sha256_bytes
+from webapp.store import db
+from webapp.store.schema import decode, encode, table
+from .manifest import GraphManifest
 from .markers import MarkerEdge
 from .references import find_text_references
 from .scanner import (
@@ -21,10 +20,6 @@ from .scanner import (
 	scan_module_file_texts,
 	scan_modules,
 )
-
-
-GRAPH_INDEX_PATH = Path("tools/content_graph/cache/index.json")
-GRAPH_MANIFEST_PATH = Path("tools/content_graph/cache/manifest.json")
 
 
 def _module_node_id(owner: str, module_id: str) -> str:
@@ -238,27 +233,12 @@ def build_content_graph(game_repo_root: Path) -> dict[str, object]:
 	}
 
 
-def _atomic_write(path: Path, content: bytes) -> None:
-	path.parent.mkdir(parents=True, exist_ok=True)
-	with tempfile.NamedTemporaryFile(
-		mode="wb",
-		delete=False,
-		dir=path.parent,
-		prefix=f"{path.stem}.",
-		suffix=".tmp",
-	) as temp_file:
-		temp_file.write(content)
-		temp_file_path = Path(temp_file.name)
-	try:
-		os.replace(temp_file_path, path)
-	except Exception:
-		if temp_file_path.exists():
-			temp_file_path.unlink()
-		raise
+def _node_text(node: dict[str, object]) -> str:
+	return " ".join(str(node.get(field)) for field in ("id", "kind", "path", "name", "module_id") if node.get(field))
 
 
 def scan_and_cache_content_graph(repo_root: Path, game_repo_root: Path) -> GraphManifest:
-	"""Validate the game checkout, scan it, and atomically write the graph cache + manifest."""
+	"""Validate the game checkout, scan it, and atomically replace the graph store tables."""
 	resolved_repo_root = repo_root.resolve()
 	resolved_game_root = game_repo_root.resolve()
 	validate_game_repository(resolved_game_root)
@@ -286,20 +266,69 @@ def scan_and_cache_content_graph(repo_root: Path, game_repo_root: Path) -> Graph
 		reference_count=counts["reference_count"],
 	)
 
-	index_path = resolve_repo_path(resolved_repo_root, GRAPH_INDEX_PATH)
-	manifest_path = resolve_repo_path(resolved_repo_root, GRAPH_MANIFEST_PATH)
-	_atomic_write(index_path, graph_bytes)
-	_atomic_write(manifest_path, canonical_json_bytes(manifest.to_dict()))
+	def _print_progress(label: str):
+		def report(done: int, total: int) -> None:
+			print(f"{label}: embedded {done}/{total} changed row(s)...", flush=True)
+		return report
+
+	db.sync_snapshot(table(resolved_repo_root, "graph_nodes"), "id", [
+		{
+			"id": node["id"],
+			"kind": node.get("kind", ""),
+			"path": node.get("path", ""),
+			"raw_json": encode(node),
+			"text": _node_text(node),
+		}
+		for node in graph["nodes"]
+	], on_progress=_print_progress("Nodes"))
+	# Edge/marker ids must be stable across scans for the above diffing to mean anything -- a positional
+	# index (the previous scheme) shifts for every edge/marker whenever an earlier one is added or
+	# removed, which would make nearly everything look "changed" on every scan even when it wasn't. A
+	# content hash of the edge/marker's own fields is stable regardless of list order.
+	db.sync_snapshot(table(resolved_repo_root, "graph_edges"), "id", [
+		{
+			"id": db.content_hash_for(encode(edge))[:24],
+			"source": edge["source"],
+			"target": edge["target"],
+			"relation": edge["relation"],
+			"raw_json": encode(edge),
+			"text": f"{edge['source']} {edge['target']} {edge['relation']}",
+		}
+		for edge in graph["edges"]
+	], on_progress=_print_progress("Edges"))
+	db.sync_snapshot(table(resolved_repo_root, "unresolved_markers"), "id", [
+		{
+			"id": db.content_hash_for(encode(marker))[:24],
+			"core_file": marker["core_file"],
+			"raw_json": encode(marker),
+			"text": f"{marker['core_file']} {marker.get('raw_label', '')} {marker.get('original_text', '')}",
+		}
+		for marker in graph["unresolved_markers"]
+	], on_progress=_print_progress("Unresolved markers"))
+	db.upsert_rows(table(resolved_repo_root, "manifests"), "id", [{
+		"id": "graph",
+		"raw_json": encode({"manifest": manifest.to_dict(), "counts": counts}),
+		"text": "",
+	}])
 	return manifest
 
 
 def read_graph_cache(repo_root: Path) -> tuple[dict[str, object], GraphManifest] | None:
 	"""Return the cached (graph, manifest) pair, or None if no scan has been run yet."""
 	resolved_root = repo_root.resolve()
-	index_path = resolve_repo_path(resolved_root, GRAPH_INDEX_PATH)
-	manifest_path = resolve_repo_path(resolved_root, GRAPH_MANIFEST_PATH)
-	if not index_path.is_file() or not manifest_path.is_file():
+	manifest_row = db.get_row(table(resolved_root, "manifests"), "id = 'graph'")
+	if manifest_row is None:
 		return None
-	graph = json.loads(index_path.read_text(encoding="utf-8"))
-	manifest = GraphManifest.from_dict(json.loads(manifest_path.read_text(encoding="utf-8")))
+	stored = decode(manifest_row)
+	manifest = GraphManifest.from_dict(stored["manifest"])
+
+	nodes = [decode(row) for row in db.all_rows(table(resolved_root, "graph_nodes"))]
+	edges = [decode(row) for row in db.all_rows(table(resolved_root, "graph_edges"))]
+	unresolved_markers = [decode(row) for row in db.all_rows(table(resolved_root, "unresolved_markers"))]
+	graph = {
+		"nodes": nodes,
+		"edges": edges,
+		"unresolved_markers": unresolved_markers,
+		"counts": stored["counts"],
+	}
 	return graph, manifest

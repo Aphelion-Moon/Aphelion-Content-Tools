@@ -10,6 +10,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
+
 
 def write_json(path: Path, payload: object) -> None:
 	path.parent.mkdir(parents=True, exist_ok=True)
@@ -25,15 +27,6 @@ class RefreshCatalogTests(unittest.TestCase):
 		source_module = importlib.import_module("tools.lore_editor.source")
 		validation_module = importlib.import_module("tools.lore_editor.validation")
 		return catalog_module, source_module, validation_module
-
-	def init_repo(self, repo_root: Path, *, targets: object | None = None) -> Path:
-		source_root = repo_root / "config" / "aphelion" / "lore_overhaul"
-		entities_root = source_root / "entities"
-		entities_root.mkdir(parents=True, exist_ok=True)
-		if targets is None:
-			targets = []
-		write_json(source_root / "targets.json", targets)
-		return entities_root
 
 	def make_target(
 		self,
@@ -74,7 +67,7 @@ class RefreshCatalogTests(unittest.TestCase):
 		catalog_module, _source_module, _validation_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/obsolete"}])
+			seed_targets(repo_root, [{"type_path": "/obj/item/obsolete"}])
 			probe_output_path = repo_root / "data" / "lore_overhaul_targets.json"
 			write_json(
 				probe_output_path,
@@ -145,18 +138,15 @@ class RefreshCatalogTests(unittest.TestCase):
 				targets[2]["icon_metadata"]["icon"],
 				{"file": "icons/obj/devices/radio.dmi", "state": "headset"},
 			)
-			written_targets = json.loads(
-				(repo_root / "config" / "aphelion" / "lore_overhaul" / "targets.json").read_text(encoding="utf-8")
-			)
-			self.assertEqual(written_targets, targets)
+			self.assertEqual(catalog_module.read_current_targets(repo_root), targets)
 
-	def test_standalone_refresh_runs_probe_in_game_repo_and_writes_tool_catalog(self) -> None:
+	def test_refresh_runs_probe_in_game_repo_and_writes_the_store(self) -> None:
 		catalog_module, _source_module, _validation_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			root = Path(temp_dir)
 			tool_root = root / "tool"
 			game_root = root / "game"
-			(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
+			tool_root.mkdir(parents=True)
 			game_root.mkdir(parents=True)
 			(game_root / "tgstation.dme").write_text("", encoding="utf-8")
 			probe_output = game_root / "data/lore_overhaul_targets.json"
@@ -175,12 +165,9 @@ class RefreshCatalogTests(unittest.TestCase):
 
 			probe.assert_called_once_with(game_root.resolve())
 			self.assertEqual(1, len(targets))
-			self.assertTrue((tool_root / "tools/lore_editor/catalog/targets.json").is_file())
-			manifest = json.loads((tool_root / "tools/lore_editor/catalog/manifest.json").read_text(encoding="utf-8"))
-			self.assertEqual(1, manifest["target_count"])
-			self.assertEqual(manifest["snapshot_sha256"], __import__("hashlib").sha256(
-				(tool_root / "tools/lore_editor/catalog/targets.json").read_bytes()
-			).hexdigest())
+			self.assertEqual(catalog_module.read_current_targets(tool_root), targets)
+			manifest = catalog_module.read_catalog_manifest(tool_root)
+			self.assertEqual(1, manifest.target_count)
 
 	def test_refresh_catalog_rejects_game_repository_missing_marker_file(self) -> None:
 		catalog_module, _source_module, _validation_module = self.import_modules()
@@ -188,7 +175,7 @@ class RefreshCatalogTests(unittest.TestCase):
 			root = Path(temp_dir)
 			tool_root = root / "tool"
 			game_root = root / "game"
-			(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
+			tool_root.mkdir(parents=True)
 			game_root.mkdir(parents=True)
 
 			with self.assertRaisesRegex(ValueError, "does not look like a Meridian-Rift checkout"):
@@ -200,7 +187,7 @@ class RefreshCatalogTests(unittest.TestCase):
 			root = Path(temp_dir)
 			tool_root = root / "tool"
 			game_root = root / "game"
-			(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
+			tool_root.mkdir(parents=True)
 			game_root.mkdir(parents=True)
 			(game_root / "tgstation.dme").write_text("", encoding="utf-8")
 			subprocess.run(["git", "-C", str(game_root), "init", "--initial-branch=main"], check=True, capture_output=True, text=True)
@@ -216,9 +203,8 @@ class RefreshCatalogTests(unittest.TestCase):
 		catalog_module, _source_module, _validation_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
-			targets_path = repo_root / "config" / "aphelion" / "lore_overhaul" / "targets.json"
-			original_text = targets_path.read_text(encoding="utf-8")
+			seed_targets(repo_root, [{"type_path": "/obj/item/radio"}])
+			before = catalog_module.read_current_targets(repo_root)
 			probe_output_path = repo_root / "data" / "lore_overhaul_targets.json"
 			write_json(
 				probe_output_path,
@@ -239,13 +225,12 @@ class RefreshCatalogTests(unittest.TestCase):
 				with self.assertRaisesRegex(ValueError, "/obj/item/flashlight"):
 					catalog_module.refresh_catalog(repo_root)
 
-			self.assertEqual(targets_path.read_text(encoding="utf-8"), original_text)
+			self.assertEqual(catalog_module.read_current_targets(repo_root), before)
 
 	def test_refresh_catalog_accepts_species_targets(self) -> None:
 		catalog_module, _source_module, _validation_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			self.init_repo(repo_root)
 			probe_output_path = repo_root / "data" / "lore_overhaul_targets.json"
 			write_json(
 				probe_output_path,
@@ -272,9 +257,8 @@ class RefreshCatalogTests(unittest.TestCase):
 		catalog_module, _source_module, _validation_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
-			targets_path = repo_root / "config" / "aphelion" / "lore_overhaul" / "targets.json"
-			original_text = targets_path.read_text(encoding="utf-8")
+			seed_targets(repo_root, [{"type_path": "/obj/item/radio"}])
+			before = catalog_module.read_current_targets(repo_root)
 			probe_output_path = repo_root / "data" / "lore_overhaul_targets.json"
 			probe_output_path.parent.mkdir(parents=True, exist_ok=True)
 			probe_output_path.write_text("{not valid json", encoding="utf-8")
@@ -283,7 +267,7 @@ class RefreshCatalogTests(unittest.TestCase):
 				with self.assertRaisesRegex(ValueError, "malformed JSON"):
 					catalog_module.refresh_catalog(repo_root)
 
-			self.assertEqual(targets_path.read_text(encoding="utf-8"), original_text)
+			self.assertEqual(catalog_module.read_current_targets(repo_root), before)
 
 	def test_normalize_targets_accepts_empty_byond_icon_metadata_list(self) -> None:
 		catalog_module, _source_module, _validation_module = self.import_modules()
@@ -336,7 +320,6 @@ class RefreshCatalogTests(unittest.TestCase):
 		catalog_module, source_module, validation_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(repo_root)
 			probe_output_path = repo_root / "data" / "lore_overhaul_targets.json"
 			write_json(
 				probe_output_path,
@@ -352,16 +335,11 @@ class RefreshCatalogTests(unittest.TestCase):
 					),
 				],
 			)
-			write_json(
-				entities_root / "fixture" / "items.json",
-				[
-					{
-						"id": "fixture.invalid_target",
-						"type_path": "/obj/item/megaphone",
-						"name": "fixture invalid target",
-					},
-				],
-			)
+			seed_override(repo_root, "fixture-items", {
+				"id": "fixture.invalid_target",
+				"type_path": "/obj/item/megaphone",
+				"name": "fixture invalid target",
+			})
 
 			with patch.object(catalog_module, "_run_catalog_probe", return_value=probe_output_path):
 				catalog_module.refresh_catalog(repo_root)
@@ -373,14 +351,29 @@ class RefreshCatalogTests(unittest.TestCase):
 				[(issue.path, issue.message, issue.severity) for issue in issues],
 				[
 					(
-						"config/aphelion/lore_overhaul/entities/fixture/items.json#fixture.invalid_target.type_path",
-						"Type path '/obj/item/megaphone' is not present in config/aphelion/lore_overhaul/targets.json.",
+						"tools/lore_editor/content/overrides/fixture-items.json#fixture.invalid_target.type_path",
+						"Type path '/obj/item/megaphone' is not present in the catalog.",
 						"error",
 					)
 				],
 			)
 
-	def test_run_catalog_probe_rejects_stale_compiled_dmb(self) -> None:
+	def test_run_catalog_probe_rejects_a_missing_compiled_dmb(self) -> None:
+		catalog_module, _source_module, _validation_module = self.import_modules()
+		with tempfile.TemporaryDirectory() as temp_dir:
+			repo_root = Path(temp_dir)
+			# No tgstation.dmb written at all -- the compile step (mocked as a no-op) is presumed to have
+			# genuinely failed to produce anything, which is the one case this check still needs to catch.
+			with patch.object(catalog_module, "_run_external_command"):
+				with self.assertRaisesRegex(ValueError, "did not produce tgstation.dmb"):
+					catalog_module._run_catalog_probe(repo_root)
+
+	def test_run_catalog_probe_accepts_a_stale_compiled_dmb_the_build_skipped_as_up_to_date(self) -> None:
+		"""The build entrypoint (Juke Build) may legitimately skip recompiling tgstation.dmb -- "Skipping
+		'dm' (up to date)" -- whenever nothing in the game checkout changed since the last catalog-refresh.
+		That must not be treated as a failure: a stale-mtime .dmb that the build intentionally reused has
+		to be accepted, with the real correctness check being whether running it produces a fresh
+		lore_overhaul_targets.json (checked separately, further down `_run_catalog_probe`)."""
 		catalog_module, _source_module, _validation_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
@@ -389,8 +382,12 @@ class RefreshCatalogTests(unittest.TestCase):
 			stale_time_ns = time.time_ns() - 5_000_000_000
 			os.utime(compiled_dmb_path, ns=(stale_time_ns, stale_time_ns))
 
-			with patch.object(catalog_module, "_run_external_command"):
-				with self.assertRaisesRegex(ValueError, "did not produce a fresh"):
+			with patch.object(catalog_module, "_run_external_command"), \
+				patch.object(catalog_module, "_find_dreamdaemon_path", return_value="DreamDaemon.exe"), \
+				patch.object(catalog_module, "_find_free_port", return_value=1337):
+				# The mocked DreamDaemon run never actually writes lore_overhaul_targets.json, so the
+				# function still ends up failing -- but on *that* check, not the removed dmb-freshness one.
+				with self.assertRaisesRegex(ValueError, r"did not produce data/lore_overhaul_targets\.json"):
 					catalog_module._run_catalog_probe(repo_root)
 
 	def test_external_command_can_accept_probe_shutdown_code(self) -> None:
@@ -500,7 +497,7 @@ class RefreshCatalogTests(unittest.TestCase):
 		catalog_module, _source_module, _validation_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
+			seed_targets(repo_root, [{"type_path": "/obj/item/radio"}])
 
 			targets = catalog_module.read_current_targets(repo_root)
 

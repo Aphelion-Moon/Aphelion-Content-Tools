@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from threading import Lock
+
+from webapp.store import db
+from webapp.store.schema import decode, table
 
 from .model import (
     CatalogTarget,
-    IconRecord,
     LoreCorpus,
     LoreEntry,
     SUPPORTED_ICON_KEYS,
@@ -15,16 +16,21 @@ from .model import (
     as_string,
     freeze_json,
 )
-from .workspace import WorkspaceLayout
-from webapp.path_safety import resolve_repo_path, read_json_file
 
-CONFIG_ROOT = Path("config/aphelion/lore_overhaul")
-TARGETS_PATH = CONFIG_ROOT / "targets.json"
-ENTITIES_ROOT = CONFIG_ROOT / "entities"
+# Overrides no longer live in real files -- each one carries a free-text `group` label instead (still
+# picked/typed the same way in the UI, see app.js's "entity group" selector), but `LoreEntry.source_path`
+# and everything downstream of it (validation issue paths, the entry list's "category", the export
+# manifest) still expects a `Path`. This synthesizes one from the group so none of that code needs to
+# change: it's a virtual identifier, not a real filesystem location.
+OVERRIDES_GROUP_ROOT = Path("tools/lore_editor/content/overrides")
 
 
-_CATALOG_TARGET_CACHE: dict[tuple[Path, int, int], tuple[CatalogTarget, ...]] = {}
-_CATALOG_TARGET_CACHE_LOCK = Lock()
+def source_path_for_group(group: str) -> Path:
+    return OVERRIDES_GROUP_ROOT / f"{group}.json"
+
+
+def group_for_source_path(source_path: Path | str) -> str:
+    return Path(source_path).stem
 
 
 def make_catalog_target(raw_target: object) -> CatalogTarget:
@@ -68,7 +74,7 @@ def make_lore_entry(source_path: Path, raw_entry: object) -> LoreEntry:
     description = None
     special_desc_requirement = None
     special_desc = None
-    icons: list[IconRecord] = []
+    icons: list = []
     wiki = None
 
     if entry_object is not None:
@@ -81,6 +87,7 @@ def make_lore_entry(source_path: Path, raw_entry: object) -> LoreEntry:
 
         icon_object = as_object(entry_object.get("icons"))
         if icon_object is not None:
+            from .model import IconRecord
             for key in SUPPORTED_ICON_KEYS:
                 icon_value = as_object(icon_object.get(key))
                 if icon_value is None:
@@ -114,64 +121,33 @@ def make_lore_entry(source_path: Path, raw_entry: object) -> LoreEntry:
     )
 
 
-def iter_raw_entries(raw_document: object) -> tuple[object, ...]:
-    if isinstance(raw_document, list):
-        return tuple(raw_document)
-    return (raw_document,)
-
-
-def iter_entity_paths(repo_root: Path) -> list[Path]:
-    layout = WorkspaceLayout.from_root(repo_root)
-    entities_root = resolve_repo_path(repo_root, layout.entities_root)
-    if not entities_root.exists():
-        return []
-    entity_paths = []
-    for entity_path in entities_root.rglob("*.json"):
-        resolved_path = entity_path.resolve()
-        if not resolved_path.is_relative_to(repo_root.resolve()):
-            raise ValueError(f"Repository path escapes root: {entity_path}")
-        entity_paths.append(resolved_path.relative_to(repo_root.resolve()))
-    entity_paths.sort(key=lambda path: path.as_posix())
-    return entity_paths
-
-
 def load_catalog_targets(repo_root: Path) -> tuple[CatalogTarget, ...]:
-    resolved_root = repo_root.resolve()
-    layout = WorkspaceLayout.from_root(resolved_root)
-    targets_path = resolve_repo_path(resolved_root, layout.targets_path)
-    try:
-        targets_stat = targets_path.stat()
-    except FileNotFoundError:
-        targets_stat = None
-    cache_key = (
-        resolved_root,
-        targets_stat.st_mtime_ns if targets_stat is not None else 0,
-        targets_stat.st_size if targets_stat is not None else 0,
-    )
-    with _CATALOG_TARGET_CACHE_LOCK:
-        cached_targets = _CATALOG_TARGET_CACHE.get(cache_key)
-        if cached_targets is not None:
-            return cached_targets
-
-    raw_targets = read_json_file(resolved_root, layout.targets_path)
-    if not isinstance(raw_targets, list):
-        raise ValueError(f"{layout.targets_path.as_posix()}: expected a JSON array")
-    targets = tuple(make_catalog_target(target) for target in raw_targets)
-    with _CATALOG_TARGET_CACHE_LOCK:
-        for cached_key in tuple(_CATALOG_TARGET_CACHE):
-            if cached_key[0] == resolved_root:
-                del _CATALOG_TARGET_CACHE[cached_key]
-        _CATALOG_TARGET_CACHE[cache_key] = targets
-    return targets
+    rows = db.all_rows(table(repo_root, "catalog_targets"))
+    targets = tuple(make_catalog_target(decode(row)) for row in rows)
+    return tuple(sorted(targets, key=lambda target: target.type_path or ""))
 
 
 def load_corpus(repo_root: Path) -> LoreCorpus:
-    resolved_root = repo_root.resolve()
-    targets = load_catalog_targets(resolved_root)
-    entries_list: list[LoreEntry] = []
-    for source_path in iter_entity_paths(resolved_root):
-        raw_document = read_json_file(resolved_root, source_path)
-        for raw_entry in iter_raw_entries(raw_document):
-            entries_list.append(make_lore_entry(source_path, raw_entry))
-    entries = tuple(entries_list)
+    targets = load_catalog_targets(repo_root)
+    override_rows = db.all_rows(table(repo_root, "overrides"))
+    entries = tuple(
+        make_lore_entry(source_path_for_group(row["group"]), decode(row))
+        for row in override_rows
+    )
+    # Deterministic order regardless of the store's own row order -- several validation/generation code
+    # paths (duplicate-id/duplicate-field-ownership messages, generated DM ordering) depend on a stable
+    # entry order, the same way the old per-file JSON store's alphabetical file listing was implicitly
+    # stable.
+    entries = tuple(sorted(entries, key=lambda entry: (entry.source_path.as_posix(), entry.entry_id or "")))
     return LoreCorpus(targets=targets, entries=entries)
+
+
+def list_entity_groups(repo_root: Path) -> list[str]:
+    rows = db.all_rows(table(repo_root, "overrides"))
+    return sorted({row["group"] for row in rows})
+
+
+def list_entity_files(repo_root: Path) -> list[str]:
+    """Return the set of override "group" identifiers, formatted as the virtual paths the UI already
+    expects (see app.js's "entity group" dropdown, populated from this list)."""
+    return [source_path_for_group(group).as_posix() for group in list_entity_groups(repo_root)]

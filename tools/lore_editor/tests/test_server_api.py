@@ -12,12 +12,8 @@ from pathlib import Path
 from PIL import Image
 
 from tools.dmi import Dmi
+from tools.lore_editor.tests.store_helpers import seed_group, seed_override, seed_targets
 from webapp.server import create_server
-
-
-def write_json(path: Path, payload: object) -> None:
-	path.parent.mkdir(parents=True, exist_ok=True)
-	path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
 def write_dmi(path: Path, state_name: str) -> None:
@@ -32,33 +28,33 @@ class ServerApiTests(unittest.TestCase):
 	def setUp(self) -> None:
 		self.temp_dir = tempfile.TemporaryDirectory()
 		self.repo_root = Path(self.temp_dir.name)
-		write_json(
-			self.repo_root / "config/aphelion/lore_overhaul/targets.json",
-			[
-				{
-					"type_path": "/obj/item/radio",
-					"label": "Radio",
-					"field_profile": "atom_like",
-				},
-				{
-					"type_path": "/obj/item/radio/weather_monitor",
-					"label": "Weather monitor",
-					"field_profile": "atom_like",
-					"base_values": {
-						"name": "Weather monitor",
-						"description": "A monitor for local weather conditions.",
-					},
-				},
-			],
-		)
-		write_json(
-			self.repo_root / "config/aphelion/lore_overhaul/entities/items.json",
-			[{
-				"id": "items.radio",
+		seed_targets(self.repo_root, [
+			{
 				"type_path": "/obj/item/radio",
-				"name": "Old radio",
-			}],
-		)
+				"label": "Radio",
+				"field_profile": "atom_like",
+			},
+			{
+				"type_path": "/obj/item/radio/weather_monitor",
+				"label": "Weather monitor",
+				"field_profile": "atom_like",
+				"base_values": {
+					"name": "Weather monitor",
+					"description": "A monitor for local weather conditions.",
+				},
+			},
+		])
+		seed_override(self.repo_root, "items", {
+			"id": "items.radio",
+			"type_path": "/obj/item/radio",
+			"name": "Old radio",
+		})
+		seed_group(self.repo_root, {
+			"id": "languages",
+			"label": "Languages",
+			"color": "#60a5fa",
+			"type_path_prefixes": ["/datum/language"],
+		})
 		write_dmi(self.repo_root / "modular_aphelion/modules/lore_overhaul/icons/radio.dmi", "radio")
 		write_dmi(self.repo_root / "icons/obj/radio.dmi", "radio")
 		write_dmi(self.repo_root / "icons/obj/clothing/head/default.dmi", "")
@@ -120,7 +116,7 @@ class ServerApiTests(unittest.TestCase):
 			"/api/entries/items.radio",
 			method="PUT",
 			payload={
-				"source_file": "config/aphelion/lore_overhaul/entities/items.json",
+				"source_file": "tools/lore_editor/content/overrides/items.json",
 				"entry": updated,
 			},
 		)
@@ -137,7 +133,7 @@ class ServerApiTests(unittest.TestCase):
 		delete_status, _delete_type, deleted = self.request(
 			"/api/entries/items.radio",
 			method="DELETE",
-			payload={"source_file": "config/aphelion/lore_overhaul/entities/items.json"},
+			payload={"source_file": "tools/lore_editor/content/overrides/items.json"},
 		)
 		self.assertEqual(delete_status, 200)
 		self.assertTrue(deleted["deleted"])
@@ -149,10 +145,10 @@ class ServerApiTests(unittest.TestCase):
 		missing_status, _missing_type, missing = self.request(
 			"/api/entries/items.radio",
 			method="DELETE",
-			payload={"source_file": "config/aphelion/lore_overhaul/entities/items.json"},
+			payload={"source_file": "tools/lore_editor/content/overrides/items.json"},
 		)
 		self.assertEqual(missing_status, 400)
-		self.assertIn("does not exist", missing["error"])
+		self.assertIn("was not found", missing["error"])
 
 	def test_review_endpoint_includes_catalog_targets_without_overrides(self) -> None:
 		status, _content_type, review = self.request("/api/review")
@@ -257,7 +253,7 @@ class ServerApiTests(unittest.TestCase):
 
 		groups_status, _groups_type, groups = self.request("/api/groups")
 		self.assertEqual(groups_status, 200)
-		self.assertEqual(groups["groups"][-1]["id"], "company-review")
+		self.assertEqual(groups["groups"][-1]["id"], "languages")
 
 	def test_group_update_and_needs_attention_routes_persist_writer_decisions(self) -> None:
 		group_status, _group_type, group = self.request(
@@ -289,24 +285,21 @@ class ServerApiTests(unittest.TestCase):
 		self.assertEqual(status, 200)
 		self.assertEqual(
 			{tool["id"] for tool in payload["tools"]},
-			{"catalog-refresh", "validate", "generate", "refresh-validate", "scan-content"},
+			{"catalog-refresh", "validate", "generate", "refresh-validate", "scan-content", "rebuild-search-embeddings", "optimize-store"},
 		)
 		bad_status, _bad_type, _bad_payload = self.request("/api/tools/arbitrary-command", method="POST")
 		self.assertEqual(bad_status, 400)
 
 	def test_create_entry_route_creates_a_new_entity_group(self) -> None:
-		write_json(
-			self.repo_root / "config/aphelion/lore_overhaul/targets.json",
-			[
-				{"type_path": "/obj/item/radio", "label": "Radio", "field_profile": "atom_like"},
-				{"type_path": "/obj/item/megaphone", "label": "Megaphone", "field_profile": "atom_like"},
-			],
-		)
+		seed_targets(self.repo_root, [
+			{"type_path": "/obj/item/radio", "label": "Radio", "field_profile": "atom_like"},
+			{"type_path": "/obj/item/megaphone", "label": "Megaphone", "field_profile": "atom_like"},
+		])
 		status, _content_type, response = self.request(
 			"/api/entries",
 			method="POST",
 			payload={
-				"source_file": "config/aphelion/lore_overhaul/entities/communications.json",
+				"source_file": "tools/lore_editor/content/overrides/communications.json",
 				"entry": {
 					"id": "communications.megaphone",
 					"type_path": "/obj/item/megaphone",

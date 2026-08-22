@@ -12,9 +12,10 @@ the [writer guide](writer-guide.md); architecture and implementation history are
 - `webapp/` — the shared shell every tool runs inside: the local HTTP server (`server.py`,
   `serve.py`), the generic Git adapter (`git_adapter.py`), the background job runner (`tooling.py`),
   the game-checkout identity check (`game_repository.py`), generic manifest/JSON-storage primitives,
-  and the **Home page** (`web/index.html`, `app.js`, `styles.css`), served at `/` — repository status,
-  local Git actions, and the cross-tool "Cache and Storage Management" job list live here, not inside
-  any one tool.
+  the **Home page** (`web/index.html`, `app.js`, `styles.css`), served at `/`, and the
+  **File Management page** (`web/file-management.html`, `file-management.js`), served at
+  `/file-management` — repository status, local Git actions, and the cross-tool "Database and Git"
+  job list live on File Management, not inside any one tool.
 - `tools/lore_editor/` — the Lore Editor tool: its own domain logic, content, catalog snapshot, and its
   own page (`tools/lore_editor/web/index.html`, `app.js`), served by the shared shell at `/lore-editor`.
   Imports the shared pieces from `webapp/` rather than owning them.
@@ -23,7 +24,7 @@ the [writer guide](writer-guide.md); architecture and implementation history are
   but with no JS/CSS dependency on any other tool's page.
 
 Each tool registers its own `ToolDefinition`s (see `tool_definitions.py` in each tool folder); the
-shell combines them into one background-job registry so Home's "Cache and Storage Management" panel and
+shell combines them into one background-job registry so File Management's "Database and Git" panel and
 `/api/tools` list every tool's actions together, without either tool importing the other's code.
 
 Each page's `.js` file is a plain script (no bundler, no `<script type="module">`), but ends with a
@@ -32,6 +33,23 @@ exports its pure, DOM-free functions for testing. This only activates under Node
 browsers never see it. The matching top-level browser-only calls (element lookups, the auto-init call)
 are guarded the same way (`typeof document !== 'undefined'`) so `require()`-ing the file under Node
 doesn't throw. See `web/tests/*.test.js` next to each page's script, run via `node --test`.
+
+## Parsec: the app's standard feedback-reporting surface
+
+Parsec (`webapp/web/parsec.js`) is the husky pixel-pet mascot living in the sidebar's "Database and Git"
+widget on every page, and — this is the part that matters for new work — **the app's standing pattern for
+reporting successes and errors**, not just a decoration. Any script can call
+`window.AphelionParsec.announce(message, {kind: 'success' | 'error' | 'info', tool})` to have her deliver a
+speech-bubble toast, in addition to (never instead of) whatever inline status text the page already shows.
+New success/error messaging should call `announce()` alongside its existing inline update, following the
+pattern already applied throughout `file-management.js`, `tools/lore_editor/web/app.js`, and
+`tools/content_graph/web/graph.js`: every real error (`.catch` blocks that show `error.message`) and every
+clear success confirmation announces; purely incidental/informational text (live counts, placeholder copy)
+does not — she's meant to surface things worth noticing, not narrate constantly.
+
+Her own settings/info page lives at `/parsec` (`webapp/web/parsec.html` + `parsec-page.js`), reachable via
+the gear icon on her box or the "Parsec" nav pill. Her sprite sheet (`webapp/web/vendor/parsec.png`) is
+cropped/repacked from "Husky Sprites" (opengameart.org/content/husky-sprites, CC0/public domain).
 
 ## Architecture summary (Lore Editor)
 
@@ -88,7 +106,7 @@ Two safeguards apply whenever `--game-repo` is passed (to `catalog-refresh`, and
   after the refresh: type paths **removed** from the game repository, type paths that **changed**
   (label, field profile, editable root, parent type, or base name/description), and which existing
   overrides now reference a removed-or-changed target ("stale" overrides worth reviewing). This
-  reaches the Home page's Cache and Storage Management run log automatically, since it's just CLI
+  reaches the File Management page's Database and Git run log automatically, since it's just CLI
   stdout.
 
 ## Group and review oversight

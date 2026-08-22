@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from dataclasses import asdict
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -103,16 +104,33 @@ def _load_marker_edit_functions():
 
 def _load_tooling_functions():
 	if __package__ in (None, ""):
-		from webapp.tooling import get_tool_run, list_tools, start_tool
+		from webapp.tooling import get_tool_run, list_active_runs, list_tools, shut_down_worker, start_tool, stop_tool
 	else:
-		from .tooling import get_tool_run, list_tools, start_tool
-	return {"list_tools": list_tools, "start_tool": start_tool, "get_tool_run": get_tool_run}
+		from .tooling import get_tool_run, list_active_runs, list_tools, shut_down_worker, start_tool, stop_tool
+	return {
+		"list_tools": list_tools,
+		"start_tool": start_tool,
+		"get_tool_run": get_tool_run,
+		"stop_tool": stop_tool,
+		"shut_down_worker": shut_down_worker,
+		"list_active_runs": list_active_runs,
+	}
 
 
 def _load_tool_registry():
-	from tools.content_graph.tool_definitions import TOOL_DEFINITIONS as GRAPH_TOOL_DEFINITIONS
-	from tools.lore_editor.tool_definitions import TOOL_DEFINITIONS as LORE_TOOL_DEFINITIONS
-	return LORE_TOOL_DEFINITIONS + GRAPH_TOOL_DEFINITIONS
+	if __package__ in (None, ""):
+		from webapp.tool_registry import load_tool_registry
+	else:
+		from .tool_registry import load_tool_registry
+	return load_tool_registry()
+
+
+def _load_store_health_function():
+	if __package__ in (None, ""):
+		from webapp.store.health import store_health
+	else:
+		from .store.health import store_health
+	return store_health
 
 
 def _load_export_functions():
@@ -134,6 +152,12 @@ def _load_graph_query_functions():
 	}
 
 
+# How long after startup to automatically queue "Optimize database" once, so LanceDB's fragment/version
+# housekeeping happens without the user needing to remember to click it. Long enough that it never fires
+# during a short-lived test server; short enough to matter within a normal working session.
+STARTUP_OPTIMIZE_DELAY_SECONDS = 60.0
+
+
 class WebAppServer(ThreadingHTTPServer):
 	allow_reuse_address = True
 
@@ -141,6 +165,28 @@ class WebAppServer(ThreadingHTTPServer):
 		self.repo_root = repo_root.resolve()
 		self.game_repo_root = (game_repo_root or repo_root).resolve()
 		super().__init__(server_address, WebAppRequestHandler)
+		self._startup_optimize_timer = threading.Timer(STARTUP_OPTIMIZE_DELAY_SECONDS, self._run_startup_optimize)
+		self._startup_optimize_timer.daemon = True
+		self._startup_optimize_timer.start()
+
+	def _run_startup_optimize(self) -> None:
+		try:
+			start_tool = _load_tooling_functions()["start_tool"]
+			start_tool(self.repo_root, _load_tool_registry(), "optimize-store")
+		except (OSError, ValueError, RuntimeError):
+			pass  # best-effort -- a manual "Optimize database" click remains available regardless
+
+	def server_close(self) -> None:
+		self._startup_optimize_timer.cancel()
+		# The store worker (webapp/store_worker.py) is spawned lazily the first time a tool run starts,
+		# and outlives individual requests -- it must be told to shut down here, or it's left running
+		# after this process exits (Windows does not kill child processes automatically when a parent
+		# exits). An unmanaged leftover worker is exactly the orphaned-process failure mode already
+		# diagnosed once in this project (a hung catalog-refresh subprocess still running 15+ minutes
+		# after its console was closed); this must not reintroduce a new variant of that bug.
+		shut_down_worker = _load_tooling_functions()["shut_down_worker"]
+		shut_down_worker(self.repo_root)
+		super().server_close()
 
 
 class WebAppRequestHandler(BaseHTTPRequestHandler):
@@ -223,6 +269,24 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 		if parsed.path == "/open-in-menu.js":
 			self.serve_static("open-in-menu.js", "text/javascript; charset=utf-8")
 			return
+		if parsed.path == "/references-panel.js":
+			self.serve_static("references-panel.js", "text/javascript; charset=utf-8")
+			return
+		if parsed.path == "/info-tooltip.js":
+			self.serve_static("info-tooltip.js", "text/javascript; charset=utf-8")
+			return
+		if parsed.path == "/store-status-widget.js":
+			self.serve_static("store-status-widget.js", "text/javascript; charset=utf-8")
+			return
+		if parsed.path == "/parsec.js":
+			self.serve_static("parsec.js", "text/javascript; charset=utf-8")
+			return
+		if parsed.path == "/parsec-page.js":
+			self.serve_static("parsec-page.js", "text/javascript; charset=utf-8")
+			return
+		if parsed.path == "/parsec.png":
+			self.serve_static("vendor/parsec.png", "image/png")
+			return
 		if parsed.path in {"/floating-ui-core.umd.min.js", "/floating-ui-dom.umd.min.js"}:
 			# Vendored locally (no CDN, no build step), same as every other third-party script this app
 			# uses -- shared across tools (Content Graph, Lore Editor), so served bare at the webapp root
@@ -237,6 +301,9 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 			return
 		if parsed.path == "/file-management":
 			self.serve_static("file-management.html", "text/html; charset=utf-8")
+			return
+		if parsed.path == "/parsec":
+			self.serve_static("parsec.html", "text/html; charset=utf-8")
 			return
 		if parsed.path == "/file-management.js":
 			self.serve_static("file-management.js", "text/javascript; charset=utf-8")
@@ -336,6 +403,24 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 			try:
 				catalog_response = _load_api_functions()["catalog_response"]
 				self.send_json(catalog_response(self.server.repo_root))
+			except (OSError, ValueError) as exc:
+				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
+			return
+		if parsed.path == "/api/references":
+			try:
+				from webapp.references import list_references
+				self.send_json({"references": list_references(self.server.repo_root)})
+			except (OSError, ValueError) as exc:
+				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
+			return
+		if parsed.path == "/api/search":
+			try:
+				from webapp.store.search import search
+				query = parse_qs(parsed.query)
+				tables_param = query.get("tables", [""])[0]
+				tables = [name for name in tables_param.split(",") if name] or None
+				limit = _query_int(query, "limit", default=20, minimum=1)
+				self.send_json({"results": search(self.server.repo_root, query.get("q", [""])[0], tables=tables, limit=limit)})
 			except (OSError, ValueError) as exc:
 				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
 			return
@@ -496,6 +581,25 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 			except (OSError, ValueError) as exc:
 				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
 			return
+		if parsed.path == "/api/store/health":
+			try:
+				store_health = _load_store_health_function()
+				self.send_json(store_health(self.server.repo_root))
+			except (OSError, ValueError) as exc:
+				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
+			return
+		if parsed.path == "/api/tools/active":
+			try:
+				list_active_runs = _load_tooling_functions()["list_active_runs"]
+				labels = {tool["id"]: tool["label"] for tool in _load_tooling_functions()["list_tools"](_load_tool_registry())}
+				active_runs = [
+					{**run, "tool_label": labels.get(run["tool_id"], run["tool_id"])}
+					for run in list_active_runs(self.server.repo_root)
+				]
+				self.send_json({"active_runs": active_runs})
+			except (OSError, ValueError) as exc:
+				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
+			return
 		if parsed.path == "/api/icon-files":
 			try:
 				icon_files_response = _load_api_functions()["icon_files_response"]
@@ -550,6 +654,14 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 
 	def do_POST(self) -> None:
 		parsed = urlparse(self.path)
+		if parsed.path == "/api/references":
+			try:
+				from webapp.references import add_reference
+				payload = self.read_json_body()
+				self.send_json(add_reference(self.server.repo_root, payload))
+			except (OSError, ValueError) as exc:
+				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
+			return
 		if parsed.path == "/api/graph/markers/edit":
 			try:
 				payload = self.read_json_body()
@@ -740,7 +852,15 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 		if parsed.path.startswith(tool_prefix):
 			tool_id = unquote(parsed.path[len(tool_prefix):])
 			if tool_id.startswith("runs/"):
-				self.send_error_json(HTTPStatus.NOT_FOUND, "Tool runs are read-only.")
+				run_segment = tool_id[len("runs/"):]
+				if run_segment.endswith("/stop"):
+					try:
+						stop_tool = _load_tooling_functions()["stop_tool"]
+						self.send_json(stop_tool(run_segment[:-len("/stop")]))
+					except (OSError, ValueError) as exc:
+						self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
+					return
+				self.send_error_json(HTTPStatus.NOT_FOUND, "Tool runs are read-only except for /stop.")
 				return
 			try:
 				start_tool = _load_tooling_functions()["start_tool"]
@@ -826,6 +946,19 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 
 	def do_DELETE(self) -> None:
 		parsed = urlparse(self.path)
+		references_prefix = "/api/references/"
+		if parsed.path.startswith(references_prefix):
+			reference_id = unquote(parsed.path[len(references_prefix):])
+			if not reference_id or "/" in reference_id:
+				self.send_error_json(HTTPStatus.BAD_REQUEST, "A single reference id is required.")
+				return
+			try:
+				from webapp.references import remove_reference
+				remove_reference(self.server.repo_root, reference_id)
+				self.send_json({"deleted": True, "id": reference_id})
+			except (OSError, ValueError) as exc:
+				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
+			return
 		prefix = "/api/entries/"
 		if not parsed.path.startswith(prefix):
 			self.send_error_json(HTTPStatus.NOT_FOUND, "Resource not found.")

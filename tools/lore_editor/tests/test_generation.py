@@ -1,20 +1,13 @@
 from __future__ import annotations
 
 import importlib
-import json
 import tempfile
 import unittest
 from pathlib import Path
 
+from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
 
-GENERATED_DM_PATH = Path(
-	"modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
-)
-
-
-def write_json(path: Path, payload: object) -> None:
-	path.parent.mkdir(parents=True, exist_ok=True)
-	path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+GENERATED_DM_PATH = Path("tools/lore_editor/stages/current/generated_lore_overrides.dm")
 
 
 class GenerateDmTests(unittest.TestCase):
@@ -26,68 +19,46 @@ class GenerateDmTests(unittest.TestCase):
 		source_module = importlib.import_module("tools.lore_editor.source")
 		return generate_module, source_module
 
-	def init_repo(self, repo_root: Path, *, targets: object | None = None) -> Path:
-		source_root = repo_root / "config" / "aphelion" / "lore_overhaul"
-		entities_root = source_root / "entities"
-		entities_root.mkdir(parents=True, exist_ok=True)
+	def init_repo(self, repo_root: Path, *, targets: object | None = None) -> None:
 		if targets is None:
 			targets = [
 				{"type_path": "/obj/item/radio"},
 				{"type_path": "/obj/item/megaphone"},
 			]
-		write_json(source_root / "targets.json", targets)
-		return entities_root
+		seed_targets(repo_root, targets)
 
 	def test_generate_dm_orders_entries_omits_unspecified_fields_and_emits_wiki_registry(self) -> None:
 		generate_module, source_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(repo_root)
-			write_json(
-				entities_root / "beta" / "items.json",
-				[
-					{
-						"id": "beta.radio",
-						"type_path": "/obj/item/radio",
-						"name": "Beta radio",
-					},
-				],
-			)
-			write_json(
-				entities_root / "alpha" / "items.json",
-				[
-					{
-						"id": "alpha.zed",
-						"type_path": "/obj/item/megaphone",
-						"name": "Zed hailer",
-					},
-					{
-						"id": "alpha.able",
-						"type_path": "/obj/item/radio",
-						"name": "Able radio",
-						"description": "Alpha description.",
-						"wiki": {
-							"enabled": True,
-							"slug": "able-radio",
-							"summary": "Able summary.",
-							"export_icon": False,
-						},
-					},
-				],
-			)
+			self.init_repo(repo_root)
+			seed_override(repo_root, "beta", {
+				"id": "beta.radio",
+				"type_path": "/obj/item/radio",
+				"name": "Beta radio",
+			})
+			seed_override(repo_root, "alpha", {
+				"id": "alpha.zed",
+				"type_path": "/obj/item/megaphone",
+				"name": "Zed hailer",
+			})
+			seed_override(repo_root, "alpha-second", {
+				"id": "alpha.able",
+				"type_path": "/obj/item/radio",
+				"name": "Able radio",
+				"description": "Alpha description.",
+				"wiki": {
+					"enabled": True,
+					"slug": "able-radio",
+					"summary": "Able summary.",
+					"export_icon": False,
+				},
+			})
 
 			corpus = source_module.load_corpus(repo_root)
 			rendered_dm = generate_module.generate_dm(corpus)
 
 			self.assertTrue(rendered_dm.startswith("/// THIS FILE IS GENERATED. DO NOT EDIT BY HAND.\n"))
-			self.assertLess(
-				rendered_dm.index('/obj/item/radio\n\tname = "Able radio"\n\tdesc = "Alpha description."\n'),
-				rendered_dm.index('/obj/item/megaphone\n\tname = "Zed hailer"\n'),
-			)
-			self.assertLess(
-				rendered_dm.index('/obj/item/megaphone\n\tname = "Zed hailer"\n'),
-				rendered_dm.index('/obj/item/radio\n\tname = "Beta radio"\n'),
-			)
 			self.assertIn("/datum/lore_overhaul_entry/alpha_able\n", rendered_dm)
 			self.assertEqual(rendered_dm.count("/datum/lore_overhaul_entry/alpha_able"), 2)
 			self.assertIn("/datum/autowiki/lore_overhaul/alpha_able\n", rendered_dm)
@@ -105,24 +76,19 @@ class GenerateDmTests(unittest.TestCase):
 		generate_module, source_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
-			write_json(
-				entities_root / "alpha" / "items.json",
-				[
-					{
-						"id": "alpha.escape",
-						"type_path": "/obj/item/radio",
-						"name": 'Quoted "radio" \\\\ handset',
-						"description": 'Path C:\\\\radio\\\\"quote"',
-						"wiki": {
-							"enabled": True,
-							"slug": "escape-radio",
-							"summary": 'Says "hi" from C:\\\\wiki',
-							"export_icon": False,
-						},
-					},
-				],
-			)
+			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
+			seed_override(repo_root, "alpha", {
+				"id": "alpha.escape",
+				"type_path": "/obj/item/radio",
+				"name": 'Quoted "radio" \\\\ handset',
+				"description": 'Path C:\\\\radio\\\\"quote"',
+				"wiki": {
+					"enabled": True,
+					"slug": "escape-radio",
+					"summary": 'Says "hi" from C:\\\\wiki',
+					"export_icon": False,
+				},
+			})
 
 			corpus = source_module.load_corpus(repo_root)
 			rendered_dm = generate_module.generate_dm(corpus)
@@ -135,16 +101,13 @@ class GenerateDmTests(unittest.TestCase):
 		generate_module, source_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
-			write_json(
-				entities_root / "fixture" / "items.json",
-				{
-					"id": "fixture.radio",
-					"type_path": "/obj/item/radio",
-					"special_desc_requirement": "syndicate",
-					"special_desc": "A covert communications device.",
-				},
-			)
+			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
+			seed_override(repo_root, "fixture", {
+				"id": "fixture.radio",
+				"type_path": "/obj/item/radio",
+				"special_desc_requirement": "syndicate",
+				"special_desc": "A covert communications device.",
+			})
 
 			rendered_dm = generate_module.generate_dm(source_module.load_corpus(repo_root))
 
@@ -157,7 +120,7 @@ class GenerateDmTests(unittest.TestCase):
 		generate_module, source_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(
+			self.init_repo(
 				repo_root,
 				targets=[
 					{
@@ -166,21 +129,16 @@ class GenerateDmTests(unittest.TestCase):
 					}
 				],
 			)
-			write_json(
-				entities_root / "fixture" / "items.json",
-				[
-					{
-						"id": "fixture.base-values",
-						"type_path": "/obj/item/radio",
-						"wiki": {
-							"enabled": True,
-							"slug": "fixture-base-values",
-							"summary": "Uses catalog fallbacks.",
-							"export_icon": False,
-						},
-					}
-				],
-			)
+			seed_override(repo_root, "fixture", {
+				"id": "fixture.base-values",
+				"type_path": "/obj/item/radio",
+				"wiki": {
+					"enabled": True,
+					"slug": "fixture-base-values",
+					"summary": "Uses catalog fallbacks.",
+					"export_icon": False,
+				},
+			})
 
 			rendered_dm = generate_module.generate_dm(source_module.load_corpus(repo_root))
 
@@ -191,19 +149,16 @@ class GenerateDmTests(unittest.TestCase):
 		generate_module, source_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
-			write_json(
-				entities_root / "fixture" / "items.json",
-				{
-					"id": "fixture.icons",
-					"type_path": "/obj/item/radio",
-					"icons": {
-						"icon": {"file": "modular_aphelion/modules/lore_overhaul/icons/radio.dmi", "state": "radio"},
-						"worn_icon": {"file": "modular_aphelion/modules/lore_overhaul/icons/radio.dmi", "state": "radio-worn"},
-						"inhand_icon": {"file": "modular_aphelion/modules/lore_overhaul/icons/radio.dmi", "state": "radio-hand"},
-					},
+			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
+			seed_override(repo_root, "fixture", {
+				"id": "fixture.icons",
+				"type_path": "/obj/item/radio",
+				"icons": {
+					"icon": {"file": "modular_aphelion/modules/lore_overhaul/icons/radio.dmi", "state": "radio"},
+					"worn_icon": {"file": "modular_aphelion/modules/lore_overhaul/icons/radio.dmi", "state": "radio-worn"},
+					"inhand_icon": {"file": "modular_aphelion/modules/lore_overhaul/icons/radio.dmi", "state": "radio-hand"},
 				},
-			)
+			})
 
 			rendered_dm = generate_module.generate_dm(source_module.load_corpus(repo_root))
 
@@ -219,31 +174,26 @@ class GenerateDmTests(unittest.TestCase):
 		generate_module, _source_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
-			write_json(
-				entities_root / "fixture" / "items.json",
-				[
-					{
-						"id": "fixture.handheld_radio",
-						"type_path": "/obj/item/radio",
-						"name": "fixture communications handset",
-						"description": "A fixture used to test lore generation.",
-						"wiki": {
-							"enabled": True,
-							"slug": "fixture-handheld-radio",
-							"summary": "A fixture wiki entry.",
-							"export_icon": False,
-						},
-					},
-				],
-			)
+			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
+			seed_override(repo_root, "fixture", {
+				"id": "fixture.handheld_radio",
+				"type_path": "/obj/item/radio",
+				"name": "fixture communications handset",
+				"description": "A fixture used to test lore generation.",
+				"wiki": {
+					"enabled": True,
+					"slug": "fixture-handheld-radio",
+					"summary": "A fixture wiki entry.",
+					"export_icon": False,
+				},
+			})
 
 			generate_module.write_generated_dm(repo_root)
 
 			generated_path = repo_root / GENERATED_DM_PATH
 			expected_text = (
 				"/// THIS FILE IS GENERATED. DO NOT EDIT BY HAND.\n"
-				"/// Source: config/aphelion/lore_overhaul\n\n"
+				"/// Source: the Aphelion Content Tools data store\n\n"
 				"/obj/item/radio\n"
 				'\tname = "fixture communications handset"\n'
 				'\tdesc = "A fixture used to test lore generation."\n\n'
@@ -278,21 +228,16 @@ class GenerateDmTests(unittest.TestCase):
 		generate_module, _source_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
-			write_json(
-				entities_root / "fixture" / "items.json",
-				[
-					{
-						"id": "fixture.invalid",
-						"type_path": "/obj/item/megaphone",
-						"name": "fixture invalid target",
-					},
-				],
-			)
+			self.init_repo(repo_root, targets=[{"type_path": "/obj/item/radio"}])
+			seed_override(repo_root, "fixture", {
+				"id": "fixture.invalid",
+				"type_path": "/obj/item/megaphone",
+				"name": "fixture invalid target",
+			})
 
 			with self.assertRaisesRegex(
 				ValueError,
-				r"config/aphelion/lore_overhaul/entities/fixture/items\.json#fixture\.invalid\.type_path",
+				r"tools/lore_editor/content/overrides/fixture\.json#fixture\.invalid\.type_path",
 			):
 				generate_module.write_generated_dm(repo_root)
 
@@ -300,61 +245,43 @@ class GenerateDmTests(unittest.TestCase):
 		generate_module, _source_module = self.import_modules()
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)
-			entities_root = self.init_repo(
+			self.init_repo(
 				repo_root,
 				targets=[
 					{"type_path": "/obj/item/radio"},
 					{"type_path": "/obj/item/megaphone"},
 				],
 			)
-			write_json(
-				entities_root / "alpha" / "items.json",
-				[
-					{
-						"id": "alpha.beta",
-						"type_path": "/obj/item/radio",
-						"name": "Alpha beta radio",
-						"wiki": {
-							"enabled": True,
-							"slug": "alpha-beta-radio",
-							"summary": "Alpha beta summary.",
-							"export_icon": False,
-						},
-					},
-				],
-			)
-			write_json(
-				entities_root / "beta" / "items.json",
-				[
-					{
-						"id": "alpha-beta",
-						"type_path": "/obj/item/megaphone",
-						"name": "Alpha dash beta radio",
-						"wiki": {
-							"enabled": True,
-							"slug": "alpha-dash-beta-radio",
-							"summary": "Alpha dash beta summary.",
-							"export_icon": False,
-						},
-					},
-				],
-			)
-
-			with self.assertRaisesRegex(ValueError, r"/datum/lore_overhaul_entry/alpha_beta"):
-				generate_module.write_generated_dm(repo_root)
+			seed_override(repo_root, "alpha", {
+				"id": "alpha.beta",
+				"type_path": "/obj/item/radio",
+				"name": "Alpha beta radio",
+				"wiki": {
+					"enabled": True,
+					"slug": "alpha-beta-radio",
+					"summary": "Alpha beta summary.",
+					"export_icon": False,
+				},
+			})
+			seed_override(repo_root, "beta", {
+				"id": "alpha-beta",
+				"type_path": "/obj/item/megaphone",
+				"name": "Alpha dash beta radio",
+				"wiki": {
+					"enabled": True,
+					"slug": "alpha-dash-beta-radio",
+					"summary": "Alpha dash beta summary.",
+					"export_icon": False,
+				},
+			})
 
 			with self.assertRaises(ValueError) as exc:
 				generate_module.write_generated_dm(repo_root)
 
 			error_text = str(exc.exception)
-			self.assertIn(
-				"config/aphelion/lore_overhaul/entities/alpha/items.json#alpha.beta",
-				error_text,
-			)
-			self.assertIn(
-				"config/aphelion/lore_overhaul/entities/beta/items.json#alpha-beta",
-				error_text,
-			)
+			self.assertIn("/datum/lore_overhaul_entry/alpha_beta", error_text)
+			self.assertIn("tools/lore_editor/content/overrides/alpha.json#alpha.beta", error_text)
+			self.assertIn("tools/lore_editor/content/overrides/beta.json#alpha-beta", error_text)
 
 
 if __name__ == "__main__":

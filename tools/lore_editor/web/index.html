@@ -17,6 +17,10 @@
           <p>Review catalog content, organize it into writer groups, and maintain overrides without editing DM.</p>
         </header>
 
+        <div id="store-status-widget" class="store-status-widget"></div>
+
+        <div id="reference-panel" class="reference-panel"></div>
+
         <div class="sidebar-search">
           <label for="global-search" class="sidebar-search-label">Search</label>
           <input id="global-search" class="global-search-input" type="search" placeholder="Search catalog entries or pages…">
@@ -26,6 +30,7 @@
         <nav class="tool-nav" aria-label="Tools">
           <a class="tool-pill tool-pill-home" href="/">Home</a>
           <a class="tool-pill tool-pill-filemgmt" href="/file-management">File Management</a>
+          <a class="tool-pill tool-pill-parsec" href="/parsec">Parsec</a>
           <span class="tool-pill active" aria-current="page">Lore Editor</span>
           <a class="tool-pill" href="/graph">Content Graph</a>
         </nav>
@@ -54,9 +59,6 @@
           </div>
           <span id="result-count" class="count-badge">0</span>
         </div>
-        <label for="search">Search names, descriptions, groups, and references</label>
-        <input id="search" type="search" placeholder="Try Nanotrasen, language, or radio">
-
         <div class="filter-heading">
           <h3>Groups</h3>
           <div class="button-row">
@@ -66,13 +68,6 @@
           </div>
         </div>
         <div id="group-filters" class="filter-list" aria-label="Group filters"></div>
-
-        <fieldset class="compact-fieldset">
-          <legend>Visibility</legend>
-          <label class="checkbox-label"><input id="show-directional" type="checkbox"> Show directional subtypes</label>
-          <label class="checkbox-label"><input id="show-redundant" type="checkbox"> Show redundant descriptions</label>
-          <p id="suppression-summary" class="metadata">No suppressed catalog targets.</p>
-        </fieldset>
 
         <div class="filter-heading">
           <h3>Status</h3>
@@ -84,6 +79,16 @@
           <label class="filter-option"><input type="checkbox" name="status" value="overridden" checked> <span>Overridden</span></label>
           <label class="filter-option"><input type="checkbox" name="status" value="needs-attention" checked> <span>Needs attention</span></label>
         </div>
+
+        <fieldset class="compact-fieldset">
+          <legend>Visibility</legend>
+          <label class="checkbox-label"><input id="show-directional" type="checkbox"> Show directional subtypes</label>
+          <label class="checkbox-label"><input id="show-redundant" type="checkbox"> Show redundant descriptions</label>
+          <p id="suppression-summary" class="metadata">No suppressed catalog targets.</p>
+        </fieldset>
+
+        <label for="search">Search names, descriptions, groups, and references</label>
+        <input id="search" type="search" placeholder="Try Nanotrasen, language, or radio">
 
         <label for="sort-select">Sort results</label>
         <select id="sort-select">
@@ -110,6 +115,7 @@
               <p id="empty-editor">Select a catalog target to begin.</p>
               <p id="entry-mode" class="metadata"></p>
               <div id="entry-open-actions" class="button-row"></div>
+              <button id="add-reference-button" class="secondary-button text-button" type="button" hidden>Add to references</button>
             </div>
             <span id="entry-status" class="status-pill" hidden></span>
           </div>
@@ -258,7 +264,11 @@
        on it (see webapp/web/open-in-menu.js) -- also used by Content Graph. Core must load before dom. -->
   <script src="/floating-ui-core.umd.min.js"></script>
   <script src="/floating-ui-dom.umd.min.js"></script>
+  <script src="/info-tooltip.js"></script>
+  <script src="/parsec.js"></script>
+  <script src="/store-status-widget.js"></script>
   <script src="/open-in-menu.js"></script>
+  <script src="/references-panel.js"></script>
   <script src="/lore-editor.js"></script>
 </body>
 </html>

@@ -9,12 +9,14 @@ import shutil
 import tempfile
 
 from .app.manifest import ExportManifest, sha256_bytes
+from .catalog import read_current_targets
 from .generate import generate_dm
 from .source import load_corpus
 from .validation import validate_corpus
 from .workspace import WorkspaceLayout
 from webapp.game_repository import validate_game_repository
 from webapp.git_adapter import repository_revision, repository_status
+from webapp.json_storage import canonical_json_bytes
 
 
 ARTIFACT_RELATIVE_PATH = Path("modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm")
@@ -72,12 +74,8 @@ def _validation_error(tool_root: Path, game_root: Path) -> str | None:
 	return f"Lore export validation failed:\n{formatted_issues}"
 
 
-def _catalog_snapshot(tool_root: Path) -> tuple[bytes, Path]:
-	layout = WorkspaceLayout.from_root(tool_root)
-	catalog_path = _resolve_child(tool_root, layout.targets_path)
-	if not catalog_path.is_file():
-		raise ValueError(f"Catalog snapshot is missing: {layout.targets_path.as_posix()}")
-	return catalog_path.read_bytes(), catalog_path
+def _catalog_snapshot(tool_root: Path) -> bytes:
+	return canonical_json_bytes(read_current_targets(tool_root))
 
 
 def _new_stage_directory(stage_root: Path, generated_hash: str) -> Path:
@@ -106,7 +104,7 @@ def prepare_export(tool_root: Path, game_repo_root: Path, stage_root: Path) -> P
 		raise ValueError(validation_error)
 
 	corpus = load_corpus(resolved_tool_root)
-	catalog_bytes, _ = _catalog_snapshot(resolved_tool_root)
+	catalog_bytes = _catalog_snapshot(resolved_tool_root)
 	catalog_sha256 = sha256_bytes(catalog_bytes)
 	tool_status = repository_status(resolved_tool_root)
 	tool_revision = repository_revision(resolved_tool_root)

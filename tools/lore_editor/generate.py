@@ -13,7 +13,7 @@ from .workspace import WorkspaceLayout
 GENERATED_DM_PATH = Path("modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm")
 GENERATED_HEADER = (
 	"/// THIS FILE IS GENERATED. DO NOT EDIT BY HAND.\n"
-	"/// Source: config/aphelion/lore_overhaul\n"
+	"/// Source: the Aphelion Content Tools data store\n"
 )
 ENTRY_ID_SEGMENT_PATTERN = re.compile(r"[^a-z0-9]+")
 SPECIAL_DESC_REQUIREMENT_CONSTANTS = {

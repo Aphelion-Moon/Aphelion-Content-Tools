@@ -5,93 +5,143 @@ import time
 import unittest
 from pathlib import Path
 
+from tools.lore_editor.tests.store_helpers import seed_targets
 from webapp import tooling
-from webapp.tooling import ToolDefinition, build_tool_command, get_tool_run, list_tools, start_tool
+from webapp.tool_registry import load_tool_registry
 
 
-GENERATE_DEFINITION = ToolDefinition(
-	id="generate",
-	label="Generate DM",
-	description="Regenerate the checked-in lore override DM artifact.",
-	tool_root="tools/lore_editor",
-	commands=(("generate",),),
-)
-VALIDATE_DEFINITION = ToolDefinition(
-	id="validate",
-	label="Validate content",
-	description="Validate lore JSON and check the generated DM artifact.",
-	tool_root="tools/lore_editor",
-	commands=(("validate", "--check-generated"),),
-	game_repo_commands=frozenset({"validate"}),
-)
-TEST_DEFINITIONS = (GENERATE_DEFINITION, VALIDATE_DEFINITION)
+def _synthetic_targets(count: int) -> list[dict[str, object]]:
+	return [
+		{
+			"type_path": f"/obj/item/synthetic_{i}",
+			"label": f"Synthetic item {i}",
+			"editable_root": "/obj/item",
+			"parent_type": "/obj/item",
+			"field_profile": "atom_like",
+			"base_values": {"name": f"synthetic item {i}", "description": f"A synthetic test item {i}."},
+			"icon_metadata": {},
+		}
+		for i in range(count)
+	]
 
 
-class ToolingTests(unittest.TestCase):
+class ToolingClientTests(unittest.TestCase):
+	"""Exercises `webapp/tooling.py` as the IPC client to the real, persistent `webapp/store_worker.py`
+	process -- these spawn a real worker subprocess (unlike `test_store_worker.py`, which fakes the CLI
+	entry point to test the worker's own bookkeeping quickly), so they're the ones that actually prove
+	the end-to-end architecture (a job really runs in a separate warm process, a stop really reaches it,
+	a crash is really recovered from) works, not just each half in isolation."""
+
 	def setUp(self) -> None:
 		self.temp_dir = tempfile.TemporaryDirectory()
 		self.repo_root = Path(self.temp_dir.name)
-		(self.repo_root / "config/aphelion/lore_overhaul/entities").mkdir(parents=True)
-		(self.repo_root / "config/aphelion/lore_overhaul/entities/.gitkeep").write_text("", encoding="utf-8")
-		(self.repo_root / "config/aphelion/lore_overhaul/targets.json").write_text("[]\n", encoding="utf-8")
-		cli_path = self.repo_root / "tools/lore_editor/cli.py"
-		cli_path.parent.mkdir(parents=True)
-		cli_path.write_text("print('Generated lore DM artifact.')\n", encoding="utf-8")
+		self.definitions = load_tool_registry()
+		seed_targets(self.repo_root, [
+			{
+				"type_path": "/obj/item/radio",
+				"label": "Handheld Radio",
+				"editable_root": "/obj/item/radio",
+				"parent_type": "/obj/item",
+				"field_profile": "atom_like",
+				"base_values": {"name": "radio", "description": "A radio."},
+				"icon_metadata": {},
+			}
+		])
 
 	def tearDown(self) -> None:
+		tooling.shut_down_worker(self.repo_root)
 		self.temp_dir.cleanup()
 
-	def test_allowlist_exposes_named_tools_and_fixed_commands(self) -> None:
-		tools = list_tools(TEST_DEFINITIONS)
-		self.assertEqual({tool["id"] for tool in tools}, {"generate", "validate"})
-		command = build_tool_command(self.repo_root, VALIDATE_DEFINITION)
-		self.assertEqual(command[0], __import__("sys").executable)
-		self.assertIn("tools/lore_editor/cli.py", command[1].replace("\\", "/"))
-		self.assertIn("--check-generated", command)
-		with self.assertRaises(ValueError):
-			build_tool_command(self.repo_root, VALIDATE_DEFINITION, command_index=5)
-
-	def test_generate_tool_runs_to_completion_and_captures_output(self) -> None:
-		run = start_tool(self.repo_root, TEST_DEFINITIONS, "generate")
-		self.assertIn(run["status"], {"queued", "running"})
-		deadline = time.monotonic() + 10
+	def _wait_for_completion(self, run_id: str, timeout: float = 30.0) -> dict:
+		deadline = time.monotonic() + timeout
 		while time.monotonic() < deadline:
-			current = get_tool_run(run["run_id"])
-			if current["status"] not in {"queued", "running"}:
-				break
+			current = tooling.get_tool_run(run_id)
+			if current["status"] not in ("queued", "running"):
+				return current
 			time.sleep(0.05)
-		else:
-			self.fail("Tool run did not finish before the test deadline.")
+		self.fail("Tool run did not finish before the test deadline.")
+
+	def test_start_tool_rejects_an_unknown_tool_id_without_starting_a_worker(self) -> None:
+		with self.assertRaises(ValueError):
+			tooling.start_tool(self.repo_root, self.definitions, "not-a-real-tool")
+		self.assertNotIn(str(self.repo_root.resolve()), tooling._workers)
+
+	def test_generate_runs_to_completion_through_the_real_worker_process(self) -> None:
+		run = tooling.start_tool(self.repo_root, self.definitions, "generate")
+		self.assertIn(run["status"], {"queued", "running"})
+		current = self._wait_for_completion(run["run_id"])
 		self.assertEqual(current["status"], "succeeded")
 		self.assertIn("Generated lore DM artifact", current["output"])
-		self.assertIsInstance(current["log_path"], str)
-		log_path = self.repo_root / current["log_path"]
-		self.assertTrue(log_path.is_file())
-		self.assertIn("Generated lore DM artifact", log_path.read_text(encoding="utf-8"))
+		self.assertTrue((self.repo_root / "tools/lore_editor/stages/current/generated_lore_overrides.dm").exists())
 
-	def test_unknown_tool_and_unknown_run_are_rejected(self) -> None:
+	def test_get_tool_run_and_stop_tool_reject_an_unknown_run_id(self) -> None:
+		tooling.start_tool(self.repo_root, self.definitions, "generate")  # ensures a worker exists to ask
 		with self.assertRaises(ValueError):
-			start_tool(self.repo_root, TEST_DEFINITIONS, "arbitrary-command")
+			tooling.get_tool_run("not-a-real-run")
 		with self.assertRaises(ValueError):
-			get_tool_run("missing-run")
+			tooling.stop_tool("not-a-real-run")
 
-	def test_eviction_drops_oldest_finished_runs_but_keeps_active_ones(self) -> None:
-		original_runs = tooling._RUNS
+	def test_stop_tool_interrupts_a_running_job_instead_of_letting_it_succeed(self) -> None:
+		seed_targets(self.repo_root, _synthetic_targets(300))
+		run = tooling.start_tool(self.repo_root, self.definitions, "rebuild-search-embeddings")
+		time.sleep(1.0)
+		stopped = tooling.stop_tool(run["run_id"])
+		self.assertIn(stopped["status"], {"running", "stopped"})
+		current = self._wait_for_completion(run["run_id"])
+		self.assertEqual(current["status"], "stopped")
+
+	def test_worker_respawns_transparently_after_a_crash(self) -> None:
+		run = tooling.start_tool(self.repo_root, self.definitions, "generate")
+		self._wait_for_completion(run["run_id"])
+
+		handle = tooling._get_worker(self.repo_root)
+		pid_before = handle.process.pid
+		handle.process.kill()
+		handle.process.wait(timeout=5)
+
+		run2 = tooling.start_tool(self.repo_root, self.definitions, "generate")
+		current2 = self._wait_for_completion(run2["run_id"])
+		self.assertEqual(current2["status"], "succeeded")
+		self.assertNotEqual(tooling._get_worker(self.repo_root).process.pid, pid_before)
+
+	def test_jobs_against_the_same_repo_root_run_one_at_a_time(self) -> None:
+		seed_targets(self.repo_root, _synthetic_targets(300))
+		run_a = tooling.start_tool(self.repo_root, self.definitions, "rebuild-search-embeddings")
+		run_b = tooling.start_tool(self.repo_root, self.definitions, "rebuild-search-embeddings")
+		time.sleep(0.3)
+		self.assertEqual(tooling.get_tool_run(run_b["run_id"])["status"], "queued")
+		self.assertEqual(self._wait_for_completion(run_a["run_id"])["status"], "succeeded")
+		self.assertEqual(self._wait_for_completion(run_b["run_id"])["status"], "succeeded")
+
+	def test_shut_down_worker_is_a_quiet_no_op_when_no_worker_was_ever_started(self) -> None:
+		other_temp_dir = tempfile.TemporaryDirectory()
 		try:
-			tooling._RUNS = {}
-			for index in range(tooling.MAX_RETAINED_RUNS + 5):
-				tooling._RUNS[f"finished-{index}"] = {"status": "succeeded"}
-			tooling._RUNS["still-running"] = {"status": "running"}
-
-			with tooling._RUNS_LOCK:
-				tooling._evict_old_runs_locked()
-
-			self.assertLessEqual(len(tooling._RUNS), tooling.MAX_RETAINED_RUNS + 1)
-			self.assertIn("still-running", tooling._RUNS)
-			self.assertNotIn("finished-0", tooling._RUNS)
-			self.assertIn(f"finished-{tooling.MAX_RETAINED_RUNS + 4}", tooling._RUNS)
+			tooling.shut_down_worker(Path(other_temp_dir.name))
 		finally:
-			tooling._RUNS = original_runs
+			other_temp_dir.cleanup()
+
+	def test_list_active_runs_never_spawns_a_worker_when_none_exists(self) -> None:
+		other_temp_dir = tempfile.TemporaryDirectory()
+		try:
+			other_repo_root = Path(other_temp_dir.name)
+			self.assertEqual(tooling.list_active_runs(other_repo_root), [])
+			self.assertNotIn(str(other_repo_root.resolve()), tooling._workers)
+		finally:
+			other_temp_dir.cleanup()
+
+	def test_list_active_runs_reports_a_real_job_in_progress_then_clears_after_it_finishes(self) -> None:
+		seed_targets(self.repo_root, _synthetic_targets(300))
+		run = tooling.start_tool(self.repo_root, self.definitions, "rebuild-search-embeddings")
+		time.sleep(0.5)
+
+		active = tooling.list_active_runs(self.repo_root)
+		self.assertTrue(any(entry["run_id"] == run["run_id"] for entry in active))
+		matching = next(entry for entry in active if entry["run_id"] == run["run_id"])
+		self.assertEqual(matching["tool_id"], "rebuild-search-embeddings")
+		self.assertIn("queued_at", matching)
+
+		self._wait_for_completion(run["run_id"])
+		self.assertEqual(tooling.list_active_runs(self.repo_root), [])
 
 
 if __name__ == "__main__":

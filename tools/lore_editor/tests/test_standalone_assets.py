@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -9,6 +8,7 @@ from PIL import Image
 
 from tools.dmi import Dmi
 from tools.lore_editor.source import load_corpus
+from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
 from tools.lore_editor.validation import validate_corpus
 
 
@@ -19,9 +19,7 @@ class StandaloneAssetValidationTests(unittest.TestCase):
 			root = Path(temporary_directory)
 			tool_root = root / "tool"
 			game_root = root / "game"
-			(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/content/overrides").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/catalog/targets.json").write_text(json.dumps([
+			seed_targets(tool_root, [
 				{
 					"type_path": "/obj/item/radio",
 					"label": "radio",
@@ -31,12 +29,12 @@ class StandaloneAssetValidationTests(unittest.TestCase):
 					"base_values": {"name": "radio", "description": "radio"},
 					"icon_metadata": {},
 				},
-			]), encoding="utf-8")
-			(tool_root / "tools/lore_editor/content/overrides/lore.radio.json").write_text(json.dumps({
+			])
+			seed_override(tool_root, "lore", {
 				"id": "lore.radio",
 				"type_path": "/obj/item/radio",
 				"icons": {"icon": {"file": "icons/radio.dmi", "state": "radio"}},
-			}), encoding="utf-8")
+			})
 			dmi = Dmi(32, 32)
 			state = dmi.state("radio")
 			state.frame(Image.new("RGBA", (32, 32), (255, 0, 0, 255)))

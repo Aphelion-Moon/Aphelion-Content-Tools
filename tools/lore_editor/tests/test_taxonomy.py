@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,11 +16,7 @@ from tools.lore_editor.taxonomy import (
 	save_group_assignments,
 	save_review,
 )
-
-
-def write_json(path: Path, payload: object) -> None:
-	path.parent.mkdir(parents=True, exist_ok=True)
-	path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+from tools.lore_editor.tests.store_helpers import seed_assignment, seed_group, seed_review
 
 
 class TaxonomyTests(unittest.TestCase):
@@ -32,26 +27,16 @@ class TaxonomyTests(unittest.TestCase):
 	def tearDown(self) -> None:
 		self.temp_dir.cleanup()
 
-	def test_standalone_taxonomy_uses_one_record_per_file(self) -> None:
-		content_root = self.repo_root / "tools/lore_editor/content"
-		(content_root / "groups").mkdir(parents=True)
-		(content_root / "reviews").mkdir()
-		(content_root / "assignments").mkdir()
-		write_json(content_root / "groups/items.json", {
+	def test_groups_reviews_and_assignments_round_trip_through_the_store(self) -> None:
+		seed_group(self.repo_root, {
 			"id": "items",
 			"label": "Items",
 			"color": "#fff",
 			"keywords": ["item"],
 			"type_path_prefixes": ["/obj/item"],
 		})
-		write_json(content_root / "assignments/assignment.obj-item-radio.json", {
-			"id": "assignment.obj-item-radio",
-			"type_path": "/obj/item/radio",
-			"group_ids": ["items"],
-		})
-		write_json(content_root / "reviews/review.obj-item-radio.json", {
-			"id": "review.obj-item-radio",
-			"type_path": "/obj/item/radio",
+		seed_assignment(self.repo_root, "/obj/item/radio", ["items"])
+		seed_review(self.repo_root, "/obj/item/radio", {
 			"status": "reviewed",
 			"reviewed_by": "Writer",
 			"reviewed_at": "2026-08-20T12:00:00+00:00",
@@ -68,44 +53,33 @@ class TaxonomyTests(unittest.TestCase):
 		save_group_assignments(self.repo_root, "/obj/item/radio", ())
 		save_review(self.repo_root, "/obj/item/radio", None)
 
-		self.assertFalse((content_root / "groups.json").exists())
-		self.assertEqual("Updated Items", json.loads((content_root / "groups/items.json").read_text(encoding="utf-8"))["label"])
-		self.assertFalse((content_root / "assignments/assignment.obj-item-radio.json").exists())
-		self.assertFalse((content_root / "reviews/review.obj-item-radio.json").exists())
+		self.assertEqual(load_groups(self.repo_root).groups[0].label, "Updated Items")
+		self.assertEqual(load_groups(self.repo_root).assignments.get("/obj/item/radio", ()), ())
+		self.assertEqual(load_reviews(self.repo_root), {})
 
 	def test_default_groups_are_available_for_a_new_repository(self) -> None:
-		write_json(self.repo_root / "config/aphelion/lore_overhaul/groups.json", {
-			"groups": [
-				{
-					"id": "languages",
-					"label": "Languages",
-					"color": "#60a5fa",
-					"type_path_prefixes": ["/datum/language"],
-				},
-			],
-			"assignments": {},
+		seed_group(self.repo_root, {
+			"id": "languages",
+			"label": "Languages",
+			"color": "#60a5fa",
+			"type_path_prefixes": ["/datum/language"],
 		})
 		groups = load_groups(self.repo_root)
 		self.assertEqual([group.id for group in groups.groups], ["languages"])
 		self.assertEqual(groups.groups[0].color, "#60a5fa")
 
 	def test_classification_uses_type_prefixes_and_keywords(self) -> None:
-		write_json(self.repo_root / "config/aphelion/lore_overhaul/groups.json", {
-			"groups": [
-				{
-					"id": "languages",
-					"label": "Languages",
-					"color": "#60a5fa",
-					"type_path_prefixes": ["/datum/language"],
-				},
-				{
-					"id": "nanotrasen",
-					"label": "Nanotrasen",
-					"color": "#34d399",
-					"keywords": ["nanotrasen"],
-				},
-			],
-			"assignments": {},
+		seed_group(self.repo_root, {
+			"id": "languages",
+			"label": "Languages",
+			"color": "#60a5fa",
+			"type_path_prefixes": ["/datum/language"],
+		})
+		seed_group(self.repo_root, {
+			"id": "nanotrasen",
+			"label": "Nanotrasen",
+			"color": "#34d399",
+			"keywords": ["nanotrasen"],
 		})
 		groups = load_groups(self.repo_root)
 		target = make_catalog_target({
@@ -116,15 +90,12 @@ class TaxonomyTests(unittest.TestCase):
 		self.assertEqual(classify_target(target, groups), ("languages", "nanotrasen"))
 
 	def test_keyword_matching_uses_word_boundaries_and_excludes_icon_metadata(self) -> None:
-		write_json(self.repo_root / "config/aphelion/lore_overhaul/groups.json", {
-			"groups": [{
-				"id": "nanotrasen",
-				"label": "Nanotrasen",
-				"color": "#34d399",
-				"keywords": ["nt", "nanotrasen"],
-				"type_path_prefixes": [],
-			}],
-			"assignments": {},
+		seed_group(self.repo_root, {
+			"id": "nanotrasen",
+			"label": "Nanotrasen",
+			"color": "#34d399",
+			"keywords": ["nt", "nanotrasen"],
+			"type_path_prefixes": [],
 		})
 		groups = load_groups(self.repo_root)
 		unrelated_target = make_catalog_target({
@@ -149,15 +120,12 @@ class TaxonomyTests(unittest.TestCase):
 		self.assertEqual(classify_target(company_target, groups), ("nanotrasen",))
 
 	def test_classification_explains_prefix_and_keyword_matches(self) -> None:
-		write_json(self.repo_root / "config/aphelion/lore_overhaul/groups.json", {
-			"groups": [{
-				"id": "nanotrasen",
-				"label": "Nanotrasen",
-				"color": "#34d399",
-				"keywords": ["nanotrasen"],
-				"type_path_prefixes": ["/obj/item"],
-			}],
-			"assignments": {},
+		seed_group(self.repo_root, {
+			"id": "nanotrasen",
+			"label": "Nanotrasen",
+			"color": "#34d399",
+			"keywords": ["nanotrasen"],
+			"type_path_prefixes": ["/obj/item"],
 		})
 		groups = load_groups(self.repo_root)
 		target = make_catalog_target({
@@ -180,15 +148,12 @@ class TaxonomyTests(unittest.TestCase):
 		})
 
 	def test_keyword_scope_excludes_type_path_by_default(self) -> None:
-		write_json(self.repo_root / "config/aphelion/lore_overhaul/groups.json", {
-			"groups": [{
-				"id": "nova-sector",
-				"label": "Nova Sector",
-				"color": "#a853d0",
-				"keywords": ["nova"],
-				"type_path_prefixes": [],
-			}],
-			"assignments": {},
+		seed_group(self.repo_root, {
+			"id": "nova-sector",
+			"label": "Nova Sector",
+			"color": "#a853d0",
+			"keywords": ["nova"],
+			"type_path_prefixes": [],
 		})
 		groups = load_groups(self.repo_root)
 		unrelated_target = make_catalog_target({
@@ -200,16 +165,13 @@ class TaxonomyTests(unittest.TestCase):
 		self.assertEqual(classify_target(unrelated_target, groups), ())
 
 	def test_keyword_scope_can_be_widened_to_include_type_path(self) -> None:
-		write_json(self.repo_root / "config/aphelion/lore_overhaul/groups.json", {
-			"groups": [{
-				"id": "nova-sector",
-				"label": "Nova Sector",
-				"color": "#a853d0",
-				"keywords": ["nova"],
-				"type_path_prefixes": [],
-				"keyword_scope": ["type_path"],
-			}],
-			"assignments": {},
+		seed_group(self.repo_root, {
+			"id": "nova-sector",
+			"label": "Nova Sector",
+			"color": "#a853d0",
+			"keywords": ["nova"],
+			"type_path_prefixes": [],
+			"keyword_scope": ["type_path"],
 		})
 		groups = load_groups(self.repo_root)
 		target = make_catalog_target({

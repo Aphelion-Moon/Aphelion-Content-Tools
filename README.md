@@ -17,10 +17,10 @@ color to set it apart from the tool pages.
 
 If Python 3.11+ with Pillow is already installed, the launcher uses it. Otherwise it asks before downloading a private per-user Python runtime. Declining leaves installation instructions and does not change the machine. GitHub Desktop remains responsible for sign-in, pushing, pull requests, and complicated merge conflicts.
 
-## Home
+## File Management
 
-The landing page (`/`). Use the repository panel to create a local branch, commit selected repository
-changes, and open the relevant checkout in GitHub Desktop. Use **Cache and Storage Management** to run
+Served at `/file-management`. Use the repository panel to create a local branch, commit selected
+repository changes, and open the relevant checkout in GitHub Desktop. Use **Database and Git** to run
 catalog refresh, validation, generation, and content-graph scan jobs without leaving this page — it
 lists every tool's registered job, not just one tool's.
 

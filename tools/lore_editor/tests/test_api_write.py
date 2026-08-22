@@ -1,49 +1,46 @@
 from __future__ import annotations
 
-import json
 import tempfile
 import unittest
 from unittest.mock import patch
 from pathlib import Path
 
+from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
+from webapp.store import db
+from webapp.store.schema import decode, table
 
-def write_json(path: Path, payload: object) -> None:
-	path.parent.mkdir(parents=True, exist_ok=True)
-	path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+ITEMS_SOURCE_FILE = "tools/lore_editor/content/overrides/items.json"
+GENERATED_PATH = "tools/lore_editor/stages/current/generated_lore_overrides.dm"
 
 
 class ApiWriteTests(unittest.TestCase):
-	def make_repo(self) -> tuple[Path, Path]:
+	def make_repo(self) -> Path:
 		temp_dir = tempfile.TemporaryDirectory()
 		self.addCleanup(temp_dir.cleanup)
 		repo_root = Path(temp_dir.name)
-		write_json(
-			repo_root / "config/aphelion/lore_overhaul/targets.json",
-			[{
-				"type_path": "/obj/item/radio",
-				"label": "Radio",
-				"field_profile": "atom_like",
-			}],
-		)
-		source_path = repo_root / "config/aphelion/lore_overhaul/entities/items.json"
-		write_json(
-			source_path,
-			[{
-				"id": "items.radio",
-				"type_path": "/obj/item/radio",
-				"name": "Old radio",
-			}],
-		)
-		return repo_root, source_path
+		seed_targets(repo_root, [{
+			"type_path": "/obj/item/radio",
+			"label": "Radio",
+			"field_profile": "atom_like",
+		}])
+		seed_override(repo_root, "items", {
+			"id": "items.radio",
+			"type_path": "/obj/item/radio",
+			"name": "Old radio",
+		})
+		return repo_root
+
+	def override_row(self, repo_root: Path, entry_id: str):
+		return db.get_row(table(repo_root, "overrides"), f"id = '{entry_id}'")
 
 	def test_save_entry_validates_writes_atomically_and_generates_dm(self) -> None:
 		from tools.lore_editor.api import save_entry
 
-		repo_root, source_path = self.make_repo()
+		repo_root = self.make_repo()
 		result = save_entry(
 			repo_root,
 			entry_id="items.radio",
-			source_file="config/aphelion/lore_overhaul/entities/items.json",
+			source_file=ITEMS_SOURCE_FILE,
 			entry={
 				"id": "items.radio",
 				"type_path": "/obj/item/radio",
@@ -53,17 +50,17 @@ class ApiWriteTests(unittest.TestCase):
 		)
 
 		self.assertEqual(result["id"], "items.radio")
-		self.assertEqual(json.loads(source_path.read_text(encoding="utf-8"))[0]["name"], "New radio")
-		self.assertIn('name = "New radio"', (repo_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm").read_text(encoding="utf-8"))
+		self.assertEqual(decode(self.override_row(repo_root, "items.radio"))["name"], "New radio")
+		self.assertIn('name = "New radio"', (repo_root / GENERATED_PATH).read_text(encoding="utf-8"))
 
 	def test_save_entry_persists_special_description_overrides(self) -> None:
 		from tools.lore_editor.api import save_entry
 
-		repo_root, source_path = self.make_repo()
+		repo_root = self.make_repo()
 		result = save_entry(
 			repo_root,
 			entry_id="items.radio",
-			source_file="config/aphelion/lore_overhaul/entities/items.json",
+			source_file=ITEMS_SOURCE_FILE,
 			entry={
 				"id": "items.radio",
 				"type_path": "/obj/item/radio",
@@ -74,19 +71,19 @@ class ApiWriteTests(unittest.TestCase):
 
 		self.assertEqual(result["special_desc_requirement"], "syndicate")
 		self.assertEqual(result["special_desc"], "A covert communications device.")
-		serialized = json.loads(source_path.read_text(encoding="utf-8"))[0]
-		self.assertEqual(serialized["special_desc_requirement"], "syndicate")
-		self.assertEqual(serialized["special_desc"], "A covert communications device.")
-		generated = (repo_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm").read_text(encoding="utf-8")
+		stored = decode(self.override_row(repo_root, "items.radio"))
+		self.assertEqual(stored["special_desc_requirement"], "syndicate")
+		self.assertEqual(stored["special_desc"], "A covert communications device.")
+		generated = (repo_root / GENERATED_PATH).read_text(encoding="utf-8")
 		self.assertIn("special_desc_requirement = EXAMINE_CHECK_SYNDICATE", generated)
 		self.assertIn('special_desc = "A covert communications device."', generated)
 
 	def test_save_entry_rejects_invalid_candidate_without_modifying_source_or_generated(self) -> None:
 		from tools.lore_editor.api import save_entry
 
-		repo_root, source_path = self.make_repo()
-		original_source = source_path.read_bytes()
-		generated_path = repo_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
+		repo_root = self.make_repo()
+		original_row = self.override_row(repo_root, "items.radio")
+		generated_path = repo_root / GENERATED_PATH
 		generated_path.parent.mkdir(parents=True, exist_ok=True)
 		generated_path.write_bytes(b"original generated\n")
 
@@ -94,7 +91,7 @@ class ApiWriteTests(unittest.TestCase):
 			save_entry(
 				repo_root,
 				entry_id="items.radio",
-				source_file="config/aphelion/lore_overhaul/entities/items.json",
+				source_file=ITEMS_SOURCE_FILE,
 				entry={
 					"id": "items.radio",
 					"type_path": "/obj/item/not_in_catalog",
@@ -102,37 +99,34 @@ class ApiWriteTests(unittest.TestCase):
 				},
 			)
 
-		self.assertEqual(source_path.read_bytes(), original_source)
+		self.assertEqual(self.override_row(repo_root, "items.radio"), original_row)
 		self.assertEqual(generated_path.read_bytes(), b"original generated\n")
 
 	def test_save_entry_rejects_source_path_traversal(self) -> None:
 		from tools.lore_editor.api import save_entry
 
-		repo_root, _source_path = self.make_repo()
+		repo_root = self.make_repo()
 		with self.assertRaises(ValueError):
 			save_entry(
 				repo_root,
 				entry_id="items.radio",
-				source_file="config/aphelion/lore_overhaul/entities/../targets.json",
+				source_file="tools/lore_editor/content/overrides/../targets.json",
 				entry={"id": "items.radio", "type_path": "/obj/item/radio"},
 			)
 
-	def test_save_entry_appends_new_entry_to_a_domain_array(self) -> None:
+	def test_save_entry_creates_a_new_entry_in_an_existing_group(self) -> None:
 		from tools.lore_editor.api import save_entry
 
-		repo_root, source_path = self.make_repo()
-		write_json(
-			repo_root / "config/aphelion/lore_overhaul/targets.json",
-			[
-				{"type_path": "/obj/item/radio", "label": "Radio", "field_profile": "atom_like"},
-				{"type_path": "/obj/item/megaphone", "label": "Megaphone", "field_profile": "atom_like"},
-			],
-		)
+		repo_root = self.make_repo()
+		seed_targets(repo_root, [
+			{"type_path": "/obj/item/radio", "label": "Radio", "field_profile": "atom_like"},
+			{"type_path": "/obj/item/megaphone", "label": "Megaphone", "field_profile": "atom_like"},
+		])
 
 		save_entry(
 			repo_root,
 			entry_id="items.megaphone",
-			source_file="config/aphelion/lore_overhaul/entities/items.json",
+			source_file=ITEMS_SOURCE_FILE,
 			entry={
 				"id": "items.megaphone",
 				"type_path": "/obj/item/megaphone",
@@ -140,37 +134,33 @@ class ApiWriteTests(unittest.TestCase):
 			},
 		)
 
-		self.assertEqual(len(json.loads(source_path.read_text(encoding="utf-8"))), 2)
+		overrides = db.all_rows(table(repo_root, "overrides"), where="group = 'items'")
+		self.assertEqual(len(overrides), 2)
 
 	def test_save_entry_rejects_mismatched_source_file(self) -> None:
 		from tools.lore_editor.api import save_entry
 
-		repo_root, _source_path = self.make_repo()
-		other_path = repo_root / "config/aphelion/lore_overhaul/entities/jobs.json"
-		write_json(other_path, [])
+		repo_root = self.make_repo()
 		with self.assertRaisesRegex(ValueError, "different source file"):
 			save_entry(
 				repo_root,
 				entry_id="items.radio",
-				source_file="config/aphelion/lore_overhaul/entities/jobs.json",
+				source_file="tools/lore_editor/content/overrides/jobs.json",
 				entry={"id": "items.radio", "type_path": "/obj/item/radio"},
 			)
-		self.assertEqual(json.loads(other_path.read_text(encoding="utf-8")), [])
+		self.assertEqual(decode(self.override_row(repo_root, "items.radio"))["name"], "Old radio")
 
-	def test_create_entry_can_create_a_new_override_group_file(self) -> None:
+	def test_create_entry_can_create_a_new_override_group(self) -> None:
 		from tools.lore_editor.api import create_entry, list_entity_files
 
-		repo_root, _source_path = self.make_repo()
-		write_json(
-			repo_root / "config/aphelion/lore_overhaul/targets.json",
-			[
-				{"type_path": "/obj/item/radio", "label": "Radio", "field_profile": "atom_like"},
-				{"type_path": "/obj/item/megaphone", "label": "Megaphone", "field_profile": "atom_like"},
-			],
-		)
+		repo_root = self.make_repo()
+		seed_targets(repo_root, [
+			{"type_path": "/obj/item/radio", "label": "Radio", "field_profile": "atom_like"},
+			{"type_path": "/obj/item/megaphone", "label": "Megaphone", "field_profile": "atom_like"},
+		])
 		result = create_entry(
 			repo_root,
-			source_file="config/aphelion/lore_overhaul/entities/languages.json",
+			source_file="tools/lore_editor/content/overrides/languages.json",
 			entry={
 				"id": "languages.megaphone",
 				"type_path": "/obj/item/megaphone",
@@ -179,140 +169,110 @@ class ApiWriteTests(unittest.TestCase):
 		)
 
 		self.assertEqual(result["id"], "languages.megaphone")
-		self.assertEqual(
-			json.loads((repo_root / "config/aphelion/lore_overhaul/entities/languages.json").read_text(encoding="utf-8"))[0]["name"],
-			"Common megaphone",
-		)
-		self.assertIn("config/aphelion/lore_overhaul/entities/languages.json", list_entity_files(repo_root))
+		self.assertEqual(decode(self.override_row(repo_root, "languages.megaphone"))["name"], "Common megaphone")
+		self.assertIn("tools/lore_editor/content/overrides/languages.json", list_entity_files(repo_root))
+
+	def test_create_entry_rejects_an_id_that_already_exists(self) -> None:
+		from tools.lore_editor.api import create_entry
+
+		repo_root = self.make_repo()
+		with self.assertRaises(ValueError):
+			create_entry(
+				repo_root,
+				source_file=ITEMS_SOURCE_FILE,
+				entry={"id": "items.radio", "type_path": "/obj/item/radio", "name": "Duplicate"},
+			)
 
 	def test_create_entry_rejects_paths_outside_entity_groups(self) -> None:
 		from tools.lore_editor.api import create_entry
 
-		repo_root, _source_path = self.make_repo()
+		repo_root = self.make_repo()
 		with self.assertRaises(ValueError):
 			create_entry(
 				repo_root,
-				source_file="config/aphelion/lore_overhaul/entities/../groups.json",
+				source_file="tools/lore_editor/content/overrides/../groups.json",
 				entry={"id": "bad", "type_path": "/obj/item/radio"},
 			)
 
 	def test_generation_failure_restores_source_and_generated_bytes(self) -> None:
 		from tools.lore_editor.api import save_entry
 
-		repo_root, source_path = self.make_repo()
-		generated_path = repo_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
+		repo_root = self.make_repo()
+		generated_path = repo_root / GENERATED_PATH
 		generated_path.parent.mkdir(parents=True, exist_ok=True)
 		generated_path.write_bytes(b"original generated\n")
-		original_source = source_path.read_bytes()
+		original_row = self.override_row(repo_root, "items.radio")
 
 		with patch("tools.lore_editor.api.write_generated_dm", side_effect=ValueError("generation failed")):
 			with self.assertRaisesRegex(ValueError, "generation failed"):
 				save_entry(
 					repo_root,
 					entry_id="items.radio",
-					source_file="config/aphelion/lore_overhaul/entities/items.json",
+					source_file=ITEMS_SOURCE_FILE,
 					entry={"id": "items.radio", "type_path": "/obj/item/radio", "name": "New radio"},
 				)
 
-		self.assertEqual(source_path.read_bytes(), original_source)
+		self.assertEqual(self.override_row(repo_root, "items.radio"), original_row)
 		self.assertEqual(generated_path.read_bytes(), b"original generated\n")
 
-	def test_delete_entry_removes_one_entry_from_a_shared_group_file(self) -> None:
+	def test_delete_entry_removes_one_entry_from_a_shared_group(self) -> None:
 		from tools.lore_editor.api import delete_entry
 
-		repo_root, source_path = self.make_repo()
-		write_json(
-			repo_root / "config/aphelion/lore_overhaul/targets.json",
-			[
-				{"type_path": "/obj/item/radio", "label": "Radio", "field_profile": "atom_like"},
-				{"type_path": "/obj/item/megaphone", "label": "Megaphone", "field_profile": "atom_like"},
-			],
-		)
-		write_json(
-			source_path,
-			[
-				{"id": "items.radio", "type_path": "/obj/item/radio", "name": "Old radio"},
-				{"id": "items.megaphone", "type_path": "/obj/item/megaphone", "name": "Old megaphone"},
-			],
-		)
+		repo_root = self.make_repo()
+		seed_targets(repo_root, [
+			{"type_path": "/obj/item/radio", "label": "Radio", "field_profile": "atom_like"},
+			{"type_path": "/obj/item/megaphone", "label": "Megaphone", "field_profile": "atom_like"},
+		])
+		seed_override(repo_root, "items", {"id": "items.megaphone", "type_path": "/obj/item/megaphone", "name": "Old megaphone"})
 
-		result = delete_entry(
-			repo_root,
-			entry_id="items.radio",
-			source_file="config/aphelion/lore_overhaul/entities/items.json",
-		)
+		result = delete_entry(repo_root, entry_id="items.radio", source_file=ITEMS_SOURCE_FILE)
 
 		self.assertEqual(result, {"deleted": True, "id": "items.radio"})
-		remaining = json.loads(source_path.read_text(encoding="utf-8"))
-		self.assertEqual([entry["id"] for entry in remaining], ["items.megaphone"])
-
-	def test_delete_entry_removes_the_file_when_the_last_entry_is_deleted(self) -> None:
-		from tools.lore_editor.api import delete_entry
-
-		repo_root, source_path = self.make_repo()
-
-		delete_entry(
-			repo_root,
-			entry_id="items.radio",
-			source_file="config/aphelion/lore_overhaul/entities/items.json",
-		)
-
-		self.assertFalse(source_path.exists())
+		self.assertIsNone(self.override_row(repo_root, "items.radio"))
+		self.assertIsNotNone(self.override_row(repo_root, "items.megaphone"))
 
 	def test_delete_entry_regenerates_the_dm_stage(self) -> None:
 		from tools.lore_editor.api import delete_entry
 
-		repo_root, _source_path = self.make_repo()
-		generated_path = repo_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
+		repo_root = self.make_repo()
+		generated_path = repo_root / GENERATED_PATH
 
-		delete_entry(
-			repo_root,
-			entry_id="items.radio",
-			source_file="config/aphelion/lore_overhaul/entities/items.json",
-		)
+		delete_entry(repo_root, entry_id="items.radio", source_file=ITEMS_SOURCE_FILE)
 
 		self.assertNotIn("Old radio", generated_path.read_text(encoding="utf-8"))
 
 	def test_delete_entry_rejects_an_unknown_entry_id(self) -> None:
 		from tools.lore_editor.api import delete_entry
 
-		repo_root, _source_path = self.make_repo()
+		repo_root = self.make_repo()
 		with self.assertRaisesRegex(ValueError, "was not found"):
-			delete_entry(
-				repo_root,
-				entry_id="items.nonexistent",
-				source_file="config/aphelion/lore_overhaul/entities/items.json",
-			)
+			delete_entry(repo_root, entry_id="items.nonexistent", source_file=ITEMS_SOURCE_FILE)
 
 	def test_delete_entry_rejects_source_path_traversal(self) -> None:
 		from tools.lore_editor.api import delete_entry
 
-		repo_root, _source_path = self.make_repo()
+		repo_root = self.make_repo()
 		with self.assertRaises(ValueError):
 			delete_entry(
 				repo_root,
 				entry_id="items.radio",
-				source_file="config/aphelion/lore_overhaul/entities/../targets.json",
+				source_file="tools/lore_editor/content/overrides/../targets.json",
 			)
 
-	def test_delete_entry_failure_restores_source_and_generated_bytes(self) -> None:
+	def test_delete_entry_failure_restores_the_row_and_generated_bytes(self) -> None:
 		from tools.lore_editor.api import delete_entry
 
-		repo_root, source_path = self.make_repo()
-		generated_path = repo_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
+		repo_root = self.make_repo()
+		generated_path = repo_root / GENERATED_PATH
 		generated_path.parent.mkdir(parents=True, exist_ok=True)
 		generated_path.write_bytes(b"original generated\n")
-		original_source = source_path.read_bytes()
+		original_row = self.override_row(repo_root, "items.radio")
 
 		with patch("tools.lore_editor.api.write_generated_dm", side_effect=ValueError("generation failed")):
 			with self.assertRaisesRegex(ValueError, "generation failed"):
-				delete_entry(
-					repo_root,
-					entry_id="items.radio",
-					source_file="config/aphelion/lore_overhaul/entities/items.json",
-				)
+				delete_entry(repo_root, entry_id="items.radio", source_file=ITEMS_SOURCE_FILE)
 
-		self.assertEqual(source_path.read_bytes(), original_source)
+		self.assertEqual(self.override_row(repo_root, "items.radio"), original_row)
 		self.assertEqual(generated_path.read_bytes(), b"original generated\n")
 
 

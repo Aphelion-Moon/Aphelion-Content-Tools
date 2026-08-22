@@ -18,6 +18,10 @@
           <p class="subtitle">Modules, master_files overrides, and NOVA/APHELION EDIT markers in the selected game checkout.</p>
         </header>
 
+        <div id="store-status-widget" class="store-status-widget"></div>
+
+        <div id="reference-panel" class="reference-panel"></div>
+
         <div class="sidebar-search">
           <label for="global-search" class="sidebar-search-label">Search</label>
           <input id="global-search" class="global-search-input" type="search" placeholder="Search catalog entries or pages…">
@@ -27,6 +31,7 @@
         <nav class="tool-nav" aria-label="Tools">
           <a class="tool-pill tool-pill-home" href="/">Home</a>
           <a class="tool-pill tool-pill-filemgmt" href="/file-management">File Management</a>
+          <a class="tool-pill tool-pill-parsec" href="/parsec">Parsec</a>
           <a class="tool-pill" href="/lore-editor">Lore Editor</a>
           <span class="tool-pill active" aria-current="page">Content Graph</span>
         </nav>
@@ -274,7 +279,11 @@
        on it (see webapp/web/open-in-menu.js) -- also used by Lore Editor. Core must load before dom. -->
   <script src="/floating-ui-core.umd.min.js"></script>
   <script src="/floating-ui-dom.umd.min.js"></script>
+  <script src="/info-tooltip.js"></script>
+  <script src="/parsec.js"></script>
+  <script src="/store-status-widget.js"></script>
   <script src="/open-in-menu.js"></script>
+  <script src="/references-panel.js"></script>
   <script src="/graph.js"></script>
 </body>
 </html>

@@ -16,6 +16,7 @@ from tools.dmi import Dmi
 from webapp.server import create_server
 from tools.lore_editor.app.manifest import ExportManifest, sha256_bytes
 from tools.lore_editor.export import PreparedExport
+from tools.lore_editor.tests.store_helpers import seed_targets
 
 
 def run_git(repo_root: Path, *arguments: str) -> None:
@@ -201,13 +202,12 @@ class StandaloneServerTests(unittest.TestCase):
 		with TemporaryDirectory() as temporary_directory:
 			root = Path(temporary_directory)
 			tool_root = root / "tool"
-			(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/catalog/targets.json").write_text(json.dumps([{
+			seed_targets(tool_root, [{
 				"type_path": "/obj/item/radio",
 				"label": "radio",
 				"field_profile": "atom_like",
 				"base_values": {"name": "radio", "description": "A standard radio."},
-			}]), encoding="utf-8")
+			}])
 
 			server = create_server(tool_root, 0)
 			thread = threading.Thread(target=server.serve_forever, daemon=True)

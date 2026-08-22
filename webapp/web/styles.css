@@ -15,6 +15,8 @@
   --home-accent-dark: #1f1400;
   --filemgmt-accent: #3cc9f2;
   --filemgmt-accent-dark: #00212b;
+  --parsec-accent: #ff8fb3;
+  --parsec-accent-dark: #3a0016;
 }
 
 body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #310047, #17072e 62%); }
@@ -45,6 +47,118 @@ body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, 
 .search-result-meta { color: var(--muted); font-size: .75rem; }
 .search-empty { margin: 0; padding: .4rem .3rem; color: var(--muted); font-size: .85rem; }
 
+.reference-panel-empty { margin: 0; font-size: .8rem; }
+.reference-panel-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
+.reference-panel-item { display: flex; align-items: center; gap: .3rem; }
+.reference-panel-select { flex: 1 1 auto; min-width: 0; text-align: left; background: rgba(23, 7, 46, .68); border: 1px solid var(--border); border-radius: .4rem; padding: .35rem .5rem; color: var(--muted); font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reference-panel-select:hover, .reference-panel-select:focus-visible { background: var(--violet); color: #fff; }
+.reference-panel-remove { flex: 0 0 auto; width: 1.6rem; height: 1.6rem; padding: 0; background: transparent; border: 1px solid var(--border); border-radius: .4rem; color: var(--muted); line-height: 1; }
+.reference-panel-remove:hover { background: var(--violet); color: #fff; }
+
+.store-status-widget { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.store-status-summary, .store-status-pill {
+  background: rgba(23, 7, 46, .68);
+  border: 1px solid var(--border);
+  border-radius: .4rem;
+  padding: .3rem .55rem;
+  color: var(--muted);
+  font-size: .78rem;
+  white-space: nowrap;
+}
+.store-status-summary:hover, .store-status-pill:hover,
+.store-status-summary:focus-visible, .store-status-pill:focus-visible { background: var(--violet); color: #fff; }
+.store-status-pill.is-running { border-color: var(--magenta); color: var(--plasma); }
+.store-status-pill.is-running:hover { background: var(--magenta); color: #fff; }
+
+.store-status-pet-box {
+  flex-basis: 100%;
+  position: relative;
+  height: 72px;
+  overflow: hidden;
+  background: rgba(13, 3, 27, .55);
+  border: 1px solid var(--border);
+  border-radius: .4rem;
+  cursor: pointer;
+  /* Repeated pat-clicks land fast enough to be read as a double/triple-click by the browser, which
+     otherwise tries to select this box's (and the gear icon's) text on every extra click. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.parsec-sprite {
+  position: absolute;
+  left: 0;
+  /* Clears .store-status-pet-box's 6.4px border-radius (.4rem) -- any lower and her feet clip into the
+     rounded corner cutout whenever she's flush against the left or right wall of her box. */
+  bottom: 8px;
+  width: 72px;
+  height: 51px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* Settings gear -- same partial-fade-until-hover treatment as Content Graph's .canvas-overlay
+   (tools/content_graph/web/graph.css), just applied to a small icon button instead of a whole panel. */
+.store-status-pet-settings {
+  position: absolute;
+  top: .35rem;
+  right: .35rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 3, 27, .7);
+  border: 1px solid var(--border);
+  border-radius: .3rem;
+  color: var(--muted);
+  font-size: .85rem;
+  line-height: 1;
+  opacity: .35;
+  transition: opacity .15s ease;
+}
+.store-status-pet-settings:hover, .store-status-pet-settings:focus-visible {
+  opacity: 1;
+  background: var(--violet);
+  color: #fff;
+}
+
+/* Parsec's speech-bubble toast (webapp/web/parsec.js's announce()) -- portaled to <body>, positioned via
+   Floating UI, same floating-panel look as .open-in-list / .info-tooltip. */
+.parsec-bubble {
+  position: fixed;
+  z-index: 1000;
+  max-width: 16rem;
+  background: rgba(13, 3, 27, .97);
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  padding: .5rem .7rem;
+  color: #fff7ff;
+  font-size: .8rem;
+  box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .4);
+}
+.parsec-bubble-error { border-color: #f2a9dd; color: #f2a9dd; }
+.parsec-bubble-success { border-color: #52f0b0; }
+
+/* General-purpose hover tooltip (webapp/web/info-tooltip.js) -- portaled to <body>, positioned via
+   Floating UI, same floating-panel look as .open-in-list. */
+.info-tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: 18rem;
+  background: rgba(13, 3, 27, .97);
+  border: 1px solid var(--border);
+  border-radius: .4rem;
+  padding: .55rem .7rem;
+  color: var(--muted);
+  font-size: .78rem;
+  box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .4);
+}
+.info-tooltip p { margin: 0 0 .35rem; }
+.info-tooltip p:last-child { margin-bottom: 0; }
+.info-tooltip-table { display: flex; flex-wrap: wrap; gap: .2rem .6rem; }
+
 .tool-nav { display: flex; flex-direction: column; gap: .4rem; }
 .tool-pill { display: block; width: 100%; box-sizing: border-box; padding: .5rem 1rem; border-radius: .6rem; border: 1px solid var(--border); background: rgba(23, 7, 46, .68); color: var(--muted); text-decoration: none; font-size: .9rem; }
 .tool-pill:hover { background: var(--violet); color: #fff; }
@@ -55,6 +169,9 @@ body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, 
 .tool-pill.tool-pill-filemgmt { border-color: var(--filemgmt-accent); color: var(--filemgmt-accent); }
 .tool-pill.tool-pill-filemgmt:hover { background: var(--filemgmt-accent); color: var(--filemgmt-accent-dark); }
 .tool-pill.tool-pill-filemgmt.active { background: var(--filemgmt-accent); border-color: var(--filemgmt-accent); color: var(--filemgmt-accent-dark); }
+.tool-pill.tool-pill-parsec { border-color: var(--parsec-accent); color: var(--parsec-accent); }
+.tool-pill.tool-pill-parsec:hover { background: var(--parsec-accent); color: var(--parsec-accent-dark); }
+.tool-pill.tool-pill-parsec.active { background: var(--parsec-accent); border-color: var(--parsec-accent); color: var(--parsec-accent-dark); }
 .eyebrow { color: var(--plasma); text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; margin: 0 0 .25rem; }
 /* Sized off the sidebar's own (fixed) width via a container query, not the viewport -- the sidebar
    no longer changes width with the viewport, so a vw-based size could still overhang its column. */
@@ -81,7 +198,8 @@ h2, h3 { margin: .35rem 0 .6rem; }
 .about-tool-list { margin: .75rem 0; padding-left: 1.25rem; display: grid; gap: .35rem; }
 .changed-file-list { display: grid; gap: .35rem; margin-top: .5rem; max-height: 18rem; overflow: auto; }
 .changed-file { border: 1px solid var(--border); border-radius: .4rem; padding: .35rem .5rem; background: rgba(23, 7, 46, .5); }
-.changed-file summary { cursor: pointer; font-size: .82rem; overflow-wrap: anywhere; color: var(--muted); }
+.changed-file summary { cursor: pointer; font-size: .82rem; overflow-wrap: anywhere; color: var(--muted); display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.changed-file-pin { flex: 0 0 auto; font-size: .72rem; padding: .15rem .5rem; }
 .changed-file[open] summary { color: inherit; }
 .changed-file .diff-output { margin-top: .5rem; font-size: .78rem; max-height: 20rem; }
 .section-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
@@ -157,6 +275,15 @@ legend { color: var(--plasma); padding: 0 .35rem; }
 .validation-panel { min-height: 2rem; color: #ffb4e4; margin: 1rem 0; white-space: pre-wrap; }
 .tool-list { display: flex; flex-wrap: wrap; gap: .6rem; }
 .tool-list button { width: auto; }
+.tool-group { padding-top: .85rem; border-top: 1px solid var(--violet); }
+.tool-group:first-of-type { padding-top: 0; border-top: none; }
+.tool-group h3 { margin: 0 0 .25rem; font-size: 1rem; }
+.tool-group .tool-list { margin-top: .5rem; }
+.tool-advanced { margin-top: .6rem; }
+.tool-advanced summary { cursor: pointer; color: var(--muted); font-size: .85rem; }
+.tool-advanced .tool-list { margin-top: .6rem; }
+.store-health { margin-top: .6rem; }
+.store-health-tables { display: flex; flex-wrap: wrap; gap: .4rem .9rem; margin-top: .3rem; }
 .tool-output { min-height: 4rem; max-height: 16rem; overflow: auto; margin: 1rem 0 0; padding: .75rem; background: #0d031b; border: 1px solid var(--violet); border-radius: .5rem; white-space: pre-wrap; }
 .export-panel { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--violet); }
 .export-panel > select { margin: .4rem 0 .6rem; }

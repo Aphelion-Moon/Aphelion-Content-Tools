@@ -289,6 +289,17 @@
     document.getElementById('graph-status').textContent = text;
   }
 
+  // Parsec (webapp/web/parsec.js) is this app's standard feedback-reporting surface -- every meaningful
+  // success/error here also announces through her, additively alongside the inline status text above,
+  // which stays exactly as it was (see references/maintainer-guide.md for the standing convention).
+  function announceError(message) {
+    window.AphelionParsec?.announce(message, {kind: 'error', tool: 'graph'});
+  }
+
+  function announceSuccess(message) {
+    window.AphelionParsec?.announce(message, {kind: 'success', tool: 'graph'});
+  }
+
   function nodeColor(node) {
     if (node.kind === 'module') return KIND_COLORS.module[node.owner] || KIND_COLORS.module.nova;
     if (node.kind === 'master_file') return KIND_COLORS.master_file;
@@ -1002,9 +1013,7 @@
     });
 
     renderer.on('clickNode', ({node, event}) => {
-      state.selectedNodeId = node;
-      renderNodeDetail(state.nodeById.get(node));
-      refreshSelectionHighlight();
+      selectNodeById(node);
       if (state.focus.enabled) {
         setFocusNode(node);
         renderFocusStatus();
@@ -1373,6 +1382,26 @@
     }).join('');
     container.innerHTML = rowsHtml + '<h3>Edges (' + connectedEdges.length + ')</h3>' + (edgesHtml || '<p class="metadata">None</p>');
     if (node.path) renderOpenActions(container, 'game', node.path);
+    const addReferenceButton = document.createElement('button');
+    addReferenceButton.type = 'button';
+    addReferenceButton.className = 'secondary-button text-button';
+    addReferenceButton.textContent = 'Add to references';
+    addReferenceButton.addEventListener('click', () => {
+      window.AphelionReferences.add({
+        tool: 'graph',
+        kind: 'graph_node',
+        key: node.id,
+        label: nodeLabel(node),
+        path: node.path || null,
+      }).catch((error) => { setStatus(error.message); announceError(error.message); });
+    });
+    container.append(addReferenceButton);
+  }
+
+  function selectNodeById(nodeId) {
+    state.selectedNodeId = nodeId;
+    renderNodeDetail(state.nodeById.get(nodeId));
+    refreshSelectionHighlight();
   }
 
   function tooltipText(node) {
@@ -1857,8 +1886,8 @@
   // ---- Static controls (filters, physics panel, scan/refresh) ----
 
   function attachStaticEvents() {
-    document.getElementById('scan-button').addEventListener('click', () => runScan().catch((error) => setStatus(error.message)));
-    document.getElementById('refresh-button').addEventListener('click', () => loadGraph().catch((error) => setStatus(error.message)));
+    document.getElementById('scan-button').addEventListener('click', () => runScan().catch((error) => { setStatus(error.message); announceError(error.message); }));
+    document.getElementById('refresh-button').addEventListener('click', () => loadGraph().catch((error) => { setStatus(error.message); announceError(error.message); }));
 
     document.querySelectorAll('[data-kind]').forEach((input) => {
       input.addEventListener('change', () => {
@@ -2073,9 +2102,11 @@
     }
     document.getElementById('scan-button').disabled = false;
     if (payload.status === 'succeeded') {
+      announceSuccess('Scan modular content completed successfully.');
       await loadGraph();
     } else {
       setStatus('Scan did not complete successfully — see output below.');
+      if (payload.status === 'failed') announceError('Scan modular content failed.');
     }
   }
 
@@ -2089,6 +2120,7 @@
     } catch (error) {
       document.getElementById('scan-output').textContent = error.message;
       document.getElementById('scan-button').disabled = false;
+      announceError(error.message);
     }
   }
 
@@ -2159,12 +2191,16 @@
       if (event.detail.visible) resumeView();
       else pauseView();
     });
+    window.addEventListener('aphelion:reference-select', (event) => {
+      if (!event.detail || event.detail.tool !== 'graph' || event.detail.kind !== 'graph_node') return;
+      if (state.nodeById.has(event.detail.key)) selectNodeById(event.detail.key);
+    });
   }
 
   function init() {
     attachStaticEvents();
     startStatsInterval();
-    loadGraph().catch((error) => setStatus(error.message));
+    loadGraph().catch((error) => { setStatus(error.message); announceError(error.message); });
   }
 
   if (typeof document !== 'undefined') {

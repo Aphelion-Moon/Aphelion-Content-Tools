@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import subprocess
@@ -9,6 +8,17 @@ from unittest.mock import patch
 
 from tools.lore_editor import export
 from tools.lore_editor.export import apply_export, prepare_export
+from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
+
+RADIO_TARGET = {
+	"type_path": "/obj/item/radio",
+	"label": "radio",
+	"editable_root": "/obj/item",
+	"parent_type": "/obj/item",
+	"field_profile": "atom_like",
+	"base_values": {"name": "radio", "description": "radio"},
+	"icon_metadata": {},
+}
 
 
 def run_git(repo_root: Path, *arguments: str) -> None:
@@ -29,9 +39,7 @@ class ExportTests(unittest.TestCase):
 		stage_root = root / "stages"
 		self.make_git_repo(tool_root)
 		self.make_git_repo(game_root)
-		(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
-		(tool_root / "tools/lore_editor/content/overrides").mkdir(parents=True)
-		(tool_root / "tools/lore_editor/catalog/targets.json").write_text("[]", encoding="utf-8")
+		seed_targets(tool_root, [])
 		(game_root / "tgstation.dme").write_text("", encoding="utf-8")
 		if with_module:
 			artifact = game_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
@@ -51,22 +59,12 @@ class ExportTests(unittest.TestCase):
 			stage_root = root / "stages"
 			self.make_git_repo(tool_root)
 			self.make_git_repo(game_root)
-			(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/content/overrides").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/catalog/targets.json").write_text(json.dumps([{
-				"type_path": "/obj/item/radio",
-				"label": "radio",
-				"editable_root": "/obj/item",
-				"parent_type": "/obj/item",
-				"field_profile": "atom_like",
-				"base_values": {"name": "radio", "description": "radio"},
-				"icon_metadata": {},
-			}]), encoding="utf-8")
-			(tool_root / "tools/lore_editor/content/overrides/lore.radio.json").write_text(json.dumps({
+			seed_targets(tool_root, [RADIO_TARGET])
+			seed_override(tool_root, "lore", {
 				"id": "lore.radio",
 				"type_path": "/obj/item/radio",
 				"name": "Updated radio",
-			}), encoding="utf-8")
+			})
 			(game_root / "tgstation.dme").write_text("", encoding="utf-8")
 			artifact = game_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
 			artifact.parent.mkdir(parents=True)
@@ -95,9 +93,7 @@ class ExportTests(unittest.TestCase):
 			game_root = root / "game"
 			self.make_git_repo(tool_root)
 			self.make_git_repo(game_root)
-			(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/content/overrides").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/catalog/targets.json").write_text("[]", encoding="utf-8")
+			seed_targets(tool_root, [])
 			(game_root / "tgstation.dme").write_text("", encoding="utf-8")
 			artifact = game_root / "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
 			artifact.parent.mkdir(parents=True)
@@ -198,9 +194,7 @@ class ExportTests(unittest.TestCase):
 			game_root = root / "game"
 			self.make_git_repo(tool_root)
 			self.make_git_repo(game_root)
-			(tool_root / "tools/lore_editor/catalog").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/content/overrides").mkdir(parents=True)
-			(tool_root / "tools/lore_editor/catalog/targets.json").write_text("[]", encoding="utf-8")
+			seed_targets(tool_root, [])
 			run_git(tool_root, "add", "--all")
 			run_git(tool_root, "commit", "-m", "Tool source")
 

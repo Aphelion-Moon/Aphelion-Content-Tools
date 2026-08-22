@@ -34,9 +34,9 @@ be beside this repository, but the launcher will offer that location by default)
 - To change base content, create an override from the selected target. Overrides live in
   `tools/lore_editor/content/overrides/` and are what the export workflow turns into the generated DM
   artifact — you never hand-edit generated DM.
-- Catalog refresh, validation, and DM generation run from the **Cache and Storage Management** panel on
-  the **Home** page (not the Lore Editor page itself, since these jobs are shared across every tool).
-  Refresh the catalog there after a game-repository update that adds or removes targets.
+- Catalog refresh, validation, and DM generation run from the **Database and Git** panel on
+  the **File Management** page (not the Lore Editor page itself, since these jobs are shared across
+  every tool). Refresh the catalog there after a game-repository update that adds or removes targets.
 
 ## Saving your work locally
 

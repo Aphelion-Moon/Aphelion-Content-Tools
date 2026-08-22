@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from functools import lru_cache
-import json
-import os
 from pathlib import Path
 import re
-import tempfile
+
+from webapp.store import db
+from webapp.store.schema import decode, encode, table
 
 from .model import (
 	DEFAULT_KEYWORD_SCOPE,
@@ -17,49 +17,9 @@ from .model import (
 	ReviewRecord,
 	thaw_json,
 )
-from .workspace import WorkspaceLayout
 
-
-CONFIG_ROOT = Path("config/aphelion/lore_overhaul")
-GROUPS_PATH = CONFIG_ROOT / "groups.json"
-REVIEWS_PATH = CONFIG_ROOT / "reviews.json"
 GROUP_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REVIEW_STATUSES = frozenset(("reviewed", "needs-attention"))
-
-
-def _resolve_path(repo_root: Path, relative_path: Path) -> Path:
-	resolved_root = repo_root.resolve()
-	resolved_path = (resolved_root / relative_path).resolve()
-	if not resolved_path.is_relative_to(resolved_root):
-		raise ValueError(f"Repository path escapes root: {relative_path}")
-	return resolved_path
-
-
-def _read_json(repo_root: Path, relative_path: Path, default: object) -> object:
-	path = _resolve_path(repo_root, relative_path)
-	if not path.exists():
-		return default
-	try:
-		return json.loads(path.read_text(encoding="utf-8"))
-	except json.JSONDecodeError as exc:
-		raise ValueError(f"{relative_path.as_posix()}: malformed JSON at line {exc.lineno} column {exc.colno}: {exc.msg}") from exc
-
-
-def _atomic_write_json(repo_root: Path, relative_path: Path, payload: object) -> None:
-	path = _resolve_path(repo_root, relative_path)
-	path.parent.mkdir(parents=True, exist_ok=True)
-	content = (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-	with tempfile.NamedTemporaryFile(mode="wb", delete=False, dir=path.parent, prefix=f".{path.name}.", suffix=".tmp") as temporary_file:
-		temporary_file.write(content)
-		temporary_file.flush()
-		os.fsync(temporary_file.fileno())
-		temporary_path = Path(temporary_file.name)
-	try:
-		os.replace(temporary_path, path)
-	except Exception:
-		if temporary_path.exists():
-			temporary_path.unlink()
-		raise
 
 
 def _string_tuple(value: object, field_name: str) -> tuple[str, ...]:
@@ -121,46 +81,17 @@ def _group_payload(group: GroupRecord) -> dict[str, object]:
 
 
 def load_groups(repo_root: Path) -> GroupConfig:
-	layout = WorkspaceLayout.from_root(repo_root)
-	if layout.standalone:
-		groups: list[GroupRecord] = []
-		groups_root = _resolve_path(repo_root, layout.content_groups_root)
-		if groups_root.exists():
-			for group_path in sorted(groups_root.glob("*.json"), key=lambda path: path.name):
-				groups.append(_group_from_raw(_read_json(repo_root, layout.content_groups_root / group_path.name, {})))
-		group_ids = [group.id for group in groups]
-		if len(group_ids) != len(set(group_ids)):
-			raise ValueError("Standalone group ids must be unique.")
-		assignments: dict[str, tuple[str, ...]] = {}
-		assignments_root = _resolve_path(repo_root, layout.content_assignments_root)
-		if assignments_root.exists():
-			for assignment_path in sorted(assignments_root.glob("*.json"), key=lambda path: path.name):
-				record = _read_json(repo_root, layout.content_assignments_root / assignment_path.name, {})
-				if not isinstance(record, dict) or not isinstance(record.get("type_path"), str):
-					raise ValueError(f"{assignment_path.as_posix()}: assignment must contain a type_path.")
-				assigned_group_ids = _string_tuple(record.get("group_ids"), f"Assignment for '{record['type_path']}'")
-				if any(group_id not in group_ids for group_id in assigned_group_ids):
-					raise ValueError(f"Assignment for '{record['type_path']}' references an unknown group.")
-				assignments[record["type_path"]] = assigned_group_ids
-		return GroupConfig(groups=tuple(groups), assignments=assignments)
-	raw_document = _read_json(repo_root, GROUPS_PATH, {"groups": [], "assignments": {}})
-	if not isinstance(raw_document, dict):
-		raise ValueError(f"{GROUPS_PATH.as_posix()}: expected a JSON object")
-	raw_groups = raw_document.get("groups", [])
-	if not isinstance(raw_groups, list):
-		raise ValueError(f"{GROUPS_PATH.as_posix()}.groups: expected a JSON array")
-	groups = tuple(_group_from_raw(raw_group) for raw_group in raw_groups)
-	group_ids = [group.id for group in groups]
-	if len(group_ids) != len(set(group_ids)):
-		raise ValueError(f"{GROUPS_PATH.as_posix()}: group ids must be unique")
-	raw_assignments = raw_document.get("assignments", {})
-	if not isinstance(raw_assignments, dict):
-		raise ValueError(f"{GROUPS_PATH.as_posix()}.assignments: expected a JSON object")
+	group_rows = db.all_rows(table(repo_root, "groups"))
+	groups = tuple(sorted((_group_from_raw(decode(row)) for row in group_rows), key=lambda group: group.id))
+	assignment_rows = db.all_rows(table(repo_root, "assignments"))
 	assignments: dict[str, tuple[str, ...]] = {}
-	for type_path, raw_group_ids in raw_assignments.items():
-		if not isinstance(type_path, str) or not type_path.startswith("/"):
-			raise ValueError("Group assignments must use absolute type paths.")
-		assigned_group_ids = _string_tuple(raw_group_ids, f"Assignment for '{type_path}'")
+	group_ids = {group.id for group in groups}
+	for row in assignment_rows:
+		record = decode(row)
+		type_path = record.get("type_path")
+		if not isinstance(type_path, str):
+			raise ValueError("Assignment record must contain a type_path.")
+		assigned_group_ids = _string_tuple(record.get("group_ids"), f"Assignment for '{type_path}'")
 		if any(group_id not in group_ids for group_id in assigned_group_ids):
 			raise ValueError(f"Assignment for '{type_path}' references an unknown group.")
 		assignments[type_path] = assigned_group_ids
@@ -190,44 +121,27 @@ def _review_from_raw(type_path: str, raw_record: object) -> ReviewRecord:
 
 
 def load_reviews(repo_root: Path) -> dict[str, ReviewRecord]:
-	layout = WorkspaceLayout.from_root(repo_root)
-	if layout.standalone:
-		reviews: dict[str, ReviewRecord] = {}
-		reviews_root = _resolve_path(repo_root, layout.content_reviews_root)
-		if reviews_root.exists():
-			for review_path in sorted(reviews_root.glob("*.json"), key=lambda path: path.name):
-				record = _read_json(repo_root, layout.content_reviews_root / review_path.name, {})
-				if not isinstance(record, dict) or not isinstance(record.get("type_path"), str):
-					raise ValueError(f"{review_path.as_posix()}: review must contain a type_path.")
-				reviews[record["type_path"]] = _review_from_raw(record["type_path"], record)
-		return reviews
-	raw_document = _read_json(repo_root, REVIEWS_PATH, {"reviews": {}})
-	if not isinstance(raw_document, dict) or not isinstance(raw_document.get("reviews", {}), dict):
-		raise ValueError(f"{REVIEWS_PATH.as_posix()}: expected an object containing a reviews object")
+	rows = db.all_rows(table(repo_root, "reviews"))
 	reviews: dict[str, ReviewRecord] = {}
-	for type_path, raw_record in raw_document["reviews"].items():
-		if not isinstance(type_path, str) or not type_path.startswith("/"):
-			raise ValueError("Review keys must be absolute type paths.")
-		reviews[type_path] = _review_from_raw(type_path, raw_record)
+	for row in rows:
+		record = decode(row)
+		type_path = record.get("type_path")
+		if not isinstance(type_path, str):
+			raise ValueError("Review record must contain a type_path.")
+		reviews[type_path] = _review_from_raw(type_path, record)
 	return reviews
 
 
 def save_group(repo_root: Path, group: GroupRecord) -> GroupRecord:
 	_validate_group_id(group.id)
-	_group_from_raw(_group_payload(group))
-	config = load_groups(repo_root)
-	layout = WorkspaceLayout.from_root(repo_root)
-	if layout.standalone:
-		_atomic_write_json(repo_root, layout.content_groups_root / f"{group.id}.json", _group_payload(group))
-		return group
-	updated_groups = [group if existing.id == group.id else existing for existing in config.groups]
-	if not any(existing.id == group.id for existing in config.groups):
-		updated_groups.append(group)
-	payload = {
-		"groups": [_group_payload(existing) for existing in updated_groups],
-		"assignments": {type_path: list(group_ids) for type_path, group_ids in config.assignments.items()},
-	}
-	_atomic_write_json(repo_root, GROUPS_PATH, payload)
+	payload = _group_payload(group)
+	_group_from_raw(payload)
+	groups_table = table(repo_root, "groups")
+	db.upsert_rows(groups_table, "id", [{
+		"id": group.id,
+		"raw_json": encode(payload),
+		"text": f"{group.label} {' '.join(group.keywords)}",
+	}])
 	return group
 
 
@@ -237,69 +151,43 @@ def save_group_assignments(repo_root: Path, type_path: str, group_ids: tuple[str
 	config = load_groups(repo_root)
 	if any(group_id not in {group.id for group in config.groups} for group_id in group_ids):
 		raise ValueError("Group assignments reference an unknown group.")
-	layout = WorkspaceLayout.from_root(repo_root)
-	if layout.standalone:
-		assignment_path = _resolve_path(repo_root, layout.content_assignments_root / f"assignment.{_target_slug(type_path)}.json")
-		if group_ids:
-			_atomic_write_json(repo_root, layout.content_assignments_root / assignment_path.name, {
-				"id": assignment_path.stem,
-				"type_path": type_path,
-				"group_ids": list(group_ids),
-			})
-		elif assignment_path.exists():
-			assignment_path.unlink()
-		return
-	assignments = dict(config.assignments)
+	assignments_table = table(repo_root, "assignments")
 	if group_ids:
-		assignments[type_path] = group_ids
+		db.upsert_rows(assignments_table, "id", [{
+			"id": _target_slug(type_path),
+			"type_path": type_path,
+			"raw_json": encode({"type_path": type_path, "group_ids": list(group_ids)}),
+			"text": type_path,
+		}])
 	else:
-		assignments.pop(type_path, None)
-	_atomic_write_json(repo_root, GROUPS_PATH, {
-		"groups": [_group_payload(group) for group in config.groups],
-		"assignments": {key: list(value) for key, value in assignments.items()},
-	})
+		db.delete_rows(assignments_table, f"id = '{_target_slug(type_path)}'")
 
 
 def save_review(repo_root: Path, type_path: str, record: ReviewRecord | None) -> None:
 	if not type_path.startswith("/"):
 		raise ValueError("Review keys must be absolute type paths.")
-	reviews = load_reviews(repo_root)
-	layout = WorkspaceLayout.from_root(repo_root)
-	if layout.standalone:
-		review_path = _resolve_path(repo_root, layout.content_reviews_root / f"review.{_target_slug(type_path)}.json")
-		if record is None:
-			if review_path.exists():
-				review_path.unlink()
-			return
-		_atomic_write_json(repo_root, layout.content_reviews_root / review_path.name, {
-			"id": review_path.stem,
-			"type_path": type_path,
-			"status": record.status,
-			"reviewed_by": record.reviewed_by,
-			"reviewed_at": record.reviewed_at,
-			"notes": record.notes,
-		})
-		return
+	reviews_table = table(repo_root, "reviews")
 	if record is None:
-		reviews.pop(type_path, None)
-	else:
-		reviews[type_path] = _review_from_raw(type_path, {
-			"status": record.status,
-			"reviewed_by": record.reviewed_by,
-			"reviewed_at": record.reviewed_at,
-			"notes": record.notes,
-		})
-	_atomic_write_json(repo_root, REVIEWS_PATH, {
-		"reviews": {
-			type_path: {
-				"status": review.status,
-				"reviewed_by": review.reviewed_by,
-				"reviewed_at": review.reviewed_at,
-				"notes": review.notes,
-			}
-			for type_path, review in sorted(reviews.items())
-		},
+		db.delete_rows(reviews_table, f"id = '{_target_slug(type_path)}'")
+		return
+	validated = _review_from_raw(type_path, {
+		"status": record.status,
+		"reviewed_by": record.reviewed_by,
+		"reviewed_at": record.reviewed_at,
+		"notes": record.notes,
 	})
+	db.upsert_rows(reviews_table, "id", [{
+		"id": _target_slug(type_path),
+		"type_path": type_path,
+		"raw_json": encode({
+			"type_path": type_path,
+			"status": validated.status,
+			"reviewed_by": validated.reviewed_by,
+			"reviewed_at": validated.reviewed_at,
+			"notes": validated.notes,
+		}),
+		"text": f"{type_path} {validated.notes}",
+	}])
 
 
 def _target_slug(type_path: str) -> str:

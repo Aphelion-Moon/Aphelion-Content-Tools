@@ -15,7 +15,7 @@ from .model import (
 	as_object,
 	as_string,
 )
-from .source import resolve_repo_path
+from webapp.path_safety import resolve_repo_path
 
 TYPE_PATH_PATTERN = re.compile(r"^/(?:[A-Za-z0-9_]+)(?:/[A-Za-z0-9_]+)*$")
 WIKI_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -32,7 +32,7 @@ SUPPORTED_TOP_LEVEL_KEYS = {
 ICON_FIELD_ORDER = tuple(SUPPORTED_ICON_KEYS)
 WIKI_FIELD_ORDER = ("enabled", "slug", "summary", "export_icon")
 ICON_RECORD_KEYS = {"file", "state"}
-TARGETS_PATH_TEXT = "config/aphelion/lore_overhaul/targets.json"
+TARGETS_PATH_TEXT = "the catalog"
 
 
 def issue_path(entry: LoreEntry, field: str) -> str:

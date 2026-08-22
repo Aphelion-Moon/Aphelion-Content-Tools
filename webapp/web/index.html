@@ -17,6 +17,10 @@
           <p>A local toolkit for authoring and maintaining Meridian-Rift's modular content.</p>
         </header>
 
+        <div id="store-status-widget" class="store-status-widget"></div>
+
+        <div id="reference-panel" class="reference-panel"></div>
+
         <div class="sidebar-search">
           <label for="global-search" class="sidebar-search-label">Search</label>
           <input id="global-search" class="global-search-input" type="search" placeholder="Search catalog entries or pages…">
@@ -26,6 +30,7 @@
         <nav class="tool-nav" aria-label="Tools">
           <span class="tool-pill tool-pill-home active" aria-current="page">Home</span>
           <a class="tool-pill tool-pill-filemgmt" href="/file-management">File Management</a>
+          <a class="tool-pill tool-pill-parsec" href="/parsec">Parsec</a>
           <a class="tool-pill" href="/lore-editor">Lore Editor</a>
           <a class="tool-pill" href="/graph">Content Graph</a>
         </nav>
@@ -57,5 +62,11 @@
     </div>
   </main>
   <script src="/shell.js"></script>
+  <script src="/floating-ui-core.umd.min.js"></script>
+  <script src="/floating-ui-dom.umd.min.js"></script>
+  <script src="/info-tooltip.js"></script>
+  <script src="/parsec.js"></script>
+  <script src="/store-status-widget.js"></script>
+  <script src="/references-panel.js"></script>
 </body>
 </html>

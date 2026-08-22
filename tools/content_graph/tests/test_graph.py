@@ -190,13 +190,6 @@ class ContentGraphScanTests(unittest.TestCase):
 			self.assertEqual(manifest.snapshot_sha256, cached_manifest.snapshot_sha256)
 			self.assertEqual(2, len([node for node in graph["nodes"] if node["kind"] == "module"]))
 
-			index_path = tool_root / "tools/content_graph/cache/index.json"
-			manifest_path = tool_root / "tools/content_graph/cache/manifest.json"
-			self.assertTrue(index_path.is_file())
-			self.assertTrue(manifest_path.is_file())
-			json.loads(index_path.read_text(encoding="utf-8"))
-			json.loads(manifest_path.read_text(encoding="utf-8"))
-
 	def test_read_graph_cache_returns_none_when_never_scanned(self) -> None:
 		with tempfile.TemporaryDirectory() as temp_dir:
 			tool_root = Path(temp_dir)

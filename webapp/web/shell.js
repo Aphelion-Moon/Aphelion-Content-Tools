@@ -1,16 +1,20 @@
 (() => {
   'use strict';
 
-  const TOOL_ROUTES = {'/': 'home', '/file-management': 'file-management', '/lore-editor': 'lore-editor', '/graph': 'graph'};
+  const TOOL_ROUTES = {'/': 'home', '/file-management': 'file-management', '/lore-editor': 'lore-editor', '/graph': 'graph', '/parsec': 'parsec'};
   // A tool's own script, or an ordered array when it also needs vendored dependencies loaded first (see
   // Content Graph's UMD-global vendor files below) -- these live as <script> tags in the tool's own HTML
   // document, but sit outside <main class="shell">, so loadView's fetch-and-extract-<main> approach (used
   // when a tool is activated via the SPA nav rather than a hard page load) never picks them up on its own.
   // They have to be registered here explicitly and loaded in order before the tool's own script runs.
+  // Every tool loads Floating UI + info-tooltip.js + store-status-widget.js now: the status widget sits
+  // in the sidebar of every page (see the `#store-status-widget` div in each page's HTML), not just
+  // lore-editor/graph, which previously were the only pages with a floating/positioned element.
+  const STATUS_WIDGET_SCRIPTS = ['/floating-ui-core.umd.min.js', '/floating-ui-dom.umd.min.js', '/info-tooltip.js', '/parsec.js', '/store-status-widget.js'];
   const TOOL_SCRIPTS = {
-    home: null,
-    'file-management': '/file-management.js',
-    'lore-editor': ['/floating-ui-core.umd.min.js', '/floating-ui-dom.umd.min.js', '/open-in-menu.js', '/lore-editor.js'],
+    home: [...STATUS_WIDGET_SCRIPTS, '/references-panel.js'],
+    'file-management': [...STATUS_WIDGET_SCRIPTS, '/references-panel.js', '/file-management.js'],
+    'lore-editor': [...STATUS_WIDGET_SCRIPTS, '/open-in-menu.js', '/references-panel.js', '/lore-editor.js'],
     graph: [
       '/vendor/graphology.umd.min.js',
       '/vendor/sigma.min.js',
@@ -18,18 +22,20 @@
       '/vendor/d3-dispatch.v3.js',
       '/vendor/d3-timer.v3.js',
       '/vendor/d3-force.v3.js',
-      '/floating-ui-core.umd.min.js',
-      '/floating-ui-dom.umd.min.js',
+      ...STATUS_WIDGET_SCRIPTS,
       '/open-in-menu.js',
+      '/references-panel.js',
       '/graph.js',
     ],
+    parsec: [...STATUS_WIDGET_SCRIPTS, '/references-panel.js', '/parsec-page.js'],
   };
-  const TOOL_STYLES = {home: ['/styles.css'], 'file-management': ['/styles.css'], 'lore-editor': ['/styles.css'], graph: ['/styles.css', '/graph.css']};
+  const TOOL_STYLES = {home: ['/styles.css'], 'file-management': ['/styles.css'], 'lore-editor': ['/styles.css'], graph: ['/styles.css', '/graph.css'], parsec: ['/styles.css']};
   const TOOL_TITLES = {
     home: 'Aphelion Content Tools',
     'file-management': 'File Management — Aphelion Content Tools',
     'lore-editor': 'Lore Editor — Aphelion Content Tools',
     graph: 'Content Graph — Aphelion Content Tools',
+    parsec: 'Parsec — Aphelion Content Tools',
   };
 
   const views = {};
@@ -97,11 +103,23 @@
     }
   }
 
+  function mountReferencePanel(mainEl) {
+    const container = mainEl.querySelector('#reference-panel');
+    if (container && window.AphelionReferences) window.AphelionReferences.mount(container);
+  }
+
+  function mountStoreStatusWidget(mainEl) {
+    const container = mainEl.querySelector('#store-status-widget');
+    if (container && window.AphelionStoreStatus) window.AphelionStoreStatus.mount(container);
+  }
+
   function registerView(tool, mainEl) {
     mainEl.id = 'tool-view-' + tool;
     mainEl.dataset.tool = tool;
     views[tool] = mainEl;
     initializeSearch(mainEl);
+    mountStoreStatusWidget(mainEl);
+    mountReferencePanel(mainEl);
   }
 
   function showView(tool) {
@@ -165,6 +183,7 @@
   const SEARCH_PAGES = [
     {tool: 'home', href: '/', title: 'Home'},
     {tool: 'file-management', href: '/file-management', title: 'File Management'},
+    {tool: 'parsec', href: '/parsec', title: 'Parsec'},
     {tool: 'lore-editor', href: '/lore-editor', title: 'Lore Editor'},
     {tool: 'graph', href: '/graph', title: 'Content Graph'},
   ];
@@ -294,6 +313,15 @@
     activateTool(tool, window.location.pathname, {pushState: false});
   }
 
+  // Other sidebar widgets (e.g. store-status-widget.js) aren't part of shell.js and can't call its
+  // internal activateTool directly -- they dispatch this event instead, the same event-bus convention
+  // already used for aphelion:tool-visibility and aphelion:reference-select.
+  function onNavigateEvent(event) {
+    const detail = event.detail || {};
+    if (!detail.tool || !detail.href) return;
+    activateTool(detail.tool, detail.href);
+  }
+
   function init() {
     const currentTool = toolFromPath(window.location.pathname);
     const mainEl = document.querySelector('main.shell');
@@ -304,6 +332,7 @@
     }
     document.addEventListener('click', onNavClick);
     window.addEventListener('popstate', onPopState);
+    window.addEventListener('aphelion:navigate', onNavigateEvent);
   }
 
   if (typeof document !== 'undefined') {

@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from dataclasses import dataclass
-import json
-import os
 from pathlib import Path
 import re
-import tempfile
 from threading import Lock
 
 from tools.dmi import Dmi
 
 from webapp.git_adapter import find_line_in_tracked_files
+from webapp.path_safety import resolve_repo_path
+from webapp.store import db
+from webapp.store.schema import decode, encode, table
 
-from .generate import GENERATED_DM_PATH, write_generated_dm
+from .generate import write_generated_dm
 from .icon_preview import list_icon_files, list_icon_states
 from .model import DEFAULT_KEYWORD_SCOPE, GroupConfig, GroupRecord, LoreCorpus, LoreEntry, ReviewRecord, ValidationIssue, thaw_json
-from .source import ENTITIES_ROOT, iter_entity_paths, load_corpus, make_lore_entry, read_json_file, resolve_repo_path
+from .source import group_for_source_path, list_entity_files as _list_entity_files, load_corpus, make_lore_entry, source_path_for_group
 from .taxonomy import REVIEW_STATUSES, classify_target_details, load_groups, load_reviews, save_group, save_group_assignments, save_review
 from .validation import validate_corpus
 from .workspace import WorkspaceLayout
@@ -85,39 +85,13 @@ class _ReviewCatalogIndex:
 	target_groups: dict[str, tuple[str, ...]]
 
 
-_REVIEW_CATALOG_INDEX_CACHE: dict[tuple[Path, tuple[int, int], tuple[int, int], tuple[int, int]], _ReviewCatalogIndex] = {}
+_REVIEW_CATALOG_INDEX_CACHE: dict[tuple[Path, int], _ReviewCatalogIndex] = {}
 _REVIEW_CATALOG_INDEX_CACHE_LOCK = Lock()
-
-
-def _file_stamp(path: Path) -> tuple[int, int]:
-	try:
-		file_stat = path.stat()
-	except FileNotFoundError:
-		return (0, 0)
-	return (file_stat.st_mtime_ns, file_stat.st_size)
-
-
-def _tree_stamp(path: Path) -> tuple[int, int]:
-	if path.is_file():
-		return _file_stamp(path)
-	if not path.is_dir():
-		return (0, 0)
-	file_stamps = [_file_stamp(candidate) for candidate in path.rglob("*.json")]
-	return (
-		sum(stamp[0] for stamp in file_stamps),
-		sum(stamp[1] for stamp in file_stamps) + len(file_stamps),
-	)
 
 
 def _review_catalog_index(repo_root: Path, corpus: LoreCorpus, group_config: GroupConfig) -> _ReviewCatalogIndex:
 	resolved_root = repo_root.resolve()
-	layout = WorkspaceLayout.from_root(resolved_root)
-	key = (
-		resolved_root,
-		_file_stamp(resolve_repo_path(resolved_root, layout.targets_path)),
-		_tree_stamp(resolve_repo_path(resolved_root, layout.content_groups_root if layout.standalone else layout.groups_path)),
-		_tree_stamp(resolve_repo_path(resolved_root, layout.content_assignments_root)) if layout.standalone else (0, 0),
-	)
+	key = (resolved_root, db.current_generation())
 	with _REVIEW_CATALOG_INDEX_CACHE_LOCK:
 		cached_index = _REVIEW_CATALOG_INDEX_CACHE.get(key)
 		if cached_index is not None:
@@ -430,12 +404,6 @@ def _sorted_review_entries(entries: list[dict[str, object]], sort: str) -> list[
 	return sorted(entries, key=lambda entry: str(entry.get("type_path") or ""))
 
 
-def _reviews_stamp(repo_root: Path, layout: WorkspaceLayout) -> tuple[int, int]:
-	if layout.standalone:
-		return _tree_stamp(resolve_repo_path(repo_root, layout.content_reviews_root))
-	return _file_stamp(resolve_repo_path(repo_root, layout.reviews_path))
-
-
 @dataclass(frozen=True)
 class _ReviewEntriesSnapshot:
 	review_entries: tuple[dict[str, object], ...]
@@ -560,16 +528,7 @@ def _review_entries_snapshot(
 ) -> _ReviewEntriesSnapshot:
 	resolved_root = repo_root.resolve()
 	resolved_asset_root = (asset_root or repo_root).resolve()
-	layout = WorkspaceLayout.from_root(resolved_root)
-	key = (
-		resolved_root,
-		resolved_asset_root,
-		_file_stamp(resolve_repo_path(resolved_root, layout.targets_path)),
-		_tree_stamp(resolve_repo_path(resolved_root, layout.content_groups_root if layout.standalone else layout.groups_path)),
-		_tree_stamp(resolve_repo_path(resolved_root, layout.content_assignments_root)) if layout.standalone else (0, 0),
-		_reviews_stamp(resolved_root, layout),
-		_tree_stamp(resolve_repo_path(resolved_root, layout.entities_root)),
-	)
+	key = (resolved_root, resolved_asset_root, db.current_generation())
 	with _REVIEW_ENTRIES_CACHE_LOCK:
 		cached_snapshot = _REVIEW_ENTRIES_CACHE.get(key)
 		if cached_snapshot is not None:
@@ -733,39 +692,24 @@ def catalog_response(repo_root: Path) -> dict[str, object]:
 	return {
 		"targets": list_catalog(repo_root),
 		"generated_at": datetime.now(timezone.utc).isoformat(),
-		"standalone": WorkspaceLayout.from_root(repo_root).standalone,
+		"standalone": True,
 	}
 
 
-def _resolve_entity_source(repo_root: Path, source_file: str, *, allow_missing: bool = False) -> Path:
+def _group_from_source_file(source_file: str) -> str:
+	"""`source_file` is a virtual path (see `source.source_path_for_group`) the UI still picks/types as
+	an "entity group" -- there is no real file behind it any more, so this only validates its shape and
+	returns the group name."""
 	relative_path = Path(source_file)
 	if relative_path.is_absolute():
 		raise ValueError("Source files must use repository-relative paths.")
-	resolved_path = resolve_repo_path(repo_root, relative_path)
-	layout = WorkspaceLayout.from_root(repo_root)
-	entities_root = resolve_repo_path(repo_root, layout.entities_root)
-	if not resolved_path.is_relative_to(entities_root) or resolved_path.suffix.casefold() != ".json":
+	if relative_path.suffix.casefold() != ".json" or relative_path.parent.as_posix() != "tools/lore_editor/content/overrides":
 		raise ValueError("Source files must be JSON files inside the configured lore override directory.")
-	if not allow_missing and not resolved_path.is_file():
-		raise ValueError(f"Source file '{relative_path.as_posix()}' does not exist.")
-	return resolved_path.relative_to(repo_root.resolve())
+	return group_for_source_path(relative_path)
 
 
 def list_entity_files(repo_root: Path) -> list[str]:
-	return [path.as_posix() for path in iter_entity_paths(repo_root)]
-
-
-def _replace_raw_entry(document: object, entry_id: str, replacement: dict[str, object]) -> object:
-	if isinstance(document, list):
-		updated_document = list(document)
-		for index, raw_entry in enumerate(updated_document):
-			if isinstance(raw_entry, dict) and raw_entry.get("id") == entry_id:
-				updated_document[index] = replacement
-				return updated_document
-		raise ValueError(f"Lore entry '{entry_id}' was not found in its source file.")
-	if isinstance(document, dict) and document.get("id") == entry_id:
-		return replacement
-	raise ValueError(f"Lore entry '{entry_id}' was not found in its source file.")
+	return _list_entity_files(repo_root)
 
 
 def _candidate_corpus(repo_root: Path, source_path: Path, entry_id: str, raw_entry: object) -> LoreCorpus:
@@ -802,8 +746,8 @@ def validate_entry(
 	if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
 		raise ValueError("Lore entry must contain a string id.")
 	resolved_root = repo_root.resolve()
-	source_path = _resolve_entity_source(resolved_root, source_file)
-	candidate = _candidate_corpus(resolved_root, source_path, entry["id"], entry)
+	group = _group_from_source_file(source_file)
+	candidate = _candidate_corpus(resolved_root, source_path_for_group(group), entry["id"], entry)
 	issues = validate_corpus(resolved_root, candidate, asset_root=asset_root)
 	return {"valid": not issues, "issues": [_issue_payload(issue) for issue in issues]}
 
@@ -824,7 +768,7 @@ def validate_entries(
 				raise ValueError("Each lore entry must contain a string id.")
 			entry_id = raw_entry["id"]
 			if source_file is not None:
-				source_path = _resolve_entity_source(resolved_root, source_file)
+				source_path = source_path_for_group(_group_from_source_file(source_file))
 			else:
 				matching_entries = [entry for entry in corpus.entries if entry.entry_id == entry_id]
 				if not matching_entries:
@@ -844,19 +788,66 @@ def validate_entries(
 	return {"valid": not issues, "issues": [_issue_payload(issue) for issue in issues]}
 
 
-def _atomic_write(path: Path, content: bytes) -> None:
-	path.parent.mkdir(parents=True, exist_ok=True)
-	with tempfile.NamedTemporaryFile(mode="wb", delete=False, dir=path.parent, prefix=f".{path.name}.", suffix=".tmp") as temporary_file:
-		temporary_file.write(content)
-		temporary_file.flush()
-		os.fsync(temporary_file.fileno())
-		temporary_path = Path(temporary_file.name)
+def _entry_search_text(entry: dict[str, object]) -> str:
+	return " ".join(
+		str(value) for value in (entry.get("id"), entry.get("type_path"), entry.get("name"), entry.get("description"))
+		if value
+	)
+
+
+def _write_entry_row(repo_root: Path, entry_id: str, group: str, entry: dict[str, object]) -> None:
+	overrides_table = table(repo_root, "overrides")
+	db.upsert_rows(overrides_table, "id", [{
+		"id": entry_id,
+		"type_path": str(entry.get("type_path") or ""),
+		"group": group,
+		"raw_json": encode(entry),
+		"text": _entry_search_text(entry),
+	}])
+
+
+def _upsert_override(
+	repo_root: Path,
+	*,
+	entry_id: str,
+	group: str,
+	entry: dict[str, object],
+	asset_root: Path | None,
+	require_new: bool,
+) -> dict[str, object]:
+	resolved_root = repo_root.resolve()
+	overrides_table = table(resolved_root, "overrides")
+	previous_row = db.get_row(overrides_table, f"id = '{entry_id}'")
+	if require_new and previous_row is not None:
+		raise ValueError(f"Lore entry '{entry_id}' already exists.")
+
+	source_path = source_path_for_group(group)
+	candidate = _candidate_corpus(resolved_root, source_path, entry_id, entry)
+	issues = validate_corpus(resolved_root, candidate, asset_root=asset_root)
+	if issues:
+		raise ValueError(f"Lore corpus validation failed:\n{_format_issues(issues)}")
+
+	generated_path = resolved_root / WorkspaceLayout.from_root(resolved_root).generated_dm_path
+	original_generated_exists = generated_path.exists()
+	original_generated_bytes = generated_path.read_bytes() if original_generated_exists else None
 	try:
-		os.replace(temporary_path, path)
+		_write_entry_row(resolved_root, entry_id, group, entry)
+		write_generated_dm(resolved_root)
 	except Exception:
-		if temporary_path.exists():
-			temporary_path.unlink()
+		if previous_row is not None:
+			overrides_table.merge_insert("id").when_matched_update_all().when_not_matched_insert_all().execute([previous_row])
+		else:
+			db.delete_rows(overrides_table, f"id = '{entry_id}'")
+		if original_generated_exists and original_generated_bytes is not None:
+			generated_path.write_bytes(original_generated_bytes)
+		elif generated_path.exists():
+			generated_path.unlink()
 		raise
+
+	for saved_entry in list_entries_response(resolved_root, asset_root=asset_root)["entries"]:
+		if isinstance(saved_entry, dict) and saved_entry.get("id") == entry_id:
+			return saved_entry
+	raise ValueError(f"Saved lore entry '{entry_id}' could not be reloaded.")
 
 
 def create_entry(
@@ -868,52 +859,8 @@ def create_entry(
 ) -> dict[str, object]:
 	if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
 		raise ValueError("New lore entry must contain a string id.")
-	resolved_root = repo_root.resolve()
-	source_path = _resolve_entity_source(resolved_root, source_file, allow_missing=True)
-	original_source_path = resolved_root / source_path
-	original_source_exists = original_source_path.exists()
-	original_source_bytes = original_source_path.read_bytes() if original_source_exists else None
-	layout = WorkspaceLayout.from_root(resolved_root)
-	if layout.standalone:
-		if original_source_exists:
-			raise ValueError(f"Lore entry source file '{source_file}' already exists.")
-		updated_document = entry
-	elif original_source_exists:
-		original_document = read_json_file(resolved_root, source_path)
-		if not isinstance(original_document, list):
-			raise ValueError("New overrides can only be added to JSON array entity groups.")
-		if any(isinstance(raw_entry, dict) and raw_entry.get("id") == entry["id"] for raw_entry in original_document):
-			raise ValueError(f"Lore entry '{entry['id']}' already exists in its entity group.")
-		updated_document = [*original_document, entry]
-	else:
-		updated_document = [entry]
-	candidate = _candidate_corpus(resolved_root, source_path, entry["id"], entry)
-	issues = validate_corpus(resolved_root, candidate, asset_root=asset_root)
-	if issues:
-		raise ValueError(f"Lore corpus validation failed:\n{_format_issues(issues)}")
-
-	generated_path = resolved_root / layout.generated_dm_path
-	original_generated_exists = generated_path.exists()
-	original_generated_bytes = generated_path.read_bytes() if original_generated_exists else None
-	serialized_document = (json.dumps(updated_document, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-	try:
-		_atomic_write(original_source_path, serialized_document)
-		write_generated_dm(resolved_root)
-	except Exception:
-		if original_source_exists and original_source_bytes is not None:
-			_atomic_write(original_source_path, original_source_bytes)
-		elif original_source_path.exists():
-			original_source_path.unlink()
-		if original_generated_exists and original_generated_bytes is not None:
-			_atomic_write(generated_path, original_generated_bytes)
-		elif generated_path.exists():
-			generated_path.unlink()
-		raise
-
-	for saved_entry in list_entries_response(resolved_root, asset_root=asset_root)["entries"]:
-		if isinstance(saved_entry, dict) and saved_entry.get("id") == entry["id"]:
-			return saved_entry
-	raise ValueError(f"Created lore entry '{entry['id']}' could not be reloaded.")
+	group = _group_from_source_file(source_file)
+	return _upsert_override(repo_root, entry_id=entry["id"], group=group, entry=entry, asset_root=asset_root, require_new=True)
 
 
 def save_entry(
@@ -928,44 +875,8 @@ def save_entry(
 		raise ValueError("Lore entry must be a JSON object.")
 	if entry.get("id") != entry_id:
 		raise ValueError("The route entry id must match entry.id.")
-
-	resolved_root = repo_root.resolve()
-	layout = WorkspaceLayout.from_root(resolved_root)
-	source_path = _resolve_entity_source(resolved_root, source_file)
-	original_source_path = resolved_root / source_path
-	original_source_bytes = original_source_path.read_bytes()
-	original_document = read_json_file(resolved_root, source_path)
-	try:
-		updated_document = _replace_raw_entry(original_document, entry_id, entry)
-	except ValueError:
-		if not isinstance(original_document, list):
-			raise
-		updated_document = [*original_document, entry]
-	candidate = _candidate_corpus(resolved_root, source_path, entry_id, entry)
-	issues = validate_corpus(resolved_root, candidate, asset_root=asset_root)
-	if issues:
-		raise ValueError(f"Lore corpus validation failed:\n{_format_issues(issues)}")
-
-	generated_path = resolved_root / layout.generated_dm_path
-	original_generated_exists = generated_path.exists()
-	original_generated_bytes = generated_path.read_bytes() if original_generated_exists else None
-	serialized_document = (json.dumps(updated_document, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-	try:
-		_atomic_write(original_source_path, serialized_document)
-		write_generated_dm(resolved_root)
-	except Exception:
-		_atomic_write(original_source_path, original_source_bytes)
-		if original_generated_exists and original_generated_bytes is not None:
-			_atomic_write(generated_path, original_generated_bytes)
-		elif generated_path.exists():
-			generated_path.unlink()
-		raise
-
-	response = list_entries_response(resolved_root, asset_root=asset_root)
-	for saved_entry in response["entries"]:
-		if isinstance(saved_entry, dict) and saved_entry.get("id") == entry_id:
-			return saved_entry
-	raise ValueError(f"Saved lore entry '{entry_id}' could not be reloaded.")
+	group = _group_from_source_file(source_file)
+	return _upsert_override(repo_root, entry_id=entry_id, group=group, entry=entry, asset_root=asset_root, require_new=False)
 
 
 def delete_entry(
@@ -975,38 +886,22 @@ def delete_entry(
 	source_file: str,
 ) -> dict[str, object]:
 	resolved_root = repo_root.resolve()
-	layout = WorkspaceLayout.from_root(resolved_root)
-	source_path = _resolve_entity_source(resolved_root, source_file)
-	original_source_path = resolved_root / source_path
-	original_source_bytes = original_source_path.read_bytes()
-	original_document = read_json_file(resolved_root, source_path)
+	_group_from_source_file(source_file)  # validates shape; the row's own `group` column is authoritative
+	overrides_table = table(resolved_root, "overrides")
+	previous_row = db.get_row(overrides_table, f"id = '{entry_id}'")
+	if previous_row is None:
+		raise ValueError(f"Lore entry '{entry_id}' was not found.")
 
-	if isinstance(original_document, list):
-		remaining_document = [
-			raw_entry for raw_entry in original_document
-			if not (isinstance(raw_entry, dict) and raw_entry.get("id") == entry_id)
-		]
-		if len(remaining_document) == len(original_document):
-			raise ValueError(f"Lore entry '{entry_id}' was not found in its source file.")
-	elif isinstance(original_document, dict) and original_document.get("id") == entry_id:
-		remaining_document = None
-	else:
-		raise ValueError(f"Lore entry '{entry_id}' was not found in its source file.")
-
-	generated_path = resolved_root / layout.generated_dm_path
+	generated_path = resolved_root / WorkspaceLayout.from_root(resolved_root).generated_dm_path
 	original_generated_exists = generated_path.exists()
 	original_generated_bytes = generated_path.read_bytes() if original_generated_exists else None
 	try:
-		if remaining_document:
-			serialized_document = (json.dumps(remaining_document, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-			_atomic_write(original_source_path, serialized_document)
-		else:
-			original_source_path.unlink()
+		db.delete_rows(overrides_table, f"id = '{entry_id}'")
 		write_generated_dm(resolved_root)
 	except Exception:
-		_atomic_write(original_source_path, original_source_bytes)
+		overrides_table.merge_insert("id").when_matched_update_all().when_not_matched_insert_all().execute([previous_row])
 		if original_generated_exists and original_generated_bytes is not None:
-			_atomic_write(generated_path, original_generated_bytes)
+			generated_path.write_bytes(original_generated_bytes)
 		elif generated_path.exists():
 			generated_path.unlink()
 		raise

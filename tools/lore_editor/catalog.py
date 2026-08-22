@@ -5,20 +5,19 @@ import shutil
 import socket
 import subprocess
 import sys
-import tempfile
-import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from .model import SUPPORTED_ICON_KEYS
 from .app.manifest import CatalogManifest, sha256_bytes
-from .app.storage import canonical_json_bytes
-from .source import TARGETS_PATH, read_json_file, resolve_repo_path
 from .validation import TYPE_PATH_PATTERN
-from .workspace import WorkspaceLayout
 from webapp.game_repository import validate_game_repository
 from webapp.git_adapter import repository_revision
+from webapp.json_storage import canonical_json_bytes
+from webapp.path_safety import read_json_file, resolve_repo_path
+from webapp.store import db
+from webapp.store.schema import decode, encode, table
 
 PROBE_OUTPUT_PATH = Path("data/lore_overhaul_targets.json")
 BUILD_ENTRYPOINT = Path("tools/build/build.bat")
@@ -160,7 +159,7 @@ def _normalize_target(raw_target: object) -> dict[str, object]:
 
 def normalize_targets(raw_targets: object) -> list[dict[str, object]]:
     if not isinstance(raw_targets, list):
-        raise ValueError(f"{TARGETS_PATH.as_posix()}: expected a JSON array")
+        raise ValueError("Catalog probe output: expected a JSON array")
 
     normalized_targets = [_normalize_target(raw_target) for raw_target in raw_targets]
     normalized_targets.sort(key=lambda target: str(target["type_path"]))
@@ -174,31 +173,35 @@ def normalize_targets(raw_targets: object) -> list[dict[str, object]]:
     return normalized_targets
 
 
-def _write_targets(repo_root: Path, targets: list[dict[str, object]]) -> bytes:
-	targets_path = resolve_repo_path(repo_root, WorkspaceLayout.from_root(repo_root).targets_path)
-	rendered_bytes = canonical_json_bytes(targets)
-	targets_path.parent.mkdir(parents=True, exist_ok=True)
-	with tempfile.NamedTemporaryFile(
-		mode="wb",
-		delete=False,
-		dir=targets_path.parent,
-		prefix=f"{targets_path.stem}.",
-		suffix=".tmp",
-	) as temp_file:
-		temp_file.write(rendered_bytes)
-		temp_file_path = Path(temp_file.name)
+def _target_search_text(target: dict[str, object]) -> str:
+	base_values = target.get("base_values")
+	name = base_values.get("name") if isinstance(base_values, dict) else None
+	description = base_values.get("description") if isinstance(base_values, dict) else None
+	return " ".join(str(value) for value in (target.get("type_path"), target.get("label"), name, description) if value)
 
-	try:
-		os.replace(temp_file_path, targets_path)
-	except Exception:
-		if temp_file_path.exists():
-			temp_file_path.unlink()
-		raise
+
+def _write_targets(repo_root: Path, targets: list[dict[str, object]], *, on_progress=None) -> bytes:
+	"""Sync the `catalog_targets` store table to `targets` and return the canonical bytes of the new
+	snapshot (used for the manifest's content hash and the export manifest's catalog fingerprint).
+
+	Only targets whose text actually changed since the last refresh are re-embedded (see
+	`webapp.store.db.sync_snapshot`) -- a routine refresh with a handful of real changes should complete
+	in a few seconds, not re-embed the entire catalog every time."""
+	rendered_bytes = canonical_json_bytes(targets)
+	targets_table = table(repo_root, "catalog_targets")
+	db.sync_snapshot(targets_table, "id", [
+		{
+			"id": target["type_path"],
+			"type_path": target["type_path"],
+			"raw_json": encode(target),
+			"text": _target_search_text(target),
+		}
+		for target in targets
+	], on_progress=on_progress)
 	return rendered_bytes
 
 
 def _write_catalog_manifest(repo_root: Path, game_repo_root: Path, targets_bytes: bytes, target_count: int) -> None:
-	resolved_root = repo_root.resolve()
 	try:
 		game_revision = repository_revision(game_repo_root)
 	except (OSError, ValueError):
@@ -209,24 +212,12 @@ def _write_catalog_manifest(repo_root: Path, game_repo_root: Path, targets_bytes
 		generated_at=datetime.now(timezone.utc).isoformat(),
 		target_count=target_count,
 	)
-	manifest_path = resolve_repo_path(resolved_root, WorkspaceLayout.from_root(resolved_root).targets_path).with_name("manifest.json")
-	manifest_bytes = canonical_json_bytes(manifest.to_dict())
-	manifest_path.parent.mkdir(parents=True, exist_ok=True)
-	with tempfile.NamedTemporaryFile(
-		mode="wb",
-		delete=False,
-		dir=manifest_path.parent,
-		prefix=f"{manifest_path.stem}.",
-		suffix=".tmp",
-	) as temp_file:
-		temp_file.write(manifest_bytes)
-		temp_file_path = Path(temp_file.name)
-	try:
-		os.replace(temp_file_path, manifest_path)
-	except Exception:
-		if temp_file_path.exists():
-			temp_file_path.unlink()
-		raise
+	manifests_table = table(repo_root, "manifests")
+	db.upsert_rows(manifests_table, "id", [{
+		"id": "catalog",
+		"raw_json": encode(manifest.to_dict()),
+		"text": "",
+	}])
 
 
 def _find_free_port() -> int:
@@ -292,7 +283,6 @@ def _run_catalog_probe(repo_root: Path) -> Path:
 	build_entrypoint = resolve_repo_path(repo_root, BUILD_ENTRYPOINT)
 	probe_output_path = resolve_repo_path(repo_root, PROBE_OUTPUT_PATH)
 	compiled_dmb_path = resolve_repo_path(repo_root, COMPILED_DMB_PATH)
-	probe_started_at_ns = time.time_ns()
 	if probe_output_path.exists():
 		probe_output_path.unlink()
 
@@ -310,8 +300,13 @@ def _run_catalog_probe(repo_root: Path) -> Path:
 
 	if not compiled_dmb_path.exists():
 		raise ValueError(f"Lore catalog probe compile did not produce {COMPILED_DMB_PATH.as_posix()}.")
-	if compiled_dmb_path.stat().st_mtime_ns <= probe_started_at_ns:
-		raise ValueError(f"Lore catalog probe compile did not produce a fresh {COMPILED_DMB_PATH.as_posix()}.")
+	# Deliberately not requiring a fresher mtime than `probe_started_at_ns` here: the build entrypoint
+	# (Juke Build) skips recompiling a target it considers already up to date -- "Skipping 'dm' (up to
+	# date)" -- which is a legitimate, common outcome whenever nothing in the game checkout changed since
+	# the last catalog-refresh, not a failed compile. The real correctness signal is further down: whether
+	# running this .dmb actually produces a fresh `probe_output_path` (it's deleted above before the
+	# build even starts, so its existence afterward can only mean this run's DreamDaemon session produced
+	# it, whether or not the .dmb itself was just recompiled or reused unchanged).
 
 	dreamdaemon_path = _find_dreamdaemon_path()
 	port = _find_free_port()
@@ -337,13 +332,17 @@ def _run_catalog_probe(repo_root: Path) -> Path:
 
 
 def read_current_targets(repo_root: Path) -> list[dict[str, object]]:
-	"""Best-effort read of the currently committed targets.json, for before/after drift comparison."""
-	resolved_root = repo_root.resolve()
+	"""Best-effort read of the currently stored catalog snapshot, for before/after drift comparison."""
 	try:
-		raw = read_json_file(resolved_root, WorkspaceLayout.from_root(resolved_root).targets_path)
+		rows = db.all_rows(table(repo_root, "catalog_targets"))
 	except (OSError, ValueError):
 		return []
-	return raw if isinstance(raw, list) and all(isinstance(item, dict) for item in raw) else []
+	return [decode(row) for row in rows]
+
+
+def read_catalog_manifest(repo_root: Path) -> CatalogManifest | None:
+	row = db.get_row(table(repo_root, "manifests"), "id = 'catalog'")
+	return CatalogManifest.from_dict(decode(row)) if row else None
 
 
 @dataclass(frozen=True)
@@ -394,8 +393,8 @@ def compute_catalog_drift(
 	return CatalogDriftReport(removed_type_paths=removed, changed_type_paths=changed, stale_entry_type_paths=stale_entries)
 
 
-def refresh_catalog(repo_root: Path, *, game_repo_root: Path | None = None) -> list[dict[str, object]]:
-	"""Run the conditional BYOND probe and atomically update targets.json."""
+def refresh_catalog(repo_root: Path, *, game_repo_root: Path | None = None, on_progress=None) -> list[dict[str, object]]:
+	"""Run the conditional BYOND probe and atomically update the catalog store."""
 	resolved_root = repo_root.resolve()
 	resolved_game_root = (game_repo_root or repo_root).resolve()
 	if game_repo_root is not None:
@@ -403,6 +402,6 @@ def refresh_catalog(repo_root: Path, *, game_repo_root: Path | None = None) -> l
 	probe_output_path = _run_catalog_probe(resolved_game_root)
 	raw_targets = _read_probe_json(resolved_game_root, probe_output_path)
 	targets = normalize_targets(raw_targets)
-	targets_bytes = _write_targets(resolved_root, targets)
+	targets_bytes = _write_targets(resolved_root, targets, on_progress=on_progress)
 	_write_catalog_manifest(resolved_root, resolved_game_root, targets_bytes, len(targets))
 	return targets

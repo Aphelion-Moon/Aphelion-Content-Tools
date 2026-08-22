@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parsec — Aphelion Content Tools</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <div class="page-layout">
+      <aside class="page-sidebar">
+        <header class="hero">
+          <p class="eyebrow">Aphelion Content Tools</p>
+          <h1>Parsec</h1>
+          <p>Her home page: who she is, how she animates, and what she's said recently.</p>
+        </header>
+
+        <div id="store-status-widget" class="store-status-widget"></div>
+
+        <div id="reference-panel" class="reference-panel"></div>
+
+        <div class="sidebar-search">
+          <label for="global-search" class="sidebar-search-label">Search</label>
+          <input id="global-search" class="global-search-input" type="search" placeholder="Search catalog entries or pages…">
+          <div class="global-search-results" hidden></div>
+        </div>
+
+        <nav class="tool-nav" aria-label="Tools">
+          <a class="tool-pill tool-pill-home" href="/">Home</a>
+          <a class="tool-pill tool-pill-filemgmt" href="/file-management">File Management</a>
+          <span class="tool-pill tool-pill-parsec active" aria-current="page">Parsec</span>
+          <a class="tool-pill" href="/lore-editor">Lore Editor</a>
+          <a class="tool-pill" href="/graph">Content Graph</a>
+        </nav>
+      </aside>
+
+      <div class="page-content">
+        <section class="card" aria-label="About Parsec">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Meet the mascot</p>
+              <h2>About Parsec</h2>
+            </div>
+          </div>
+          <p>
+            Parsec is this app's resident husky -- she lives in the sidebar on every page, sits or trots
+            depending on whether a background job is running, and delivers a speech-bubble whenever
+            something worth noticing happens: a save, a commit, an error, a completed refresh. Pat her any
+            time; she doesn't mind.
+          </p>
+          <p class="metadata">
+            Artwork: cropped and adapted from <a href="https://opengameart.org/content/husky-sprites" target="_blank" rel="noopener">"Husky Sprites"</a>
+            (OpenGameArt.org), released CC0 / public domain. No attribution was required, but credit is
+            given anyway.
+          </p>
+          <p class="metadata">
+            <strong>Known Windows gotcha:</strong> Windows 10's <em>Settings &gt; Ease of Access &gt;
+            Display &gt; Show animations in Windows</em> toggle (confirmed against a real machine) maps
+            straight to the browser's "reduce motion" preference. With it off, Parsec used to freeze --
+            she'd still switch which pose she showed, but never actually cycle frames or pace her box. She
+            now animates by default regardless of that setting (see Motion below), but if she ever looks
+            static again on a machine where you haven't touched her own Motion setting, check that Windows
+            toggle first.
+          </p>
+        </section>
+
+        <section class="card" aria-label="Motion">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Accessibility</p>
+              <h2>Motion</h2>
+              <p class="metadata">
+                By default Parsec always animates -- she's a small sprite fully confined to her own box,
+                not the large-scale motion your system's reduced-motion setting is meant to guard against,
+                so it's ignored by default. Choose "Follow system setting" here if you'd rather she
+                respected it, or "Always reduce motion" to keep her still no matter what.
+              </p>
+            </div>
+          </div>
+          <div class="control-row">
+            <div class="control-field">
+              <label for="parsec-motion-select">Animation</label>
+              <select id="parsec-motion-select">
+                <option value="">Always animate (default)</option>
+                <option value="follow-system">Follow system setting</option>
+                <option value="reduce">Always reduce motion</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" aria-label="State preview">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Try it out</p>
+              <h2>State preview</h2>
+              <p class="metadata">Trigger her states directly, without waiting for a real job to run.</p>
+            </div>
+          </div>
+          <div class="button-row">
+            <button id="parsec-preview-idle" class="secondary-button" type="button">Idle</button>
+            <button id="parsec-preview-working" class="secondary-button" type="button">Working</button>
+            <button id="parsec-preview-happy" class="secondary-button" type="button">Happy (pat)</button>
+            <button id="parsec-preview-success" class="secondary-button" type="button">Announce success</button>
+            <button id="parsec-preview-error" class="secondary-button" type="button">Announce error</button>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Recent announcements">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Log</p>
+              <h2>Recent announcements</h2>
+              <p class="metadata">The last things Parsec has said, across every page, this session.</p>
+            </div>
+          </div>
+          <div id="parsec-announcement-log" class="changed-file-list">
+            <p class="metadata">Nothing announced yet this session.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <script src="/shell.js"></script>
+  <script src="/floating-ui-core.umd.min.js"></script>
+  <script src="/floating-ui-dom.umd.min.js"></script>
+  <script src="/info-tooltip.js"></script>
+  <script src="/parsec.js"></script>
+  <script src="/store-status-widget.js"></script>
+  <script src="/references-panel.js"></script>
+  <script src="/parsec-page.js"></script>
+</body>
+</html>

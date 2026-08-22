@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,75 +12,50 @@ from tools.lore_editor.api import (
 	save_group_response,
 	save_review_response,
 )
-
-
-def write_json(path: Path, payload: object) -> None:
-	path.parent.mkdir(parents=True, exist_ok=True)
-	path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+from tools.lore_editor.tests.store_helpers import seed_group, seed_override, seed_review, seed_targets
 
 
 class ReviewApiTests(unittest.TestCase):
 	def setUp(self) -> None:
 		self.temp_dir = tempfile.TemporaryDirectory()
 		self.repo_root = Path(self.temp_dir.name)
-		write_json(
-			self.repo_root / "config/aphelion/lore_overhaul/targets.json",
-			[
-				{
-					"type_path": "/datum/language/common",
-					"label": "Common",
-					"field_profile": "named_datum",
-					"base_values": {"name": "Common", "description": "Used by Nanotrasen crews."},
-				},
-				{
-					"type_path": "/obj/item/radio",
-					"label": "Radio",
-					"field_profile": "atom_like",
-					"base_values": {"name": "Radio", "description": "A standard radio."},
-				},
-			],
-		)
-		write_json(
-			self.repo_root / "config/aphelion/lore_overhaul/entities/items.json",
-			[{
-				"id": "items.radio",
+		seed_targets(self.repo_root, [
+			{
+				"type_path": "/datum/language/common",
+				"label": "Common",
+				"field_profile": "named_datum",
+				"base_values": {"name": "Common", "description": "Used by Nanotrasen crews."},
+			},
+			{
 				"type_path": "/obj/item/radio",
-				"name": "Override radio",
-			}],
-		)
-		write_json(
-			self.repo_root / "config/aphelion/lore_overhaul/groups.json",
-			{
-				"groups": [
-					{
-						"id": "languages",
-						"label": "Languages",
-						"color": "#60a5fa",
-						"type_path_prefixes": ["/datum/language"],
-					},
-					{
-						"id": "nanotrasen",
-						"label": "Nanotrasen",
-						"color": "#34d399",
-						"keywords": ["nanotrasen"],
-					},
-				],
-				"assignments": {},
+				"label": "Radio",
+				"field_profile": "atom_like",
+				"base_values": {"name": "Radio", "description": "A standard radio."},
 			},
-		)
-		write_json(
-			self.repo_root / "config/aphelion/lore_overhaul/reviews.json",
-			{
-				"reviews": {
-					"/datum/language/common": {
-						"status": "reviewed",
-						"reviewed_by": "Zoe",
-						"reviewed_at": "2026-08-20T12:00:00+00:00",
-						"notes": "Base language is acceptable.",
-					},
-				},
-			},
-		)
+		])
+		seed_override(self.repo_root, "items", {
+			"id": "items.radio",
+			"type_path": "/obj/item/radio",
+			"name": "Override radio",
+		})
+		seed_group(self.repo_root, {
+			"id": "languages",
+			"label": "Languages",
+			"color": "#60a5fa",
+			"type_path_prefixes": ["/datum/language"],
+		})
+		seed_group(self.repo_root, {
+			"id": "nanotrasen",
+			"label": "Nanotrasen",
+			"color": "#34d399",
+			"keywords": ["nanotrasen"],
+		})
+		seed_review(self.repo_root, "/datum/language/common", {
+			"status": "reviewed",
+			"reviewed_by": "Zoe",
+			"reviewed_at": "2026-08-20T12:00:00+00:00",
+			"notes": "Base language is acceptable.",
+		})
 
 	def tearDown(self) -> None:
 		self.temp_dir.cleanup()
@@ -136,8 +110,8 @@ class ReviewApiTests(unittest.TestCase):
 		self.assertEqual([entry["type_path"] for entry in response["entries"]], ["/obj/item/radio"])
 
 	def test_catalog_suppression_requires_explicit_toggles_and_preserves_icon_metadata(self) -> None:
-		write_json(
-			self.repo_root / "config/aphelion/lore_overhaul/targets.json",
+		seed_targets(
+			self.repo_root,
 			[
 				{
 					"type_path": "/obj/item/radio",

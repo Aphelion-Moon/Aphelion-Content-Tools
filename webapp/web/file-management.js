@@ -18,6 +18,17 @@ function setText(selector, value) {
   document.querySelector(selector).textContent = value;
 }
 
+// Parsec (webapp/web/parsec.js) is this app's standard feedback-reporting surface -- every meaningful
+// success/error here also announces through her, additively alongside the inline status text above,
+// which stays exactly as it was (see references/maintainer-guide.md for the standing convention).
+function announceError(message) {
+  window.AphelionParsec?.announce(message, {kind: 'error', tool: 'file-management'});
+}
+
+function announceSuccess(message) {
+  window.AphelionParsec?.announce(message, {kind: 'success', tool: 'file-management'});
+}
+
 function repositoryLabel(repository) {
   return repository === 'game' ? 'Meridian-Rift' : 'Aphelion Content Tools';
 }
@@ -26,7 +37,25 @@ function renderChangedFileRow(repository, filePath) {
   const row = document.createElement('details');
   row.className = 'changed-file';
   const summary = document.createElement('summary');
-  summary.textContent = filePath;
+  const label = document.createElement('span');
+  label.textContent = filePath;
+  const pinButton = document.createElement('button');
+  pinButton.type = 'button';
+  pinButton.className = 'text-button changed-file-pin';
+  pinButton.textContent = 'Add to references';
+  pinButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    window.AphelionReferences.add({
+      tool: 'file-management',
+      kind: 'file',
+      key: filePath,
+      label: filePath,
+      path: filePath,
+      note: repository,
+    }).catch((error) => console.error(error));
+  });
+  summary.append(label, pinButton);
   row.append(summary);
   const diffOutput = document.createElement('pre');
   diffOutput.className = 'tool-output diff-output';
@@ -38,7 +67,7 @@ function renderChangedFileRow(repository, filePath) {
     loaded = true;
     requestJson('/api/git/diff?repository=' + encodeURIComponent(repository) + '&path=' + encodeURIComponent(filePath))
       .then((payload) => { diffOutput.textContent = payload.diff || '(no textual diff for this change)'; })
-      .catch((error) => { diffOutput.textContent = error.message; loaded = false; });
+      .catch((error) => { diffOutput.textContent = error.message; loaded = false; announceError(error.message); });
   });
   return row;
 }
@@ -108,6 +137,7 @@ async function createRepositoryBranch(repository) {
     body: JSON.stringify({repository, name}),
   });
   setText('#' + repository + '-message', 'Created and switched to ' + name + '.');
+  announceSuccess('Created and switched to ' + name + '.');
   document.querySelector('#' + repository + '-branch-name').value = '';
   await Promise.all([loadRepositoryStatus(), loadBranches(repository)]);
 }
@@ -121,6 +151,7 @@ async function switchRepositoryBranch(repository) {
     body: JSON.stringify({repository, name: branch}),
   });
   setText('#' + repository + '-message', 'Switched to ' + branch + '.');
+  announceSuccess('Switched to ' + branch + '.');
   await Promise.all([loadRepositoryStatus(), loadBranches(repository)]);
 }
 
@@ -135,6 +166,7 @@ async function commitRepositoryChanges(repository) {
     body: JSON.stringify({repository, paths: status.changed_files, message}),
   });
   setText('#' + repository + '-message', 'Committed ' + status.changed_files.length + ' file(s).');
+  announceSuccess('Committed ' + status.changed_files.length + ' file(s).');
   document.querySelector('#' + repository + '-commit-message').value = '';
   await loadRepositoryStatus();
 }
@@ -146,19 +178,20 @@ async function openRepositoryInDesktop(repository) {
     body: JSON.stringify({repository}),
   });
   setText('#' + repository + '-message', 'Opened in GitHub Desktop.');
+  announceSuccess('Opened in GitHub Desktop.');
 }
 
 function attachRepositoryControls(repository) {
   document.querySelector('#' + repository + '-refresh-button').addEventListener('click', () =>
-    Promise.all([loadRepositoryStatus(), loadBranches(repository)]).catch((error) => setText('#' + repository + '-message', error.message)));
+    Promise.all([loadRepositoryStatus(), loadBranches(repository)]).catch((error) => { setText('#' + repository + '-message', error.message); announceError(error.message); }));
   document.querySelector('#' + repository + '-switch-branch-button').addEventListener('click', () =>
-    switchRepositoryBranch(repository).catch((error) => setText('#' + repository + '-message', error.message)));
+    switchRepositoryBranch(repository).catch((error) => { setText('#' + repository + '-message', error.message); announceError(error.message); }));
   document.querySelector('#' + repository + '-create-branch-button').addEventListener('click', () =>
-    createRepositoryBranch(repository).catch((error) => setText('#' + repository + '-message', error.message)));
+    createRepositoryBranch(repository).catch((error) => { setText('#' + repository + '-message', error.message); announceError(error.message); }));
   document.querySelector('#' + repository + '-commit-button').addEventListener('click', () =>
-    commitRepositoryChanges(repository).catch((error) => setText('#' + repository + '-message', error.message)));
+    commitRepositoryChanges(repository).catch((error) => { setText('#' + repository + '-message', error.message); announceError(error.message); }));
   document.querySelector('#' + repository + '-open-desktop-button').addEventListener('click', () =>
-    openRepositoryInDesktop(repository).catch((error) => setText('#' + repository + '-message', error.message)));
+    openRepositoryInDesktop(repository).catch((error) => { setText('#' + repository + '-message', error.message); announceError(error.message); }));
 }
 
 function renderExportStages() {
@@ -199,6 +232,7 @@ async function prepareExport() {
   document.querySelector('#export-output').textContent =
     'Prepared stage ' + payload.stage + '. Review the manifest below, then click Apply to write it into Meridian-Rift.\n\n' +
     JSON.stringify(payload.manifest || payload, null, 2);
+  announceSuccess('Prepared export stage ' + payload.stage + '.');
   await Promise.all([loadExportStages(), loadRepositoryStatus()]);
 }
 
@@ -229,13 +263,35 @@ async function applySelectedExport(force = false) {
   document.querySelector('#export-output').textContent =
     'Applied ' + payload.artifact + (force ? ' (overrode the uncommitted-changes check)' : '') + '.\n' +
     'Review the game diff above under Meridian-Rift, then commit it locally.\n' + desktopNote;
+  announceSuccess('Applied ' + payload.artifact + '.');
   await loadRepositoryStatus();
 }
 
+// Which panel group each tool's button renders into. "refresh-validate" is the one pipeline step most
+// users want; its individual halves (catalog-refresh/validate/generate) move into the "advanced"
+// disclosure instead of sitting at the same top-level priority as a visibly duplicate action.
+const TOOL_GROUPS = {
+  'refresh-validate': 'tool-list-catalog',
+  'catalog-refresh': 'tool-list-catalog-advanced',
+  'validate': 'tool-list-catalog-advanced',
+  'generate': 'tool-list-catalog-advanced',
+  'scan-content': 'tool-list-graph',
+  'rebuild-search-embeddings': 'tool-list-maintenance',
+  'optimize-store': 'tool-list-maintenance',
+};
+
 function renderTools(tools) {
-  const list = document.querySelector('#tool-list');
-  list.replaceChildren();
+  const lists = new Map();
+  for (const containerId of new Set(Object.values(TOOL_GROUPS))) {
+    const container = document.querySelector('#' + containerId);
+    if (container) {
+      container.replaceChildren();
+      lists.set(containerId, container);
+    }
+  }
   for (const tool of tools) {
+    const containerId = TOOL_GROUPS[tool.id] || 'tool-list-catalog';
+    const list = lists.get(containerId) || document.querySelector('#tool-list-catalog');
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.toolId = tool.id;
@@ -243,6 +299,38 @@ function renderTools(tools) {
     button.title = tool.description || '';
     button.addEventListener('click', () => runTool(tool.id));
     list.append(button);
+  }
+}
+
+function formatBytes(bytes) {
+  if (!bytes) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return (unitIndex === 0 ? value : value.toFixed(1)) + ' ' + units[unitIndex];
+}
+
+async function loadStoreHealth() {
+  const container = document.querySelector('#store-health');
+  if (!container) return;
+  try {
+    const health = await requestJson('/api/store/health');
+    const lastWrite = health.last_write_time
+      ? new Date(health.last_write_time * 1000).toLocaleString()
+      : 'never (this session)';
+    const tableRows = Object.entries(health.tables || {})
+      .map(([name, count]) => `<span>${name}: ${count.toLocaleString()}</span>`)
+      .join('');
+    container.innerHTML =
+      `<strong>${health.total_rows.toLocaleString()}</strong> total rows across ${Object.keys(health.tables || {}).length} tables · ` +
+      `${formatBytes(health.disk_bytes)} on disk · last write ${lastWrite}` +
+      `<div class="store-health-tables">${tableRows}</div>`;
+  } catch (error) {
+    container.textContent = 'Database health unavailable: ' + error.message;
   }
 }
 
@@ -257,9 +345,16 @@ async function pollTool(runId) {
     return;
   }
   document.querySelectorAll('[data-tool-id]').forEach((button) => { button.disabled = false; });
+  const stopButton = document.querySelector('#stop-tool-button');
+  stopButton.hidden = true;
+  stopButton.onclick = null;
   if (payload.status === 'succeeded') {
+    announceSuccess(payload.tool_id + ' completed successfully.');
     await loadRepositoryStatus();
     if (payload.tool_id === 'catalog-refresh') await loadExportStages();
+    await loadStoreHealth();
+  } else if (payload.status === 'failed') {
+    announceError(payload.tool_id + ' failed.');
   }
 }
 
@@ -268,9 +363,18 @@ async function runTool(toolId) {
   document.querySelector('#tool-output').textContent = 'Starting ' + toolId + '…';
   try {
     const payload = await requestJson('/api/tools/' + encodeURIComponent(toolId), {method: 'POST'});
+    const stopButton = document.querySelector('#stop-tool-button');
+    stopButton.hidden = false;
+    stopButton.disabled = false;
+    stopButton.onclick = () => {
+      stopButton.disabled = true;
+      requestJson('/api/tools/runs/' + encodeURIComponent(payload.run_id) + '/stop', {method: 'POST'})
+        .catch((error) => { document.querySelector('#tool-output').textContent = error.message; announceError(error.message); });
+    };
     await pollTool(payload.run_id);
   } catch (error) {
     document.querySelector('#tool-output').textContent = error.message;
+    announceError(error.message);
     document.querySelectorAll('[data-tool-id]').forEach((button) => { button.disabled = false; });
   }
 }
@@ -280,11 +384,11 @@ function attachEvents() {
   attachRepositoryControls('game');
   document.querySelector('#prepare-export-button').addEventListener('click', () => {
     document.querySelector('#export-output').textContent = 'Preparing export…';
-    prepareExport().catch((error) => { document.querySelector('#export-output').textContent = error.message; });
+    prepareExport().catch((error) => { document.querySelector('#export-output').textContent = error.message; announceError(error.message); });
   });
   document.querySelector('#apply-export-button').addEventListener('click', () => {
     document.querySelector('#export-output').textContent = 'Applying export…';
-    applySelectedExport().catch((error) => { document.querySelector('#export-output').textContent = error.message; });
+    applySelectedExport().catch((error) => { document.querySelector('#export-output').textContent = error.message; announceError(error.message); });
   });
 }
 
@@ -292,7 +396,7 @@ async function loadPageData() {
   const tools = await requestJson('/api/tools');
   renderTools(tools.tools || []);
   await loadRepositoryStatus();
-  await Promise.all([loadExportStages(), loadBranches('tool'), loadBranches('game')]);
+  await Promise.all([loadExportStages(), loadBranches('tool'), loadBranches('game'), loadStoreHealth()]);
 }
 
 function initialize() {
@@ -300,6 +404,7 @@ function initialize() {
   loadPageData().catch((error) => {
     setText('#tool-message', error.message);
     setText('#game-message', error.message);
+    announceError(error.message);
   });
 }
 
@@ -315,7 +420,7 @@ if (typeof window !== 'undefined') {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {repositoryLabel};
+  module.exports = {repositoryLabel, formatBytes};
 }
 
 })();

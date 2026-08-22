@@ -14,3 +14,10 @@ test('repositoryLabel maps anything else (including "tool") to the tool reposito
   assert.equal(app.repositoryLabel('tool'), 'Aphelion Content Tools');
   assert.equal(app.repositoryLabel('unknown'), 'Aphelion Content Tools');
 });
+
+test('formatBytes renders human-readable sizes at the appropriate unit', () => {
+  assert.equal(app.formatBytes(0), '0 B');
+  assert.equal(app.formatBytes(512), '512 B');
+  assert.equal(app.formatBytes(2048), '2.0 KB');
+  assert.equal(app.formatBytes(5 * 1024 * 1024), '5.0 MB');
+});

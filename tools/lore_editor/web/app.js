@@ -56,6 +56,17 @@ function setText(selector, value) {
   document.querySelector(selector).textContent = value;
 }
 
+// Parsec (webapp/web/parsec.js) is this app's standard feedback-reporting surface -- every meaningful
+// success/error here also announces through her, additively alongside the inline status text above,
+// which stays exactly as it was (see references/maintainer-guide.md for the standing convention).
+function announceError(message) {
+  window.AphelionParsec?.announce(message, {kind: 'error', tool: 'lore-editor'});
+}
+
+function announceSuccess(message) {
+  window.AphelionParsec?.announce(message, {kind: 'success', tool: 'lore-editor'});
+}
+
 function statusLabel(status) {
   return STATUS_LABELS[status] || status || 'Unknown';
 }
@@ -117,7 +128,7 @@ function renderGroups() {
     input.addEventListener('change', () => {
       if (input.checked) state.filters.groups.add(group.id);
       else state.filters.groups.delete(group.id);
-      loadReviewEntries().catch((error) => setText('#status-message', error.message));
+      loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
     });
     const swatch = document.createElement('span');
     swatch.className = 'group-swatch';
@@ -237,7 +248,7 @@ function renderEntries() {
     loadMore.className = 'secondary-button load-more-button';
     loadMore.textContent = 'Load more entries';
     loadMore.disabled = state.loadingMoreEntries === true;
-    loadMore.addEventListener('click', () => loadReviewEntries({append: true}).catch((error) => setText('#status-message', error.message)));
+    loadMore.addEventListener('click', () => loadReviewEntries({append: true}).catch((error) => { setText('#status-message', error.message); announceError(error.message); }));
     list.append(loadMore);
   }
 }
@@ -315,6 +326,7 @@ async function loadIconStates(file, selectedState = '') {
     if (requestSerial === state.iconStateRequestSerial) {
       renderIconStateOptions([], selectedState);
       setText('#icon-message', error.message);
+      announceError(error.message);
     }
   }
 }
@@ -394,7 +406,7 @@ function renderOpenActionsRow(label, repository, path, line) {
   heading.className = 'metadata';
   heading.textContent = label + (line ? ' (line ' + line + ')' : '') + ':';
   row.append(heading);
-  window.AphelionOpenInMenu.render(row, {repository, path, line, onError: (message) => setText('#status-message', message)});
+  window.AphelionOpenInMenu.render(row, {repository, path, line, onError: (message) => { setText('#status-message', message); announceError(message); }});
   return row;
 }
 
@@ -468,6 +480,16 @@ function selectEntry(entry) {
   setEditorControls();
   renderEntryOpenActions(entry);
   document.querySelector('#validation-panel').textContent = '';
+  const addReferenceButton = document.querySelector('#add-reference-button');
+  addReferenceButton.hidden = !entry.type_path;
+  addReferenceButton.onclick = () => {
+    window.AphelionReferences.add({
+      tool: 'lore-editor',
+      kind: 'catalog_target',
+      key: entry.type_path,
+      label: entry.name || entry.base_name || entry.type_path,
+    }).catch((error) => { setText('#status-message', error.message); announceError(error.message); });
+  };
 }
 
 function formEntry() {
@@ -653,6 +675,7 @@ async function saveGroup(event) {
     renderGroups();
     renderConfigGroups();
     setText('#status-message', 'Group configuration saved.');
+    announceSuccess('Group configuration saved.');
     await loadGroupsData();
     await loadReviewEntries();
   } finally {
@@ -709,11 +732,13 @@ async function removeOverride() {
       body: JSON.stringify({source_file: state.selected.source_file}),
     });
     setText('#status-message', 'Override removed and generated.');
+    announceSuccess('Override removed and generated.');
     const typePath = state.selected.type_path;
     await loadReviewEntries();
     refreshReviewTarget(typePath);
   } catch (error) {
     setText('#status-message', error.message);
+    announceError(error.message);
   } finally {
     removeButton.disabled = false;
   }
@@ -760,20 +785,25 @@ async function saveEntry(event) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({source_file: state.selected.source_file, entry: validation.entry}),
       });
-      setText('#status-message', response.saved ? 'Saved and generated.' : 'Save completed.');
+      const message = response.saved ? 'Saved and generated.' : 'Save completed.';
+      setText('#status-message', message);
+      announceSuccess(message);
     } else {
       const response = await requestJson('/api/entries', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({source_file: selectedSourceFile(), entry: validation.entry}),
       });
-      setText('#status-message', response.created ? 'Override created and generated.' : 'Override saved.');
+      const message = response.created ? 'Override created and generated.' : 'Override saved.';
+      setText('#status-message', message);
+      announceSuccess(message);
     }
     const typePath = state.selected.type_path;
     await loadReviewEntries();
     refreshReviewTarget(typePath);
   } catch (error) {
     document.querySelector('#validation-panel').textContent = error.message;
+    announceError(error.message);
   } finally {
     saveButton.disabled = false;
   }
@@ -785,39 +815,39 @@ function attachEditorEvents() {
   document.querySelector('#create-group-button').addEventListener('click', startNewGroup);
   document.querySelector('#config-new-group-button').addEventListener('click', startNewGroup);
   document.querySelector('#cancel-group-button').addEventListener('click', () => { document.querySelector('#group-editor').hidden = true; state.groupDraftId = null; });
-  document.querySelector('#group-editor').addEventListener('submit', (event) => saveGroup(event).catch((error) => setText('#status-message', error.message)));
+  document.querySelector('#group-editor').addEventListener('submit', (event) => saveGroup(event).catch((error) => { setText('#status-message', error.message); announceError(error.message); }));
   document.querySelector('#select-all-group-filters').addEventListener('click', () => {
     state.filters.groups = new Set(state.groups.map((group) => group.id));
     renderGroups();
-    loadReviewEntries().catch((error) => setText('#status-message', error.message));
+    loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
   });
   document.querySelector('#clear-group-filters').addEventListener('click', () => {
     state.filters.groups.clear();
     renderGroups();
-    loadReviewEntries().catch((error) => setText('#status-message', error.message));
+    loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
   });
   document.querySelector('#clear-status-filters').addEventListener('click', () => {
     state.filters.statuses = new Set(Object.keys(STATUS_LABELS));
     document.querySelectorAll('#status-filters input[name="status"]').forEach((input) => { input.checked = true; });
-    loadReviewEntries().catch((error) => setText('#status-message', error.message));
+    loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
   });
   document.querySelector('#show-directional').addEventListener('change', (event) => {
     state.filters.includeDirectional = event.target.checked;
-    loadReviewEntries().catch((error) => setText('#status-message', error.message));
+    loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
   });
   document.querySelector('#show-redundant').addEventListener('change', (event) => {
     state.filters.includeRedundant = event.target.checked;
-    loadReviewEntries().catch((error) => setText('#status-message', error.message));
+    loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
   });
   document.querySelectorAll('#status-filters input[name="status"]').forEach((input) => {
     input.addEventListener('change', () => {
       state.filters.statuses = new Set(Array.from(document.querySelectorAll('#status-filters input[name="status"]:checked')).map((item) => item.value));
-      loadReviewEntries().catch((error) => setText('#status-message', error.message));
+      loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
     });
   });
   document.querySelector('#sort-select').addEventListener('change', (event) => {
     state.filters.sort = event.target.value;
-    loadReviewEntries().catch((error) => setText('#status-message', error.message));
+    loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
   });
   document.querySelector('#clear-filters').addEventListener('click', () => {
     state.filters.query = '';
@@ -832,12 +862,12 @@ function attachEditorEvents() {
     document.querySelector('#show-redundant').checked = false;
     document.querySelectorAll('#status-filters input[name="status"]').forEach((input) => { input.checked = true; });
     renderGroups();
-    loadReviewEntries().catch((error) => setText('#status-message', error.message));
+    loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
   });
   document.querySelector('#search').addEventListener('input', (event) => {
     state.filters.query = event.target.value.trim();
     window.clearTimeout(state.searchTimer);
-    state.searchTimer = window.setTimeout(() => loadReviewEntries().catch((error) => setText('#status-message', error.message)), 150);
+    state.searchTimer = window.setTimeout(() => loadReviewEntries().catch((error) => { setText('#status-message', error.message); announceError(error.message); }), 150);
   });
   document.querySelector('#entry-name').addEventListener('input', (event) => setText('#after-preview', event.target.value || '(unchanged)'));
   document.querySelector('#entry-description').addEventListener('input', (event) => setText('#after-description-preview', event.target.value || '(unchanged)'));
@@ -852,10 +882,10 @@ function attachEditorEvents() {
   document.querySelector('#icon-state').addEventListener('change', () => { state.iconDraftChanged = true; updateIconPreviews(); });
   document.querySelector('#entry-form').addEventListener('submit', saveEntry);
   document.querySelector('#create-override-button').addEventListener('click', createOverride);
-  document.querySelector('#remove-override-button').addEventListener('click', () => removeOverride().catch((error) => setText('#status-message', error.message)));
-  document.querySelector('#mark-reviewed-button').addEventListener('click', () => saveReview('reviewed').catch((error) => setText('#status-message', error.message)));
-  document.querySelector('#flag-attention-button').addEventListener('click', () => saveReview('needs-attention').catch((error) => setText('#status-message', error.message)));
-  document.querySelector('#clear-review-button').addEventListener('click', () => saveReview(null).catch((error) => setText('#status-message', error.message)));
+  document.querySelector('#remove-override-button').addEventListener('click', () => removeOverride().catch((error) => { setText('#status-message', error.message); announceError(error.message); }));
+  document.querySelector('#mark-reviewed-button').addEventListener('click', () => saveReview('reviewed').catch((error) => { setText('#status-message', error.message); announceError(error.message); }));
+  document.querySelector('#flag-attention-button').addEventListener('click', () => saveReview('needs-attention').catch((error) => { setText('#status-message', error.message); announceError(error.message); }));
+  document.querySelector('#clear-review-button').addEventListener('click', () => saveReview(null).catch((error) => { setText('#status-message', error.message); announceError(error.message); }));
 }
 
 async function loadEditorData() {
@@ -878,11 +908,13 @@ async function loadEditorData() {
 
 function initializeEditor() {
   attachEditorEvents();
-  loadEditorData().catch((error) => setText('#status-message', error.message));
+  loadEditorData().catch((error) => { setText('#status-message', error.message); announceError(error.message); });
 }
 
 function showServerLaunchMessage() {
-  setText('#status-message', 'This editor must be launched through the repository server. Run: python webapp/serve.py --repo-root . --port 0');
+  const message = 'This editor must be launched through the repository server. Run: python webapp/serve.py --repo-root . --port 0';
+  setText('#status-message', message);
+  announceError(message);
   document.querySelector('#search').disabled = true;
 }
 
@@ -900,6 +932,7 @@ async function selectEntryByTypePath(typePath, query) {
     selectEntry(match);
   } else {
     setText('#status-message', 'Could not find that entry — it may be filtered out or no longer exist.');
+    announceError('Could not find that entry — it may be filtered out or no longer exist.');
   }
 }
 
@@ -909,7 +942,12 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('aphelion:search-select-entry', (event) => {
     if (!event.detail || !event.detail.typePath) return;
-    selectEntryByTypePath(event.detail.typePath, event.detail.query).catch((error) => setText('#status-message', error.message));
+    selectEntryByTypePath(event.detail.typePath, event.detail.query).catch((error) => { setText('#status-message', error.message); announceError(error.message); });
+  });
+
+  window.addEventListener('aphelion:reference-select', (event) => {
+    if (!event.detail || event.detail.tool !== 'lore-editor' || event.detail.kind !== 'catalog_target') return;
+    selectEntryByTypePath(event.detail.key).catch((error) => { setText('#status-message', error.message); announceError(error.message); });
   });
 }
 

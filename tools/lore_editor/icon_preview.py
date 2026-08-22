@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tools.dmi import Dmi
 
-from .source import resolve_repo_path
+from webapp.path_safety import resolve_repo_path
 
 
 class IconPreviewNotFound(ValueError):
