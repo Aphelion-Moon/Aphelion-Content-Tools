@@ -129,8 +129,26 @@ class WorkerExecutionTests(unittest.TestCase):
 				time.sleep(0.02)
 			self.worker.stop(run["run_id"])
 			current = self._wait_until_finished(run["run_id"])
-		self.assertEqual(current["status"], "stopped")
-		self.assertNotIn("tick 49", current["output"])  # genuinely interrupted, not left to finish
+			self.assertEqual(current["status"], "stopped")
+			self.assertNotIn("tick 49", current["output"])  # genuinely interrupted, not left to finish
+
+	def test_stopping_a_silent_python_job_does_not_wait_for_output(self) -> None:
+		started = threading.Event()
+
+		def fake_main(argv: list[str]) -> int:
+			started.set()
+			deadline = time.monotonic() + 5
+			counter = 0
+			while time.monotonic() < deadline:
+				counter += 1
+			return counter
+
+		with patch.object(store_worker, "_load_cli_main", return_value=fake_main):
+			run = self.worker.start(FAST_DEFINITION, None)
+			self.assertTrue(started.wait(timeout=2))
+			self.worker.stop(run["run_id"])
+			current = self._wait_until_finished(run["run_id"], timeout=2)
+			self.assertEqual(current["status"], "stopped")
 
 	def test_jobs_against_the_same_worker_run_one_at_a_time(self) -> None:
 		release = threading.Event()
@@ -181,6 +199,24 @@ class WorkerExecutionTests(unittest.TestCase):
 			release.set()
 			self._wait_until_finished(run["run_id"])
 			self.assertEqual(self.worker.list_active(), [])
+
+	def test_new_worker_recovers_an_interrupted_run_as_failed(self) -> None:
+		with self.worker._runs_lock:
+			self.worker._runs["interrupted"] = {
+				"run_id": "interrupted",
+				"tool_id": FAST_DEFINITION.id,
+				"status": "running",
+				"output": "",
+				"exit_code": None,
+				"log_path": "tools/logs/interrupted.log",
+				"stop_requested": False,
+				"queued_at": time.time(),
+			}
+			self.worker._persist_run_locked("interrupted")
+
+		recovered = Worker(self.repo_root).status("interrupted")
+		self.assertEqual(recovered["status"], "failed")
+		self.assertIn("worker exited", recovered["output"].lower())
 
 
 class RunOutputStreamTests(unittest.TestCase):
@@ -239,6 +275,12 @@ class PipeAddressTests(unittest.TestCase):
 		address_b = pipe_address(Path("/b"))
 		self.assertNotEqual(address_a, address_b)
 		self.assertTrue(address_a.startswith(r"\\.\pipe\aphelion-store-worker-"))
+
+	def test_worker_rejects_a_request_claiming_another_repository(self) -> None:
+		with tempfile.TemporaryDirectory() as temporary_directory:
+			worker = Worker(Path(temporary_directory))
+			with self.assertRaises(ValueError):
+				store_worker._validate_request_repo(worker, {"repo_root": str(Path(temporary_directory) / "other")})
 
 
 if __name__ == "__main__":

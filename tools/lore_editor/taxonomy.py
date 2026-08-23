@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from webapp.store import db
-from webapp.store.schema import decode, encode, table
+from webapp.store.schema import decode, table
 
 from .model import (
 	DEFAULT_KEYWORD_SCOPE,
@@ -17,6 +17,8 @@ from .model import (
 	ReviewRecord,
 	thaw_json,
 )
+from .records import CONTENT_ROOT, atomic_write_record, canonical_record_hash, read_record, record_path
+from .write_coordinator import RecordConflict, repository_write_lock
 
 GROUP_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REVIEW_STATUSES = frozenset(("reviewed", "needs-attention"))
@@ -81,13 +83,21 @@ def _group_payload(group: GroupRecord) -> dict[str, object]:
 
 
 def load_groups(repo_root: Path) -> GroupConfig:
-	group_rows = db.all_rows(table(repo_root, "groups"))
-	groups = tuple(sorted((_group_from_raw(decode(row)) for row in group_rows), key=lambda group: group.id))
-	assignment_rows = db.all_rows(table(repo_root, "assignments"))
+	resolved_root = repo_root.resolve()
+	group_directory = resolved_root / CONTENT_ROOT / "groups"
+	if group_directory.is_dir():
+		group_payloads = [read_record(path) for path in sorted(group_directory.rglob("*.json"))]
+	else:
+		group_payloads = [decode(row) for row in db.all_rows(table(resolved_root, "groups"))]
+	groups = tuple(sorted((_group_from_raw(payload) for payload in group_payloads), key=lambda group: group.id))
+	assignment_directory = resolved_root / CONTENT_ROOT / "assignments"
+	if assignment_directory.is_dir():
+		assignment_payloads = [read_record(path) for path in sorted(assignment_directory.rglob("*.json"))]
+	else:
+		assignment_payloads = [decode(row) for row in db.all_rows(table(resolved_root, "assignments"))]
 	assignments: dict[str, tuple[str, ...]] = {}
 	group_ids = {group.id for group in groups}
-	for row in assignment_rows:
-		record = decode(row)
+	for record in assignment_payloads:
 		type_path = record.get("type_path")
 		if not isinstance(type_path, str):
 			raise ValueError("Assignment record must contain a type_path.")
@@ -121,10 +131,14 @@ def _review_from_raw(type_path: str, raw_record: object) -> ReviewRecord:
 
 
 def load_reviews(repo_root: Path) -> dict[str, ReviewRecord]:
-	rows = db.all_rows(table(repo_root, "reviews"))
+	resolved_root = repo_root.resolve()
+	review_directory = resolved_root / CONTENT_ROOT / "reviews"
+	if review_directory.is_dir():
+		payloads = [read_record(path) for path in sorted(review_directory.rglob("*.json"))]
+	else:
+		payloads = [decode(row) for row in db.all_rows(table(resolved_root, "reviews"))]
 	reviews: dict[str, ReviewRecord] = {}
-	for row in rows:
-		record = decode(row)
+	for record in payloads:
 		type_path = record.get("type_path")
 		if not isinstance(type_path, str):
 			raise ValueError("Review record must contain a type_path.")
@@ -132,66 +146,188 @@ def load_reviews(repo_root: Path) -> dict[str, ReviewRecord]:
 	return reviews
 
 
-def save_group(repo_root: Path, group: GroupRecord) -> GroupRecord:
+def save_group(
+	repo_root: Path,
+	group: GroupRecord,
+	*,
+	expected_record_hash: str | None = None,
+	enforce_record_hash: bool = False,
+	require_new: bool = False,
+) -> GroupRecord:
 	_validate_group_id(group.id)
 	payload = _group_payload(group)
 	_group_from_raw(payload)
-	groups_table = table(repo_root, "groups")
-	db.upsert_rows(groups_table, "id", [{
-		"id": group.id,
-		"raw_json": encode(payload),
-		"text": f"{group.label} {' '.join(group.keywords)}",
-	}])
+	resolved_root = repo_root.resolve()
+	with repository_write_lock(resolved_root):
+		from .reconcile import materialize_legacy_records
+
+		materialize_legacy_records(resolved_root, "group")
+		path = record_path(resolved_root, "group", group.id)
+		previous_payload = read_record(path) if path.exists() else None
+		current_hash = canonical_record_hash(previous_payload) if previous_payload is not None else None
+		if require_new and previous_payload is not None:
+			raise RecordConflict(
+				record_id=group.id,
+				expected_hash=None,
+				current_hash=current_hash,
+				base=None,
+				current=previous_payload,
+				proposed=payload,
+			)
+		if (enforce_record_hash or expected_record_hash is not None) and expected_record_hash != current_hash:
+			raise RecordConflict(
+				record_id=group.id,
+				expected_hash=expected_record_hash,
+				current_hash=current_hash,
+				base=None,
+				current=previous_payload,
+				proposed=payload,
+			)
+		atomic_write_record(path, payload)
 	return group
 
 
-def save_group_assignments(repo_root: Path, type_path: str, group_ids: tuple[str, ...]) -> None:
+def delete_group(repo_root: Path, group_id: str, *, expected_record_hash: str) -> int:
+	"""Delete one group and remove its ID from every manual assignment atomically."""
+	_validate_group_id(group_id)
+	resolved_root = repo_root.resolve()
+	with repository_write_lock(resolved_root):
+		from .reconcile import materialize_legacy_records
+
+		materialize_legacy_records(resolved_root, "group")
+		materialize_legacy_records(resolved_root, "assignment")
+		group_path = record_path(resolved_root, "group", group_id)
+		if not group_path.exists():
+			raise ValueError(f"Group '{group_id}' was not found.")
+		group_payload = read_record(group_path)
+		current_hash = canonical_record_hash(group_payload)
+		if expected_record_hash != current_hash:
+			raise RecordConflict(
+				record_id=group_id,
+				expected_hash=expected_record_hash,
+				current_hash=current_hash,
+				base=None,
+				current=group_payload,
+				proposed=None,
+			)
+
+		assignment_root = resolved_root / CONTENT_ROOT / "assignments"
+		updates: list[tuple[Path, dict[str, object], dict[str, object] | None]] = []
+		if assignment_root.is_dir():
+			for path in sorted(assignment_root.rglob("*.json")):
+				payload = read_record(path)
+				group_ids = payload.get("group_ids")
+				if not isinstance(group_ids, list) or group_id not in group_ids:
+					continue
+				remaining = [value for value in group_ids if value != group_id]
+				updated = {**payload, "group_ids": remaining} if remaining else None
+				updates.append((path, payload, updated))
+
+		try:
+			for path, _previous, updated in updates:
+				if updated is None:
+					path.unlink()
+				else:
+					atomic_write_record(path, updated)
+			group_path.unlink()
+		except Exception:
+			atomic_write_record(group_path, group_payload)
+			for path, previous, _updated in updates:
+				atomic_write_record(path, previous)
+			raise
+		return len(updates)
+
+
+def save_group_assignments(
+	repo_root: Path,
+	type_path: str,
+	group_ids: tuple[str, ...],
+	*,
+	expected_record_hash: str | None = None,
+	enforce_record_hash: bool = False,
+) -> None:
 	if not type_path.startswith("/"):
 		raise ValueError("Group assignments must use absolute type paths.")
 	config = load_groups(repo_root)
 	if any(group_id not in {group.id for group in config.groups} for group_id in group_ids):
 		raise ValueError("Group assignments reference an unknown group.")
-	assignments_table = table(repo_root, "assignments")
-	if group_ids:
-		db.upsert_rows(assignments_table, "id", [{
-			"id": _target_slug(type_path),
-			"type_path": type_path,
-			"raw_json": encode({"type_path": type_path, "group_ids": list(group_ids)}),
-			"text": type_path,
-		}])
-	else:
-		db.delete_rows(assignments_table, f"id = '{_target_slug(type_path)}'")
+	resolved_root = repo_root.resolve()
+	with repository_write_lock(resolved_root):
+		from .reconcile import materialize_legacy_records
+
+		materialize_legacy_records(resolved_root, "assignment")
+		path = record_path(resolved_root, "assignment", type_path)
+		previous_payload = read_record(path) if path.exists() else None
+		current_hash = canonical_record_hash(previous_payload) if previous_payload is not None else None
+		payload = {"type_path": type_path, "group_ids": list(group_ids)}
+		if (enforce_record_hash or expected_record_hash is not None) and expected_record_hash != current_hash:
+			raise RecordConflict(
+				record_id=type_path,
+				expected_hash=expected_record_hash,
+				current_hash=current_hash,
+				base=None,
+				current=previous_payload,
+				proposed=payload if group_ids else None,
+			)
+		if group_ids:
+			atomic_write_record(path, payload)
+		else:
+			path.unlink(missing_ok=True)
 
 
-def save_review(repo_root: Path, type_path: str, record: ReviewRecord | None) -> None:
+def save_review(
+	repo_root: Path,
+	type_path: str,
+	record: ReviewRecord | None,
+	*,
+	expected_record_hash: str | None = None,
+	enforce_record_hash: bool = False,
+) -> None:
 	if not type_path.startswith("/"):
 		raise ValueError("Review keys must be absolute type paths.")
-	reviews_table = table(repo_root, "reviews")
-	if record is None:
-		db.delete_rows(reviews_table, f"id = '{_target_slug(type_path)}'")
-		return
-	validated = _review_from_raw(type_path, {
-		"status": record.status,
-		"reviewed_by": record.reviewed_by,
-		"reviewed_at": record.reviewed_at,
-		"notes": record.notes,
-	})
-	db.upsert_rows(reviews_table, "id", [{
-		"id": _target_slug(type_path),
-		"type_path": type_path,
-		"raw_json": encode({
+	resolved_root = repo_root.resolve()
+	with repository_write_lock(resolved_root):
+		from .reconcile import materialize_legacy_records
+
+		materialize_legacy_records(resolved_root, "review")
+		path = record_path(resolved_root, "review", type_path)
+		previous_payload = read_record(path) if path.exists() else None
+		current_hash = canonical_record_hash(previous_payload) if previous_payload is not None else None
+		if record is None:
+			if (enforce_record_hash or expected_record_hash is not None) and expected_record_hash != current_hash:
+				raise RecordConflict(
+					record_id=type_path,
+					expected_hash=expected_record_hash,
+					current_hash=current_hash,
+					base=None,
+					current=previous_payload,
+					proposed=None,
+				)
+			path.unlink(missing_ok=True)
+			return
+		validated = _review_from_raw(type_path, {
+			"status": record.status,
+			"reviewed_by": record.reviewed_by,
+			"reviewed_at": record.reviewed_at,
+			"notes": record.notes,
+		})
+		payload = {
 			"type_path": type_path,
 			"status": validated.status,
 			"reviewed_by": validated.reviewed_by,
 			"reviewed_at": validated.reviewed_at,
 			"notes": validated.notes,
-		}),
-		"text": f"{type_path} {validated.notes}",
-	}])
-
-
-def _target_slug(type_path: str) -> str:
-	return re.sub(r"[^a-zA-Z0-9]+", "-", type_path.removeprefix("/")).strip("-").casefold() or "root"
+		}
+		if (enforce_record_hash or expected_record_hash is not None) and expected_record_hash != current_hash:
+			raise RecordConflict(
+				record_id=type_path,
+				expected_hash=expected_record_hash,
+				current_hash=current_hash,
+				base=None,
+				current=previous_payload,
+				proposed=payload,
+			)
+		atomic_write_record(path, payload)
 
 
 def _flatten_text(value: object) -> str:

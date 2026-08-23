@@ -11,11 +11,12 @@ from webapp.git_adapter import (
 	github_blob_url,
 	line_history,
 	list_branches,
+	list_owned_changes,
 	open_file_in_default_app,
 	open_in_github_desktop,
 	repository_status,
 	reveal_file_in_file_explorer,
-	stage_and_commit,
+	stage_owned_and_commit,
 	switch_branch,
 )
 
@@ -46,7 +47,13 @@ Repo = Annotated[RepositoryName, Query(description="Which checkout: this tool's 
 @router.get("/status", response_model=RepositoryStatus)
 def read_status(ctx: Ctx, repository: Repo = "tool") -> object:
 	status = repository_status(ctx.repository(repository))
-	return asdict(status) | {"conflicted": status.conflicted}
+	owned_changes = list_owned_changes(ctx.repository(repository), repository)
+	owned_paths = {change.path for change in owned_changes}
+	return asdict(status) | {
+		"conflicted": status.conflicted,
+		"owned_changes": [asdict(change) for change in owned_changes],
+		"unowned_changes": [path for path in status.changed_files if path not in owned_paths],
+	}
 
 
 @router.get("/branches", response_model=BranchListResponse)
@@ -93,7 +100,12 @@ def post_commit(payload: CommitRequest, ctx: Ctx) -> object:
 	Local commits only, by design: pushes, pull requests, and merge-conflict resolution stay in GitHub
 	Desktop, which owns authentication.
 	"""
-	commit_sha = stage_and_commit(ctx.repository(payload.repository), tuple(payload.paths), payload.message)
+	commit_sha = stage_owned_and_commit(
+		ctx.repository(payload.repository),
+		payload.repository,
+		tuple(payload.paths),
+		payload.message,
+	)
 	return {"repository": payload.repository, "commit": commit_sha}
 
 

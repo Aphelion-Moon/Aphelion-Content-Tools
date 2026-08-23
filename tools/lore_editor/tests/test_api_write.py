@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from tools.lore_editor.records import canonical_record_bytes, canonical_record_hash, record_path
 from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
 from webapp.store import db
 from webapp.store.schema import decode, table
@@ -52,6 +54,62 @@ class ApiWriteTests(unittest.TestCase):
 		self.assertEqual(result["id"], "items.radio")
 		self.assertEqual(decode(self.override_row(repo_root, "items.radio"))["name"], "New radio")
 		self.assertIn('name = "New radio"', (repo_root / GENERATED_PATH).read_text(encoding="utf-8"))
+
+	def test_save_entry_writes_a_canonical_record_with_an_expected_hash(self) -> None:
+		from tools.lore_editor.api import save_entry
+
+		repo_root = self.make_repo()
+		previous = decode(self.override_row(repo_root, "items.radio"))
+		updated = {
+			"id": "items.radio",
+			"type_path": "/obj/item/radio",
+			"name": "Git-backed radio",
+		}
+
+		save_entry(
+			repo_root,
+			entry_id="items.radio",
+			source_file=ITEMS_SOURCE_FILE,
+			entry=updated,
+			expected_record_hash=canonical_record_hash(previous),
+		)
+
+		path = record_path(repo_root, "override", "items.radio")
+		self.assertTrue(path.is_file())
+		self.assertEqual(path.read_bytes(), canonical_record_bytes(updated))
+
+	def test_save_entry_rejects_a_stale_expected_hash_without_overwriting(self) -> None:
+		from tools.lore_editor.api import save_entry
+		from tools.lore_editor.write_coordinator import RecordConflict
+
+		repo_root = self.make_repo()
+		original = decode(self.override_row(repo_root, "items.radio"))
+		original_hash = canonical_record_hash(original)
+		first_update = {"id": "items.radio", "type_path": "/obj/item/radio", "name": "First writer"}
+		stale_update = {"id": "items.radio", "type_path": "/obj/item/radio", "name": "Stale writer"}
+		save_entry(
+			repo_root,
+			entry_id="items.radio",
+			source_file=ITEMS_SOURCE_FILE,
+			entry=first_update,
+			expected_record_hash=original_hash,
+		)
+
+		with self.assertRaises(RecordConflict) as raised:
+			save_entry(
+				repo_root,
+				entry_id="items.radio",
+				source_file=ITEMS_SOURCE_FILE,
+				entry=stale_update,
+				expected_record_hash=original_hash,
+			)
+
+		self.assertEqual(raised.exception.record_id, "items.radio")
+		self.assertEqual(raised.exception.current, first_update)
+		self.assertEqual(
+			record_path(repo_root, "override", "items.radio").read_bytes(),
+			canonical_record_bytes(first_update),
+		)
 
 	def test_save_entry_persists_special_description_overrides(self) -> None:
 		from tools.lore_editor.api import save_entry
@@ -203,17 +261,41 @@ class ApiWriteTests(unittest.TestCase):
 		generated_path.write_bytes(b"original generated\n")
 		original_row = self.override_row(repo_root, "items.radio")
 
-		with patch("tools.lore_editor.api.write_generated_dm", side_effect=ValueError("generation failed")):
-			with self.assertRaisesRegex(ValueError, "generation failed"):
-				save_entry(
-					repo_root,
-					entry_id="items.radio",
-					source_file=ITEMS_SOURCE_FILE,
-					entry={"id": "items.radio", "type_path": "/obj/item/radio", "name": "New radio"},
-				)
+		with (
+			patch("tools.lore_editor.api.write_generated_dm", side_effect=ValueError("generation failed")),
+			self.assertRaisesRegex(ValueError, "generation failed"),
+		):
+			save_entry(
+				repo_root,
+				entry_id="items.radio",
+				source_file=ITEMS_SOURCE_FILE,
+				entry={"id": "items.radio", "type_path": "/obj/item/radio", "name": "New radio"},
+			)
 
 		self.assertEqual(self.override_row(repo_root, "items.radio"), original_row)
 		self.assertEqual(generated_path.read_bytes(), b"original generated\n")
+
+	def test_projection_failure_does_not_roll_back_a_durable_canonical_write(self) -> None:
+		from tools.lore_editor.api import save_entry
+
+		repo_root = self.make_repo()
+		current = decode(self.override_row(repo_root, "items.radio"))
+		updated = {**current, "name": "Canonical write survives"}
+
+		with patch("tools.lore_editor.api.reconcile_projection", side_effect=RuntimeError("projection failed")):
+			result = save_entry(
+				repo_root,
+				entry_id="items.radio",
+				source_file=ITEMS_SOURCE_FILE,
+				entry=updated,
+				expected_record_hash=canonical_record_hash(current),
+			)
+
+		self.assertEqual(result["name"], "Canonical write survives")
+		self.assertEqual(
+			json.loads(record_path(repo_root, "override", "items.radio").read_text(encoding="utf-8")),
+			updated,
+		)
 
 	def test_delete_entry_removes_one_entry_from_a_shared_group(self) -> None:
 		from tools.lore_editor.api import delete_entry
@@ -227,9 +309,36 @@ class ApiWriteTests(unittest.TestCase):
 
 		result = delete_entry(repo_root, entry_id="items.radio", source_file=ITEMS_SOURCE_FILE)
 
-		self.assertEqual(result, {"deleted": True, "id": "items.radio"})
+		self.assertTrue(result["deleted"])
+		self.assertEqual(result["id"], "items.radio")
+		self.assertTrue(result["projection"]["current"])
 		self.assertIsNone(self.override_row(repo_root, "items.radio"))
 		self.assertIsNotNone(self.override_row(repo_root, "items.megaphone"))
+
+	def test_delete_entry_removes_the_canonical_record_with_an_expected_hash(self) -> None:
+		from tools.lore_editor.api import delete_entry, save_entry
+
+		repo_root = self.make_repo()
+		current = decode(self.override_row(repo_root, "items.radio"))
+		save_entry(
+			repo_root,
+			entry_id="items.radio",
+			source_file=ITEMS_SOURCE_FILE,
+			entry=current,
+			expected_record_hash=canonical_record_hash(current),
+		)
+		path = record_path(repo_root, "override", "items.radio")
+		self.assertTrue(path.exists())
+
+		delete_entry(
+			repo_root,
+			entry_id="items.radio",
+			source_file=ITEMS_SOURCE_FILE,
+			expected_record_hash=canonical_record_hash(current),
+		)
+
+		self.assertFalse(path.exists())
+		self.assertIsNone(self.override_row(repo_root, "items.radio"))
 
 	def test_delete_entry_regenerates_the_dm_stage(self) -> None:
 		from tools.lore_editor.api import delete_entry
@@ -268,9 +377,11 @@ class ApiWriteTests(unittest.TestCase):
 		generated_path.write_bytes(b"original generated\n")
 		original_row = self.override_row(repo_root, "items.radio")
 
-		with patch("tools.lore_editor.api.write_generated_dm", side_effect=ValueError("generation failed")):
-			with self.assertRaisesRegex(ValueError, "generation failed"):
-				delete_entry(repo_root, entry_id="items.radio", source_file=ITEMS_SOURCE_FILE)
+		with (
+			patch("tools.lore_editor.api.write_generated_dm", side_effect=ValueError("generation failed")),
+			self.assertRaisesRegex(ValueError, "generation failed"),
+		):
+			delete_entry(repo_root, entry_id="items.radio", source_file=ITEMS_SOURCE_FILE)
 
 		self.assertEqual(self.override_row(repo_root, "items.radio"), original_row)
 		self.assertEqual(generated_path.read_bytes(), b"original generated\n")

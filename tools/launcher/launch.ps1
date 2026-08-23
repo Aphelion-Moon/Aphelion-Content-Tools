@@ -23,7 +23,7 @@ function Test-PythonRuntime {
 		if (($versionCheck | Select-Object -Last 1) -ne "ok") {
 			return $false
 		}
-		& $PythonPath -c "import PIL" 2>$null
+		& $PythonPath -c "import PIL, lancedb, fastembed, numpy, fastapi, uvicorn, pydantic" 2>$null
 		return $LASTEXITCODE -eq 0
 	}
 	catch {
@@ -52,7 +52,7 @@ function Find-CompatiblePython {
 
 function Show-RequirementsGuidance {
 	Write-Host ""
-	Write-Host "Aphelion Content Tools needs 64-bit Python 3.11 or newer with Pillow installed." -ForegroundColor Yellow
+	Write-Host "Aphelion Content Tools needs 64-bit Python 3.11 or newer with its pinned dependencies installed." -ForegroundColor Yellow
 	Write-Host "Install Python from https://www.python.org/downloads/windows/ and then run:" -ForegroundColor Yellow
 	Write-Host "  python -m pip install -r tools\lore_editor\requirements.txt" -ForegroundColor Yellow
 	Write-Host "Then double-click Launch Aphelion Content Tools.cmd again." -ForegroundColor Yellow
@@ -166,8 +166,21 @@ if ($gameRoot) {
 	New-Item -ItemType Directory -Force -Path $localRoot | Out-Null
 	@{ gameRepository = $gameRoot } | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8
 }
+$catalogArguments = @(
+	(Join-Path $resolvedRepositoryRoot "tools\lore_editor\cli.py"),
+	"catalog-bootstrap", "--repo-root", $resolvedRepositoryRoot
+)
+if ($gameRoot) { $catalogArguments += @("--game-repo", $gameRoot) }
+& $python @catalogArguments
+if ($LASTEXITCODE -ne 0) {
+	Write-Host "Catalog bootstrap did not complete. Existing authored records remain available." -ForegroundColor Yellow
+}
+$frontendIndexPath = Join-Path $resolvedRepositoryRoot "webapp\frontend\dist\index.html"
+if (-not (Test-Path -LiteralPath $frontendIndexPath -PathType Leaf)) {
+	throw "The built browser app is missing. Restore the release files or run 'npm --prefix webapp/frontend run build'."
+}
 $arguments = @(
-	(Join-Path $resolvedRepositoryRoot "webapp\serve.py"),
+	(Join-Path $resolvedRepositoryRoot "webapp\serve_api.py"),
 	"--repo-root", $resolvedRepositoryRoot,
 	"--port", "0"
 )

@@ -16,6 +16,52 @@
 	flex: 1 1 9rem;
 }
 
+.filterChecks {
+	min-width: 10rem;
+	max-width: 16rem;
+	padding: 0.4rem 0.55rem;
+	font-size: 0.75rem;
+}
+
+.filterChecks legend span {
+	color: var(--muted);
+}
+
+.filterChecks label {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.filterChecks input {
+	width: auto;
+}
+
+.filterCheckList {
+	max-height: 7rem;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.filterButtons {
+	display: flex;
+	gap: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+.filterButtons button {
+	width: auto;
+	padding: 0.2rem 0.35rem;
+	font-size: 0.7rem;
+}
+
+.clearFilters {
+	width: auto;
+	flex: none;
+}
+
 .toggles {
 	display: flex;
 	gap: 0.9rem;
@@ -67,13 +113,23 @@
 	justify-content: center;
 	gap: 0.1rem;
 	padding: 0.35rem 0.6rem;
+	border: none;
 	border-bottom: 1px solid rgba(108, 39, 141, 0.35);
 	cursor: pointer;
 	overflow: hidden;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
 }
 
 .row:hover {
 	background: rgba(102, 0, 148, 0.35);
+}
+
+.row:focus-visible {
+	outline: 2px solid var(--plasma);
+	outline-offset: -2px;
 }
 
 .rowSelected {
@@ -151,4 +207,211 @@
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow-wrap: anywhere;
+}
+
+.tabs,
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.tabs button[aria-selected='true'] {
+	background: var(--orchid);
+	border-color: var(--magenta);
+}
+
+.entryEditor,
+.reviewActions,
+.groupForm {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.reviewActions {
+	margin-top: 1.25rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--border);
+}
+
+.editorHeading {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.openActions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-bottom: 0.8rem;
+}
+
+.advancedDetails {
+	margin-bottom: 0.8rem;
+	font-size: 0.78rem;
+}
+
+.advancedDetails summary {
+	cursor: pointer;
+}
+
+.advancedDetails dl {
+	margin: 0.5rem 0 0;
+}
+
+.advancedDetails dl div {
+	display: grid;
+	grid-template-columns: minmax(7rem, 0.3fr) 1fr;
+	gap: 0.5rem;
+}
+
+.advancedDetails dt {
+	color: var(--muted);
+}
+
+.advancedDetails dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.editorHeading h3,
+.editorHeading p,
+.entryEditor h4,
+.reviewActions h3,
+.groupCard p {
+	margin: 0;
+}
+
+.editorForm,
+.formGrid {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.help,
+.operationStatus {
+	font-size: 0.78rem;
+	color: var(--muted);
+}
+
+.operationStatus {
+	padding: 0.5rem 0.65rem;
+	border-left: 3px solid var(--plasma);
+	background: rgba(102, 0, 148, 0.18);
+}
+
+.previewGrid,
+.iconGrid,
+.conflictGrid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+
+.previewGrid section,
+.iconGrid section,
+.conflictColumn,
+.groupCard {
+	min-width: 0;
+	padding: 0.75rem;
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	background: rgba(13, 3, 27, 0.38);
+}
+
+.iconPreview {
+	display: block;
+	width: 96px;
+	height: 96px;
+	margin-top: 0.5rem;
+	object-fit: contain;
+	image-rendering: pixelated;
+	background: repeating-conic-gradient(#2b1c38 0 25%, #160d22 0 50%) 50% / 16px 16px;
+}
+
+.checkbox,
+.assignmentList label {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	margin: 0.3rem 0;
+}
+
+.assignmentList {
+	max-height: 18rem;
+	overflow: auto;
+}
+
+.groupSwatch {
+	display: inline-block;
+	width: 0.8rem;
+	height: 0.8rem;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.45);
+	vertical-align: middle;
+	margin-right: 0.35rem;
+}
+
+.groupCards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	gap: 0.75rem;
+	margin-top: 1rem;
+}
+
+.groupForm {
+	margin-top: 1rem;
+	padding: 1rem;
+	border: 1px solid var(--border);
+	border-radius: 0.6rem;
+}
+
+.secondary {
+	background: transparent;
+	color: var(--ink);
+}
+
+.danger {
+	background: var(--danger);
+}
+
+.validationPanel,
+.conflictPanel {
+	padding: 0.75rem;
+	border: 1px solid var(--danger);
+	border-radius: 0.55rem;
+	background: rgba(125, 20, 54, 0.2);
+}
+
+.conflictPanel {
+	position: fixed;
+	inset: clamp(1rem, 5vw, 4rem);
+	z-index: 1100;
+	overflow: auto;
+	background: #160d22;
+	box-shadow: 0 1rem 4rem rgba(0, 0, 0, 0.65);
+}
+
+.conflictGrid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	margin: 1rem 0;
+}
+
+.conflictColumn pre {
+	max-height: 45vh;
+	overflow: auto;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+	.previewGrid,
+	.iconGrid,
+	.conflictGrid {
+		grid-template-columns: 1fr;
+	}
 }

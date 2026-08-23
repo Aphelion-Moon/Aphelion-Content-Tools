@@ -22,8 +22,8 @@ export interface RawNode {
 	readonly path?: string | null;
 	readonly name?: string | null;
 	readonly core_path?: string | null;
-	readonly has_readme?: boolean;
-	readonly marker_count?: number;
+	readonly has_readme?: boolean | null;
+	readonly marker_count?: number | null;
 	readonly file_count?: number | null;
 	readonly total_bytes?: number | null;
 	readonly size_bytes?: number | null;

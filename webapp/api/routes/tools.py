@@ -37,18 +37,18 @@ def list_active(ctx: Ctx) -> object:
 
 
 @router.get("/runs/{run_id}", response_model=ToolRun)
-def read_run(run_id: str) -> object:
+def read_run(run_id: str, ctx: Ctx) -> object:
 	try:
-		return get_tool_run(run_id)
+		return get_tool_run(ctx.repo_root, run_id)
 	except ValueError as exc:
 		# An unknown run id is a missing resource, not malformed input.
 		raise NotFound(str(exc)) from exc
 
 
 @router.post("/runs/{run_id}/stop", response_model=ToolRun)
-def stop_run(run_id: str) -> object:
+def stop_run(run_id: str, ctx: Ctx) -> object:
 	try:
-		return stop_tool(run_id)
+		return stop_tool(ctx.repo_root, run_id)
 	except ValueError as exc:
 		raise NotFound(str(exc)) from exc
 

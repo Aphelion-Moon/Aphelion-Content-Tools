@@ -2,7 +2,8 @@ import { For, Show } from 'solid-js';
 import Card, { cardStyles } from '~/components/Card';
 import { TOOLS } from '~/tools/registry';
 import { appState } from '~/store/appStore';
-import { formatBytes, formatElapsed } from '~/lib/format';
+import { formatBytes } from '~/lib/format';
+import Elapsed from '~/components/Elapsed';
 
 export default function HomePage() {
 	const otherTools = () => TOOLS.filter((tool) => tool.id !== 'home');
@@ -36,7 +37,7 @@ export default function HomePage() {
 							<p class={cardStyles.metadata}>
 								{health().total_rows.toLocaleString()} rows · {formatBytes(health().disk_bytes)}
 								<Show when={health().last_write_time}>
-									{(written) => <> · last write {formatElapsed(written())} ago</>}
+									{(written) => <> · last write <Elapsed since={written()} /> ago</>}
 								</Show>
 							</p>
 							<ul class={cardStyles.metadata}>
@@ -62,7 +63,7 @@ export default function HomePage() {
 						<For each={appState.activeRuns}>
 							{(run) => (
 								<li>
-									{run.tool_label ?? run.tool_id} — running for {formatElapsed(run.queued_at)}
+									{run.tool_label ?? run.tool_id} — running for <Elapsed since={run.queued_at} />
 								</li>
 							)}
 						</For>

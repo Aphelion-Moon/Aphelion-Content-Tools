@@ -99,15 +99,17 @@ class ApplyMarkerLabelEditTests(unittest.TestCase):
 				conflict_files=("code/modules/other/other.dm",),
 			)
 
-			with patch("tools.content_graph.marker_edit.repository_status", return_value=conflicted_status):
-				with self.assertRaisesRegex(ValueError, "unresolved Git conflicts"):
-					apply_marker_label_edit(
-						game_root,
-						"code/modules/other/other.dm",
-						2,
-						"\t// NOVA EDIT ADDITION - some future module",
-						"shuttle_toggle",
-					)
+			with (
+				patch("tools.content_graph.marker_edit.repository_status", return_value=conflicted_status),
+				self.assertRaisesRegex(ValueError, "unresolved Git conflicts"),
+			):
+				apply_marker_label_edit(
+					game_root,
+					"code/modules/other/other.dm",
+					2,
+					"\t// NOVA EDIT ADDITION - some future module",
+					"shuttle_toggle",
+				)
 
 	def test_refuses_a_line_that_is_not_a_recognizable_marker(self) -> None:
 		with tempfile.TemporaryDirectory() as temp_dir:

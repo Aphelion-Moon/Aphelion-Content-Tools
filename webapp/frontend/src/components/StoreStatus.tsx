@@ -1,8 +1,9 @@
 import { Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { appState } from '~/store/appStore';
-import { formatBytes, formatElapsed } from '~/lib/format';
+import { formatBytes } from '~/lib/format';
 import { cx } from '~/lib/cx';
+import Elapsed from './Elapsed';
 import styles from './StoreStatus.module.css';
 
 /**
@@ -36,7 +37,7 @@ export default function StoreStatus() {
 				<Show when={firstRun()} fallback={<>Idle</>}>
 					{(run) => (
 						<>
-							● {run().tool_label ?? run().tool_id} — {formatElapsed(run().queued_at)}
+							● {run().tool_label ?? run().tool_id} — <Elapsed since={run().queued_at} />
 						</>
 					)}
 				</Show>

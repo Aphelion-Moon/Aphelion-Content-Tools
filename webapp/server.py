@@ -76,11 +76,12 @@ def _load_git_functions():
 			github_blob_url,
 			line_history,
 			list_branches,
+			list_owned_changes,
 			open_file_in_default_app,
 			open_in_github_desktop,
 			repository_status,
 			reveal_file_in_file_explorer,
-			stage_and_commit,
+			stage_owned_and_commit,
 			switch_branch,
 		)
 	else:
@@ -90,17 +91,19 @@ def _load_git_functions():
 			github_blob_url,
 			line_history,
 			list_branches,
+			list_owned_changes,
 			open_file_in_default_app,
 			open_in_github_desktop,
 			repository_status,
 			reveal_file_in_file_explorer,
-			stage_and_commit,
+			stage_owned_and_commit,
 			switch_branch,
 		)
 	return {
 		"create_branch": create_branch,
 		"repository_status": repository_status,
-		"stage_and_commit": stage_and_commit,
+		"stage_owned_and_commit": stage_owned_and_commit,
+		"list_owned_changes": list_owned_changes,
 		"open_in_github_desktop": open_in_github_desktop,
 		"git_diff": git_diff,
 		"github_blob_url": github_blob_url,
@@ -361,8 +364,15 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 				query = parse_qs(parsed.query)
 				repository_name = query.get("repository", ["tool"])[0]
 				_repository_status = _load_git_functions()["repository_status"]
-				status = _repository_status(self.repository_root(repository_name))
-				self.send_json(asdict(status) | {"conflicted": status.conflicted})
+				repository_root = self.repository_root(repository_name)
+				status = _repository_status(repository_root)
+				owned_changes = _load_git_functions()["list_owned_changes"](repository_root, repository_name)
+				owned_paths = {change.path for change in owned_changes}
+				self.send_json(asdict(status) | {
+					"conflicted": status.conflicted,
+					"owned_changes": [asdict(change) for change in owned_changes],
+					"unowned_changes": [path for path in status.changed_files if path not in owned_paths],
+				})
 			except (OSError, ValueError) as exc:
 				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
 			return
@@ -435,7 +445,15 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 				tables_param = query.get("tables", [""])[0]
 				tables = [name for name in tables_param.split(",") if name] or None
 				limit = _query_int(query, "limit", default=20, minimum=1)
-				self.send_json({"results": search(self.server.repo_root, query.get("q", [""])[0], tables=tables, limit=limit)})
+				report = search(self.server.repo_root, query.get("q", [""])[0], tables=tables, limit=limit)
+				self.send_json({
+					"results": report.results,
+					"semantic_search": {
+						"mode": report.semantic_mode,
+						"model_id": report.semantic_model_id,
+						"reason": report.semantic_reason,
+					},
+				})
 			except (OSError, ValueError) as exc:
 				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
 			return
@@ -626,7 +644,7 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 		if parsed.path.startswith(tool_run_prefix):
 			try:
 				get_tool_run = _load_tooling_functions()["get_tool_run"]
-				self.send_json(get_tool_run(unquote(parsed.path[len(tool_run_prefix):])))
+				self.send_json(get_tool_run(self.repo_root, unquote(parsed.path[len(tool_run_prefix):])))
 			except (OSError, ValueError) as exc:
 				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
 			return
@@ -729,16 +747,14 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 				payload = self.read_json_body()
 				if not isinstance(payload, dict) or not isinstance(payload.get("stage"), str):
 					raise ValueError("Export application requires a string stage.")
-				force = payload.get("force", False)
-				if not isinstance(force, bool):
-					raise ValueError("Export application 'force' must be a boolean when provided.")
+				if "force" in payload:
+					raise ValueError("Dirty checkout export overrides are not supported.")
 				_export_functions = _load_export_functions()
 				_prepare_export = _export_functions["prepare_export"]
 				_apply_export = _export_functions["apply_export"]
 				artifact_path = _apply_export(
 					self.export_stage_path(payload["stage"]),
 					self.server.game_repo_root,
-					allow_dirty=force,
 				)
 				opened_in_github_desktop = False
 				github_desktop_error = None
@@ -782,8 +798,13 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 				repository_name = payload.get("repository", "tool")
 				if not isinstance(repository_name, str):
 					raise ValueError("Commit request repository must be a string.")
-				_commit = _load_git_functions()["stage_and_commit"]
-				commit_sha = _commit(self.repository_root(repository_name), tuple(paths), payload["message"])
+				_commit = _load_git_functions()["stage_owned_and_commit"]
+				commit_sha = _commit(
+					self.repository_root(repository_name),
+					repository_name,
+					tuple(paths),
+					payload["message"],
+				)
 				self.send_json({"repository": repository_name, "commit": commit_sha})
 			except (OSError, ValueError) as exc:
 				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
@@ -871,7 +892,7 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 				if run_segment.endswith("/stop"):
 					try:
 						stop_tool = _load_tooling_functions()["stop_tool"]
-						self.send_json(stop_tool(run_segment[:-len("/stop")]))
+						self.send_json(stop_tool(self.repo_root, run_segment[:-len("/stop")]))
 					except (OSError, ValueError) as exc:
 						self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
 					return

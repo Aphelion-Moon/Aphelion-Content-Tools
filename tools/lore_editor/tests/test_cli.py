@@ -167,7 +167,7 @@ class CliTests(unittest.TestCase):
 		self.assertEqual(stderr, "")
 
 	def test_apply_export_dispatches_to_application_service(self) -> None:
-		repo_root = self.make_repo()
+		self.make_repo()
 		game_root = self.make_repo()
 		with patch("tools.lore_editor.cli.apply_export", return_value=game_root / "artifact") as apply:
 			status, stdout, stderr = self.run_cli(

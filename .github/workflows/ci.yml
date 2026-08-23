@@ -1,0 +1,86 @@
+name: Foundation gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: webapp/frontend/package-lock.json
+
+      - name: Install Python dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: webapp/frontend
+
+      - name: Agent documentation
+        run: python tools/docs/check_agent_docs.py
+
+      - name: Verify generated API contract
+        shell: pwsh
+        run: |
+          npm run gen:api
+          git diff --exit-code -- src/lib/api-schema.d.ts
+        working-directory: webapp/frontend
+
+      - name: Ruff
+        run: python -m ruff check .
+
+      - name: Pyright
+        run: python -m pyright
+
+      - name: Python tests
+        run: python -m unittest discover
+
+      - name: Frontend tests
+        run: npm test -- --run
+        working-directory: webapp/frontend
+
+      - name: Frontend typecheck
+        run: npm run typecheck
+        working-directory: webapp/frontend
+
+      - name: Production SPA build
+        run: npm run build
+        working-directory: webapp/frontend
+
+      - name: Verify production SPA artifact
+        shell: pwsh
+        run: git diff --exit-code -- dist
+        working-directory: webapp/frontend
+
+      - name: Installed-wheel smoke test
+        shell: pwsh
+        run: |
+          python -m pip wheel . --no-deps --wheel-dir wheelhouse
+          $smokeRoot = Join-Path $env:RUNNER_TEMP "aphelion-wheel-smoke"
+          New-Item -ItemType Directory -Force -Path $smokeRoot | Out-Null
+          $wheel = (Get-ChildItem -LiteralPath wheelhouse -Filter "*.whl" | Select-Object -First 1).FullName
+          python -m pip install --no-deps --target $smokeRoot $wheel
+          Push-Location $env:RUNNER_TEMP
+          try {
+            python -c "import sys; sys.path.insert(0, r'$smokeRoot'); import webapp.api.app, webapp.store.search, tools.lore_editor.catalog_seed, tools.content_graph.graph"
+          }
+          finally {
+            Pop-Location
+          }
+
+      - name: Whitespace and generated drift
+        run: git diff --check

@@ -14,11 +14,14 @@ from webapp.git_adapter import repository_revision
 from webapp.json_storage import canonical_json_bytes
 from webapp.path_safety import read_json_file, resolve_repo_path
 from webapp.store import db
+from webapp.store.metadata import activate_projection, new_projection_metadata, projection_path, write_projection_marker
 from webapp.store.schema import decode, encode, table
 
 from .app.manifest import CatalogManifest, sha256_bytes
 from .model import SUPPORTED_ICON_KEYS
+from .reconcile import reconcile_projection, scan_canonical_records
 from .validation import TYPE_PATH_PATTERN
+from .write_coordinator import repository_write_lock
 
 PROBE_OUTPUT_PATH = Path("data/lore_overhaul_targets.json")
 BUILD_ENTRYPOINT = Path("tools/build/build.bat")
@@ -181,16 +184,8 @@ def _target_search_text(target: dict[str, object]) -> str:
 	return " ".join(str(value) for value in (target.get("type_path"), target.get("label"), name, description) if value)
 
 
-def _write_targets(repo_root: Path, targets: list[dict[str, object]], *, on_progress=None) -> bytes:
-	"""Sync the `catalog_targets` store table to `targets` and return the canonical bytes of the new
-	snapshot (used for the manifest's content hash and the export manifest's catalog fingerprint).
-
-	Only targets whose text actually changed since the last refresh are re-embedded (see
-	`webapp.store.db.sync_snapshot`) -- a routine refresh with a handful of real changes should complete
-	in a few seconds, not re-embed the entire catalog every time."""
-	rendered_bytes = canonical_json_bytes(targets)
-	targets_table = table(repo_root, "catalog_targets")
-	db.sync_snapshot(targets_table, "id", [
+def _target_rows(targets: list[dict[str, object]]) -> list[dict[str, object]]:
+	return [
 		{
 			"id": target["type_path"],
 			"type_path": target["type_path"],
@@ -198,27 +193,52 @@ def _write_targets(repo_root: Path, targets: list[dict[str, object]], *, on_prog
 			"text": _target_search_text(target),
 		}
 		for target in targets
-	], on_progress=on_progress)
-	return rendered_bytes
+	]
 
 
-def _write_catalog_manifest(repo_root: Path, game_repo_root: Path, targets_bytes: bytes, target_count: int) -> None:
-	try:
-		game_revision = repository_revision(game_repo_root)
-	except (OSError, ValueError):
-		game_revision = "unknown"
+def activate_catalog_targets(
+	repo_root: Path,
+	targets: list[dict[str, object]],
+	*,
+	source_game_revision: str,
+	generated_at: str | None = None,
+	on_progress=None,
+) -> CatalogManifest:
+	"""Install a verified catalog into a complete new projection generation, then activate it."""
+	resolved_root = repo_root.resolve()
+	normalized_targets = normalize_targets(targets)
+	targets_bytes = canonical_json_bytes(normalized_targets)
 	manifest = CatalogManifest(
 		snapshot_sha256=sha256_bytes(targets_bytes),
-		game_repo_revision=game_revision,
-		generated_at=datetime.now(UTC).isoformat(),
-		target_count=target_count,
+		game_repo_revision=source_game_revision,
+		generated_at=generated_at or datetime.now(UTC).isoformat(),
+		target_count=len(normalized_targets),
 	)
-	manifests_table = table(repo_root, "manifests")
-	db.upsert_rows(manifests_table, "id", [{
-		"id": "catalog",
-		"raw_json": encode(manifest.to_dict()),
-		"text": "",
-	}])
+	with repository_write_lock(resolved_root):
+		reconcile_projection(resolved_root)
+		content_revision = scan_canonical_records(resolved_root).content_revision
+		metadata = new_projection_metadata(content_revision)
+		destination = projection_path(resolved_root, metadata.generation_id)
+		shutil.copytree(db.store_path(resolved_root), destination)
+		try:
+			db.sync_snapshot(
+				table(resolved_root, "catalog_targets", store_dir=destination),
+				"id",
+				_target_rows(normalized_targets),
+				on_progress=on_progress,
+			)
+			db.upsert_rows(table(resolved_root, "manifests", store_dir=destination), "id", [{
+				"id": "catalog",
+				"raw_json": encode(manifest.to_dict()),
+				"text": "",
+			}])
+			write_projection_marker(resolved_root, metadata)
+			activate_projection(resolved_root, metadata)
+		except Exception:
+			db.discard_connection(destination)
+			shutil.rmtree(destination, ignore_errors=True)
+			raise
+	return manifest
 
 
 def _find_free_port() -> int:
@@ -342,7 +362,7 @@ def read_current_targets(repo_root: Path) -> list[dict[str, object]]:
 
 
 def read_catalog_manifest(repo_root: Path) -> CatalogManifest | None:
-	row = db.get_row(table(repo_root, "manifests"), "id = 'catalog'")
+	row = db.get_row_by_key(table(repo_root, "manifests"), "id", "catalog")
 	return CatalogManifest.from_dict(decode(row)) if row else None
 
 
@@ -403,6 +423,14 @@ def refresh_catalog(repo_root: Path, *, game_repo_root: Path | None = None, on_p
 	probe_output_path = _run_catalog_probe(resolved_game_root)
 	raw_targets = _read_probe_json(resolved_game_root, probe_output_path)
 	targets = normalize_targets(raw_targets)
-	targets_bytes = _write_targets(resolved_root, targets, on_progress=on_progress)
-	_write_catalog_manifest(resolved_root, resolved_game_root, targets_bytes, len(targets))
+	try:
+		game_revision = repository_revision(resolved_game_root)
+	except (OSError, ValueError):
+		game_revision = "unknown"
+	activate_catalog_targets(
+		resolved_root,
+		targets,
+		source_game_revision=game_revision,
+		on_progress=on_progress,
+	)
 	return targets

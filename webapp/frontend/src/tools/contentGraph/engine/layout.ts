@@ -26,6 +26,26 @@ export interface GroupingAxes {
 	readonly byOwner: boolean;
 }
 
+export type RandomSource = () => number;
+
+/** Small deterministic PRNG used for layout jitter; equal snapshot seeds produce equal coordinates. */
+export function createSeededRandom(seed: string | number): RandomSource {
+	let state = typeof seed === 'number' ? seed >>> 0 : 2166136261;
+	if (typeof seed === 'string') {
+		for (let index = 0; index < seed.length; index += 1) {
+			state ^= seed.charCodeAt(index);
+			state = Math.imul(state, 16777619) >>> 0;
+		}
+	}
+	return () => {
+		state = (state + 0x6d2b79f5) >>> 0;
+		let value = state;
+		value = Math.imul(value ^ (value >>> 15), value | 1);
+		value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+		return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+	};
+}
+
 /**
  * Which cluster a node belongs to, given the active grouping axes.
  *
@@ -103,6 +123,7 @@ export function buildClusterAnchors(
 	maxClusterSize?: number,
 ): Map<string, Point> {
 	const keys = clusterKeys(axes);
+	if (keys.length === 1) return new Map([[keys[0]!, { x: 0, y: 0 }]]);
 	let radius = BASE_CLUSTER_RADIUS * scale;
 	if (maxClusterSize) {
 		const footprint = clusterFootprintRadius(maxClusterSize, scale);
@@ -158,15 +179,20 @@ export function spiralGridOffsets(n: number): { col: number; row: number }[] {
  * than scattered through the connected core. A little jitter keeps it from reading as mechanical
  * without reintroducing near-coincident starting points.
  */
-export function packNodesIntoGrid(nodes: readonly GraphNode[], anchor: Point, scale: number): void {
+export function packNodesIntoGrid(
+	nodes: readonly GraphNode[],
+	anchor: Point,
+	scale: number,
+	random: RandomSource,
+): void {
 	const cellSize = packedCellSize(scale);
 	const ordered = [...nodes].sort((a, b) => b.degree - a.degree);
 	const offsets = spiralGridOffsets(ordered.length);
 	ordered.forEach((node, index) => {
 		const offset = offsets[index]!;
 		const jitter = cellSize * 0.18;
-		node.x = anchor.x + offset.col * cellSize + (Math.random() - 0.5) * jitter;
-		node.y = anchor.y + offset.row * cellSize + (Math.random() - 0.5) * jitter;
+		node.x = anchor.x + offset.col * cellSize + (random() - 0.5) * jitter;
+		node.y = anchor.y + offset.row * cellSize + (random() - 0.5) * jitter;
 	});
 }
 
@@ -190,15 +216,16 @@ export function placePackedGridSeed(
 	groups: ReadonlyMap<string, GraphNode[]>,
 	anchors: ReadonlyMap<string, Point>,
 	scale: number,
+	random: RandomSource,
 ): void {
 	for (const [key, group] of groups) {
-		packNodesIntoGrid(group, anchors.get(key) ?? { x: 0, y: 0 }, scale);
+		packNodesIntoGrid(group, anchors.get(key) ?? { x: 0, y: 0 }, scale, random);
 	}
 }
 
 /** One packed grid at the origin, ignoring clusters -- a neutral, maximally spread start. */
-export function placeGlobalGridSeed(nodes: readonly GraphNode[], scale: number): void {
-	packNodesIntoGrid(nodes, { x: 0, y: 0 }, scale);
+export function placeGlobalGridSeed(nodes: readonly GraphNode[], scale: number, random: RandomSource): void {
+	packNodesIntoGrid(nodes, { x: 0, y: 0 }, scale, random);
 }
 
 /** Uniform scatter within each cluster's footprint. */
@@ -206,15 +233,16 @@ export function placeRandomSeed(
 	groups: ReadonlyMap<string, GraphNode[]>,
 	anchors: ReadonlyMap<string, Point>,
 	scale: number,
+	random: RandomSource,
 ): void {
 	for (const [key, group] of groups) {
 		const anchor = anchors.get(key) ?? { x: 0, y: 0 };
 		const footprint = clusterFootprintRadius(group.length, scale);
 		for (const node of group) {
-			const angle = Math.random() * Math.PI * 2;
+			const angle = random() * Math.PI * 2;
 			// sqrt of a uniform sample, because uniform radius sampling is not uniform over a disc's area
 			// -- points would bunch toward the centre.
-			const radius = Math.sqrt(Math.random()) * footprint;
+			const radius = Math.sqrt(random()) * footprint;
 			node.x = anchor.x + Math.cos(angle) * radius;
 			node.y = anchor.y + Math.sin(angle) * radius;
 		}

@@ -54,6 +54,7 @@ class CatalogManifest:
 class ExportManifest:
 	tool_repo_revision: str
 	tool_branch: str
+	content_revision: str
 	catalog_sha256: str
 	game_repo_revision: str
 	entry_ids: tuple[str, ...]
@@ -67,6 +68,7 @@ class ExportManifest:
 			"format_version": self.format_version,
 			"tool_repo_revision": self.tool_repo_revision,
 			"tool_branch": self.tool_branch,
+			"content_revision": self.content_revision,
 			"catalog_sha256": self.catalog_sha256,
 			"game_repo_revision": self.game_repo_revision,
 			"entry_ids": list(self.entry_ids),
@@ -91,6 +93,7 @@ class ExportManifest:
 		return cls(
 			tool_repo_revision=_required_string(payload, "tool_repo_revision"),
 			tool_branch=_required_string(payload, "tool_branch"),
+			content_revision=_required_string(payload, "content_revision"),
 			catalog_sha256=_required_string(payload, "catalog_sha256"),
 			game_repo_revision=_required_string(payload, "game_repo_revision"),
 			entry_ids=_required_string_list(payload, "entry_ids"),

@@ -4,12 +4,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.lore_editor.records import canonical_record_bytes, canonical_record_hash, record_path
 from tools.lore_editor.source import make_catalog_target
 from tools.lore_editor.taxonomy import (
 	GroupRecord,
 	ReviewRecord,
 	classify_target,
 	classify_target_details,
+	delete_group,
 	load_groups,
 	load_reviews,
 	save_group,
@@ -17,6 +19,7 @@ from tools.lore_editor.taxonomy import (
 	save_review,
 )
 from tools.lore_editor.tests.store_helpers import seed_assignment, seed_group, seed_review
+from tools.lore_editor.write_coordinator import RecordConflict
 
 
 class TaxonomyTests(unittest.TestCase):
@@ -56,6 +59,30 @@ class TaxonomyTests(unittest.TestCase):
 		self.assertEqual(load_groups(self.repo_root).groups[0].label, "Updated Items")
 		self.assertEqual(load_groups(self.repo_root).assignments.get("/obj/item/radio", ()), ())
 		self.assertEqual(load_reviews(self.repo_root), {})
+
+	def test_delete_group_removes_it_from_manual_assignments_and_rejects_a_stale_hash(self) -> None:
+		group = GroupRecord("items", "Items", "#ffffff", (), ("/obj/item",))
+		save_group(self.repo_root, group)
+		save_group(self.repo_root, GroupRecord("devices", "Devices", "#000000", (), ()))
+		save_group_assignments(self.repo_root, "/obj/item/radio", ("items", "devices"))
+		group_hash = canonical_record_hash({
+			"id": "items",
+			"label": "Items",
+			"color": "#ffffff",
+			"keywords": [],
+			"type_path_prefixes": ["/obj/item"],
+			"keyword_scope": ["name", "description", "label"],
+		})
+
+		with self.assertRaises(RecordConflict):
+			delete_group(self.repo_root, "items", expected_record_hash="0" * 64)
+		self.assertEqual(load_groups(self.repo_root).assignments["/obj/item/radio"], ("items", "devices"))
+
+		updated = delete_group(self.repo_root, "items", expected_record_hash=group_hash)
+		self.assertEqual(updated, 1)
+		config = load_groups(self.repo_root)
+		self.assertEqual([current.id for current in config.groups], ["devices"])
+		self.assertEqual(config.assignments["/obj/item/radio"], ("devices",))
 
 	def test_default_groups_are_available_for_a_new_repository(self) -> None:
 		seed_group(self.repo_root, {
@@ -206,8 +233,11 @@ class TaxonomyTests(unittest.TestCase):
 		)
 		save_review(self.repo_root, "/datum/language/common", record)
 		self.assertEqual(load_reviews(self.repo_root)["/datum/language/common"], record)
+		review_path = record_path(self.repo_root, "review", "/datum/language/common")
+		self.assertTrue(review_path.is_file())
 		save_review(self.repo_root, "/datum/language/common", None)
 		self.assertEqual(load_reviews(self.repo_root), {})
+		self.assertFalse(review_path.exists())
 
 	def test_needs_attention_reviews_are_persisted(self) -> None:
 		record = ReviewRecord(
@@ -219,6 +249,30 @@ class TaxonomyTests(unittest.TestCase):
 		save_review(self.repo_root, "/obj/item/radio", record)
 		self.assertEqual(load_reviews(self.repo_root)["/obj/item/radio"], record)
 
+	def test_review_keys_preserve_distinct_valid_type_paths(self) -> None:
+		underscore_record = ReviewRecord(
+			status="reviewed",
+			reviewed_by="Zoe",
+			reviewed_at="2026-08-20T12:00:00+00:00",
+			notes="Underscore path",
+		)
+		slash_record = ReviewRecord(
+			status="needs-attention",
+			reviewed_by="Zoe",
+			reviewed_at="2026-08-20T12:01:00+00:00",
+			notes="Slash path",
+		)
+
+		save_review(self.repo_root, "/obj/a_b", underscore_record)
+		save_review(self.repo_root, "/obj/a/b", slash_record)
+
+		reviews = load_reviews(self.repo_root)
+		self.assertEqual(reviews["/obj/a_b"], underscore_record)
+		self.assertEqual(reviews["/obj/a/b"], slash_record)
+
+		save_review(self.repo_root, "/obj/a_b", None)
+		self.assertEqual(load_reviews(self.repo_root), {"/obj/a/b": slash_record})
+
 	def test_group_creation_and_assignments_are_persisted(self) -> None:
 		group = GroupRecord(
 			id="frontier-cults",
@@ -229,6 +283,18 @@ class TaxonomyTests(unittest.TestCase):
 		)
 		save_group(self.repo_root, group)
 		save_group_assignments(self.repo_root, "/obj/item/relic", ("frontier-cults",))
+		self.assertEqual(
+			record_path(self.repo_root, "group", "frontier-cults").read_bytes(),
+			canonical_record_bytes({
+				"id": "frontier-cults",
+				"label": "Frontier Cults",
+				"color": "#f59e0b",
+				"keywords": ["cult"],
+				"type_path_prefixes": [],
+				"keyword_scope": ["name", "description", "label"],
+			}),
+		)
+		self.assertTrue(record_path(self.repo_root, "assignment", "/obj/item/relic").is_file())
 		groups = load_groups(self.repo_root)
 		self.assertEqual(groups.groups[-1], group)
 		self.assertEqual(groups.assignments["/obj/item/relic"], ("frontier-cults",))
@@ -242,6 +308,76 @@ class TaxonomyTests(unittest.TestCase):
 				keywords=(),
 				type_path_prefixes=(),
 			))
+
+	def test_group_and_review_writes_reject_stale_hashes(self) -> None:
+		original_group = GroupRecord("items", "Items", "#ffffff", (), ("/obj/item",))
+		updated_group = GroupRecord("items", "Updated Items", "#000000", (), ("/obj/item",))
+		stale_group = GroupRecord("items", "Stale Items", "#ff0000", (), ("/obj/item",))
+		save_group(self.repo_root, original_group)
+		original_group_payload = {
+			"id": "items",
+			"label": "Items",
+			"color": "#ffffff",
+			"keywords": [],
+			"type_path_prefixes": ["/obj/item"],
+			"keyword_scope": ["name", "description", "label"],
+		}
+		original_group_hash = canonical_record_hash(original_group_payload)
+		save_group(self.repo_root, updated_group, expected_record_hash=original_group_hash)
+		with self.assertRaises(RecordConflict):
+			save_group(self.repo_root, stale_group, expected_record_hash=original_group_hash)
+		self.assertEqual(load_groups(self.repo_root).groups[0], updated_group)
+
+		original_review = ReviewRecord("reviewed", "Zoe", "2026-08-22T12:00:00+00:00", "Original")
+		updated_review = ReviewRecord("needs-attention", "Zoe", "2026-08-22T12:01:00+00:00", "Updated")
+		stale_review = ReviewRecord("reviewed", "Zoe", "2026-08-22T12:02:00+00:00", "Stale")
+		save_review(self.repo_root, "/obj/item/radio", original_review)
+		original_review_hash = canonical_record_hash({
+			"type_path": "/obj/item/radio",
+			"status": "reviewed",
+			"reviewed_by": "Zoe",
+			"reviewed_at": "2026-08-22T12:00:00+00:00",
+			"notes": "Original",
+		})
+		save_review(
+			self.repo_root,
+			"/obj/item/radio",
+			updated_review,
+			expected_record_hash=original_review_hash,
+		)
+		with self.assertRaises(RecordConflict):
+			save_review(
+				self.repo_root,
+				"/obj/item/radio",
+				stale_review,
+				expected_record_hash=original_review_hash,
+			)
+		self.assertEqual(load_reviews(self.repo_root)["/obj/item/radio"], updated_review)
+
+	def test_assignment_writes_reject_stale_hashes(self) -> None:
+		save_group(self.repo_root, GroupRecord("items", "Items", "#ffffff", (), ("/obj/item",)))
+		save_group(self.repo_root, GroupRecord("devices", "Devices", "#000000", (), ()))
+		save_group_assignments(self.repo_root, "/obj/item/radio", ("items",))
+		original_hash = canonical_record_hash({
+			"type_path": "/obj/item/radio",
+			"group_ids": ["items"],
+		})
+
+		save_group_assignments(
+			self.repo_root,
+			"/obj/item/radio",
+			("items", "devices"),
+			expected_record_hash=original_hash,
+		)
+		with self.assertRaises(RecordConflict):
+			save_group_assignments(
+				self.repo_root,
+				"/obj/item/radio",
+				("devices",),
+				expected_record_hash=original_hash,
+			)
+
+		self.assertEqual(load_groups(self.repo_root).assignments["/obj/item/radio"], ("items", "devices"))
 
 
 if __name__ == "__main__":

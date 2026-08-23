@@ -7,6 +7,22 @@
 	padding: 1.5rem clamp(1.5rem, 3vw, 3rem);
 }
 
+.skipLink {
+	position: fixed;
+	top: 0.5rem;
+	left: 0.5rem;
+	z-index: 1000;
+	transform: translateY(-200%);
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.4rem;
+	background: var(--ink);
+	color: var(--void);
+}
+
+.skipLink:focus {
+	transform: translateY(0);
+}
+
 /* width/min/max are pinned alongside the flex shorthand: a flex item's automatic minimum size can
    otherwise let the sidebar grow past its basis to fit a long word. */
 .sidebar {

@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.lore_editor.records import canonical_record_hash
 from tools.lore_editor.tests.store_helpers import seed_group, seed_override, seed_targets
 
 
@@ -56,6 +57,16 @@ class ApiReadTests(unittest.TestCase):
 		self.assertEqual(entries[1]["base_name"], "base radio")
 		self.assertEqual(entries[1]["special_desc_requirement"], "none")
 		self.assertEqual(entries[1]["special_desc"], "A radio with a hidden note.")
+		self.assertEqual(
+			entries[1]["record_hash"],
+			canonical_record_hash({
+				"id": "items.radio",
+				"type_path": "/obj/item/radio",
+				"name": "lore radio",
+				"special_desc_requirement": "none",
+				"special_desc": "A radio with a hidden note.",
+			}),
+		)
 		self.assertNotIn(str(repo_root), json.dumps(entries))
 
 	def test_entry_filters_preserve_source_order(self) -> None:

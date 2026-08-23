@@ -68,6 +68,6 @@ def add_reference(repo_root: Path, payload: object) -> dict[str, object]:
 
 def remove_reference(repo_root: Path, reference_id: str) -> None:
 	references_table = table(repo_root, "references")
-	if db.get_row(references_table, f"id = '{reference_id}'") is None:
+	if db.get_row_by_key(references_table, "id", reference_id) is None:
 		raise ValueError(f"Reference '{reference_id}' was not found.")
-	db.delete_rows(references_table, f"id = '{reference_id}'")
+	db.delete_row_by_key(references_table, "id", reference_id)

@@ -55,7 +55,7 @@ class ToolingClientTests(unittest.TestCase):
 	def _wait_for_completion(self, run_id: str, timeout: float = 30.0) -> dict:
 		deadline = time.monotonic() + timeout
 		while time.monotonic() < deadline:
-			current = tooling.get_tool_run(run_id)
+			current = tooling.get_tool_run(self.repo_root, run_id)
 			if current["status"] not in ("queued", "running"):
 				return current
 			time.sleep(0.05)
@@ -73,43 +73,77 @@ class ToolingClientTests(unittest.TestCase):
 		self.assertEqual(current["status"], "succeeded")
 		self.assertIn("Generated lore DM artifact", current["output"])
 		self.assertTrue((self.repo_root / "tools/lore_editor/stages/current/generated_lore_overrides.dm").exists())
+		self.assertIn(
+			"Starting store worker",
+			(self.repo_root / "tools/logs/store-worker-startup.log").read_text(encoding="utf-8"),
+		)
 
 	def test_get_tool_run_and_stop_tool_reject_an_unknown_run_id(self) -> None:
 		tooling.start_tool(self.repo_root, self.definitions, "generate")  # ensures a worker exists to ask
 		with self.assertRaises(ValueError):
-			tooling.get_tool_run("not-a-real-run")
+			tooling.get_tool_run(self.repo_root, "not-a-real-run")
 		with self.assertRaises(ValueError):
-			tooling.stop_tool("not-a-real-run")
+			tooling.stop_tool(self.repo_root, "not-a-real-run")
+
+	def test_run_lookup_and_stop_are_isolated_by_repository(self) -> None:
+		with tempfile.TemporaryDirectory() as other_temp_dir:
+			other_repo_root = Path(other_temp_dir)
+			seed_targets(other_repo_root, _synthetic_targets(1))
+			try:
+				run = tooling.start_tool(self.repo_root, self.definitions, "generate")
+				tooling.start_tool(other_repo_root, self.definitions, "generate")
+				with self.assertRaises(ValueError):
+					tooling.get_tool_run(other_repo_root, run["run_id"])
+				with self.assertRaises(ValueError):
+					tooling.stop_tool(other_repo_root, run["run_id"])
+				self.assertEqual(tooling.get_tool_run(self.repo_root, run["run_id"])["run_id"], run["run_id"])
+			finally:
+				tooling.shut_down_worker(other_repo_root)
 
 	def test_stop_tool_interrupts_a_running_job_instead_of_letting_it_succeed(self) -> None:
 		seed_targets(self.repo_root, _synthetic_targets(300))
 		run = tooling.start_tool(self.repo_root, self.definitions, "rebuild-search-embeddings")
 		time.sleep(1.0)
-		stopped = tooling.stop_tool(run["run_id"])
+		stopped = tooling.stop_tool(self.repo_root, run["run_id"])
 		self.assertIn(stopped["status"], {"running", "stopped"})
 		current = self._wait_for_completion(run["run_id"])
 		self.assertEqual(current["status"], "stopped")
 
 	def test_worker_respawns_transparently_after_a_crash(self) -> None:
 		run = tooling.start_tool(self.repo_root, self.definitions, "generate")
-		self._wait_for_completion(run["run_id"])
+		completed = self._wait_for_completion(run["run_id"])
 
 		handle = tooling._get_worker(self.repo_root)
 		pid_before = handle.process.pid
 		handle.process.kill()
 		handle.process.wait(timeout=5)
+		recovered = tooling.get_tool_run(self.repo_root, run["run_id"])
+		self.assertEqual(recovered["status"], "succeeded")
+		self.assertIn("Generated lore DM artifact", recovered["output"])
 
 		run2 = tooling.start_tool(self.repo_root, self.definitions, "generate")
 		current2 = self._wait_for_completion(run2["run_id"])
 		self.assertEqual(current2["status"], "succeeded")
 		self.assertNotEqual(tooling._get_worker(self.repo_root).process.pid, pid_before)
+		self.assertEqual(completed["run_id"], recovered["run_id"])
+
+	def test_worker_crash_marks_an_interrupted_run_failed_instead_of_losing_it(self) -> None:
+		seed_targets(self.repo_root, _synthetic_targets(300))
+		run = tooling.start_tool(self.repo_root, self.definitions, "rebuild-search-embeddings")
+		handle = tooling._get_worker(self.repo_root)
+		handle.process.kill()
+		handle.process.wait(timeout=5)
+
+		recovered = tooling.get_tool_run(self.repo_root, run["run_id"])
+		self.assertEqual(recovered["status"], "failed")
+		self.assertIn("worker exited", recovered["output"].lower())
 
 	def test_jobs_against_the_same_repo_root_run_one_at_a_time(self) -> None:
 		seed_targets(self.repo_root, _synthetic_targets(300))
 		run_a = tooling.start_tool(self.repo_root, self.definitions, "rebuild-search-embeddings")
 		run_b = tooling.start_tool(self.repo_root, self.definitions, "rebuild-search-embeddings")
 		time.sleep(0.3)
-		self.assertEqual(tooling.get_tool_run(run_b["run_id"])["status"], "queued")
+		self.assertEqual(tooling.get_tool_run(self.repo_root, run_b["run_id"])["status"], "queued")
 		self.assertEqual(self._wait_for_completion(run_a["run_id"])["status"], "succeeded")
 		self.assertEqual(self._wait_for_completion(run_b["run_id"])["status"], "succeeded")
 

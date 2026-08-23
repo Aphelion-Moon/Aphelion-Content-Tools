@@ -4,6 +4,7 @@ import { TOOLS, type ToolManifest } from '~/tools/registry';
 import { cx } from '~/lib/cx';
 import GlobalSearch from './GlobalSearch';
 import Parsec from './Parsec';
+import SharedReferences from './SharedReferences';
 import StoreStatus from './StoreStatus';
 import styles from './AppShell.module.css';
 
@@ -25,7 +26,8 @@ export default function AppShell(props: AppShellProps) {
 
 	return (
 		<div class={styles.layout}>
-			<aside class={styles.sidebar}>
+			<a class={styles.skipLink} href="#main-content">Skip to content</a>
+			<aside class={styles.sidebar} aria-label="Application sidebar">
 				<header class={styles.hero}>
 					<p class={styles.eyebrow}>Aphelion Content Tools</p>
 					<h1>{activeTool()?.navLabel ?? 'Aphelion Content Tools'}</h1>
@@ -35,6 +37,7 @@ export default function AppShell(props: AppShellProps) {
 				<StoreStatus />
 				<Parsec />
 				<GlobalSearch />
+				<SharedReferences />
 
 				<nav class={styles.nav} aria-label="Tools">
 					<For each={TOOLS}>
@@ -55,7 +58,7 @@ export default function AppShell(props: AppShellProps) {
 				</nav>
 			</aside>
 
-			<div class={styles.content}>{props.children}</div>
+			<main id="main-content" class={styles.content} tabIndex={-1}>{props.children}</main>
 		</div>
 	);
 }

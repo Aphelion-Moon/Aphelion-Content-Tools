@@ -82,3 +82,14 @@ test('reviewQueryUrl encodes the active filters as query parameters', () => {
   assert.equal(params.has('include_redundant'), false);
   assert.equal(params.get('offset'), '50');
 });
+
+test('withExpectedRecordHash carries the version token and preserves explicit new-record null', () => {
+  assert.deepEqual(
+    app.withExpectedRecordHash({status: 'reviewed'}, 'a'.repeat(64)),
+    {status: 'reviewed', expected_record_hash: 'a'.repeat(64)},
+  );
+  assert.deepEqual(
+    app.withExpectedRecordHash({status: 'reviewed'}, null),
+    {status: 'reviewed', expected_record_hash: null},
+  );
+});

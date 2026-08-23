@@ -264,10 +264,10 @@ def format_validation_error(repo_root: Path, corpus: LoreCorpus) -> str | None:
 	return f"Lore corpus validation failed:\n{formatted_issues}"
 
 
-def write_generated_dm(repo_root: Path, *, check_only: bool = False) -> None:
+def write_generated_dm(repo_root: Path, *, check_only: bool = False, corpus: LoreCorpus | None = None) -> None:
 	"""Validate and write or compare the Aphelion DM artifact atomically."""
 	resolved_root = repo_root.resolve()
-	corpus = load_corpus(resolved_root)
+	corpus = corpus or load_corpus(resolved_root)
 	validation_error = format_validation_error(resolved_root, corpus)
 	if validation_error is not None:
 		raise ValueError(validation_error)

@@ -48,6 +48,10 @@ async function requestJson(path, options = {}) {
   return payload;
 }
 
+function withExpectedRecordHash(payload, recordHash) {
+  return {...payload, expected_record_hash: recordHash ?? null};
+}
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -657,10 +661,14 @@ async function saveGroup(event) {
   saveButton.disabled = true;
   try {
     const path = state.groupDraftId ? '/api/groups/' + encodeURIComponent(state.groupDraftId) : '/api/groups';
+    const currentGroup = state.groups.find((candidate) => candidate.id === state.groupDraftId);
+    const requestPayload = state.groupDraftId
+      ? withExpectedRecordHash(payload, currentGroup?.record_hash)
+      : payload;
     const response = await requestJson(path, {
       method: state.groupDraftId ? 'PUT' : 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload),
+      body: JSON.stringify(requestPayload),
     });
     document.querySelector('#group-editor').hidden = true;
     state.groupDraftId = null;
@@ -698,7 +706,7 @@ async function saveReview(status) {
   await requestJson('/api/reviews/' + encodeURIComponent(state.selected.type_path), {
     method: 'PUT',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(payload),
+    body: JSON.stringify(withExpectedRecordHash(payload, state.selected.review?.record_hash)),
   });
   const typePath = state.selected.type_path;
   await loadReviewEntries();
@@ -729,7 +737,10 @@ async function removeOverride() {
     await requestJson('/api/entries/' + encodeURIComponent(state.selected.id), {
       method: 'DELETE',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({source_file: state.selected.source_file}),
+      body: JSON.stringify(withExpectedRecordHash(
+        {source_file: state.selected.source_file},
+        state.selected.record_hash,
+      )),
     });
     setText('#status-message', 'Override removed and generated.');
     announceSuccess('Override removed and generated.');
@@ -783,7 +794,10 @@ async function saveEntry(event) {
       const response = await requestJson('/api/entries/' + encodeURIComponent(state.selected.id), {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({source_file: state.selected.source_file, entry: validation.entry}),
+        body: JSON.stringify(withExpectedRecordHash(
+          {source_file: state.selected.source_file, entry: validation.entry},
+          state.selected.record_hash,
+        )),
       });
       const message = response.saved ? 'Saved and generated.' : 'Save completed.';
       setText('#status-message', message);
@@ -952,7 +966,16 @@ if (typeof window !== 'undefined') {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {state, statusLabel, groupMatchSummary, slugify, iconRecord, isIconStateAvailable, reviewQueryUrl};
+  module.exports = {
+    state,
+    statusLabel,
+    groupMatchSummary,
+    slugify,
+    iconRecord,
+    isIconStateAvailable,
+    reviewQueryUrl,
+    withExpectedRecordHash,
+  };
 }
 
 })();

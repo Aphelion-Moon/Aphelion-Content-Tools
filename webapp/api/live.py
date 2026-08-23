@@ -3,10 +3,12 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from webapp.git_adapter import workspace_revision
 from webapp.store.health import store_health
 from webapp.tool_registry import load_tool_registry
 from webapp.tooling import list_active_runs, list_tools
@@ -73,7 +75,15 @@ class Broadcaster:
 			{**run, "tool_label": labels.get(run["tool_id"], run["tool_id"])}
 			for run in list_active_runs(self._repo_root)
 		]
-		return {"health": store_health(self._repo_root), "active_runs": runs}
+		try:
+			revision = asdict(workspace_revision(self._repo_root))
+		except (OSError, ValueError):
+			revision = None
+		return {
+			"health": store_health(self._repo_root),
+			"active_runs": runs,
+			"workspace_revision": revision,
+		}
 
 	async def _broadcast(self, message_type: str, payload: object) -> None:
 		frame = json.dumps({"type": message_type, "data": payload})

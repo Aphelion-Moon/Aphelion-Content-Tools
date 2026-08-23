@@ -5,6 +5,8 @@ from http import HTTPStatus
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from tools.lore_editor.write_coordinator import RecordConflict
+
 # A real error taxonomy.
 #
 # The pre-rewrite server answered every failure with the same handler, repeated 56 times:
@@ -90,6 +92,23 @@ async def handle_value_error(_request: Request, exc: Exception) -> JSONResponse:
 	return JSONResponse(
 		status_code=HTTPStatus.BAD_REQUEST,
 		content=error_body("bad_request", str(exc)),
+	)
+
+
+async def handle_record_conflict(_request: Request, exc: Exception) -> JSONResponse:
+	assert isinstance(exc, RecordConflict)
+	return JSONResponse(
+		status_code=HTTPStatus.CONFLICT,
+		content={
+			"error": str(exc),
+			"code": "record_conflict",
+			"record_id": exc.record_id,
+			"expected_hash": exc.expected_hash,
+			"current_hash": exc.current_hash,
+			"base": exc.base,
+			"current": exc.current,
+			"proposed": exc.proposed,
+		},
 	)
 
 

@@ -1,6 +1,6 @@
 import { For, Show, createResource, createSignal } from 'solid-js';
 import Card, { cardStyles } from '~/components/Card';
-import { ApiError, api } from '~/lib/api';
+import { api } from '~/lib/api';
 import { announceError, announceSuccess } from '~/lib/notify';
 import type { components } from '~/lib/api-schema';
 import styles from './FileManagement.module.css';
@@ -44,7 +44,7 @@ export default function ExportPanel() {
 		}
 	}
 
-	async function apply(force = false): Promise<void> {
+	async function apply(): Promise<void> {
 		const stage = selected();
 		if (!stage) {
 			setOutput('Prepare an export before applying one.');
@@ -53,31 +53,18 @@ export default function ExportPanel() {
 		setBusy(true);
 		setOutput('Applying export…');
 		try {
-			const result = await api.post<ApplyExportResponse>('/api/export/apply', { stage, force });
+			const result = await api.post<ApplyExportResponse>('/api/export/apply', { stage });
 			const desktopNote = result.opened_in_github_desktop
 				? 'GitHub Desktop opened for the game checkout.'
 				: `Could not open GitHub Desktop${result.github_desktop_error ? `: ${result.github_desktop_error}` : '.'} ` +
 					'Open it manually to review, commit, and open a pull request.';
 			setOutput(
-				`Applied ${result.artifact}${force ? ' (overrode the uncommitted-changes check)' : ''}.\n` +
+				`Applied ${result.artifact}.\n` +
 					`Review the game diff under Meridian-Rift, then commit it locally.\n${desktopNote}`,
 			);
 			announceSuccess(`Applied ${result.artifact}.`, 'file-management');
 		} catch (error) {
-			// A dirty game checkout is a deliberate stop condition, not a failure to paper over -- offer
-			// the override explicitly rather than retrying with force automatically.
-			const message = error instanceof ApiError ? error.message : String(error);
-			if (!force && /uncommitted changes/i.test(message)) {
-				const proceed = window.confirm(
-					'Meridian-Rift has uncommitted changes.\n\n' +
-						'Apply the export anyway? This only overwrites the generated lore artifact — your other ' +
-						'uncommitted changes are left alone, but review them before committing.',
-				);
-				if (proceed) {
-					setBusy(false);
-					return apply(true);
-				}
-			}
+			const message = error instanceof Error ? error.message : String(error);
 			setOutput(message);
 			announceError(error, 'file-management');
 		} finally {

@@ -3,7 +3,10 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from tools.lore_editor.reconcile import reconcile_projection
+from tools.lore_editor.records import atomic_write_record, record_path
 from webapp.store import db
 from webapp.store.health import store_health
 from webapp.store.schema import TABLE_SCHEMAS, encode, table
@@ -57,6 +60,26 @@ class StoreHealthTests(unittest.TestCase):
 		db._generation = 0
 		health = store_health(self.repo_root)
 		self.assertIsNotNone(health["last_write_time"])
+
+	def test_reports_visible_keyword_only_mode_when_embeddings_are_unavailable(self) -> None:
+		with patch("webapp.store.embeddings._load_model", return_value=None):
+			health = store_health(self.repo_root)
+
+		self.assertEqual(health["semantic_search"]["mode"], "keyword-only")
+		self.assertEqual(health["semantic_search"]["model_id"], "BAAI/bge-small-en-v1.5")
+		self.assertTrue(health["semantic_search"]["reason"])
+
+	def test_reports_whether_the_projection_matches_canonical_content(self) -> None:
+		path = record_path(self.repo_root, "group", "items")
+		payload = {"id": "items", "label": "Items", "color": "#fff", "keywords": [], "type_path_prefixes": []}
+		atomic_write_record(path, payload)
+		reconcile_projection(self.repo_root)
+
+		self.assertTrue(store_health(self.repo_root)["projection"]["current"])
+		atomic_write_record(path, {**payload, "label": "Changed"})
+		changed = store_health(self.repo_root)["projection"]
+		self.assertFalse(changed["current"])
+		self.assertIn("Canonical content changed", changed["reason"])
 
 
 if __name__ == "__main__":

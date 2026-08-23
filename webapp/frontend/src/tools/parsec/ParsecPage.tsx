@@ -1,13 +1,21 @@
-import { For, Show } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import Card, { cardStyles } from '~/components/Card';
 import { appState } from '~/store/appStore';
 import { announce, announceError, announceSuccess, react } from '~/lib/notify';
 import { formatElapsed } from '~/lib/format';
+import { readMotionPreference, writeMotionPreference, type MotionPreference } from '~/lib/parsecEngine';
 
 // Parsec's own page. Her sprite/animation engine is ported in step 4; what works here already is the
 // announcement log, which now reads from the shared store rather than a window-global ring buffer -- so
 // announcements raised by any tool show up here without the page having been open at the time.
 export default function ParsecPage() {
+	const [motionPreference, setMotionPreference] = createSignal(readMotionPreference());
+
+	function updateMotionPreference(preference: MotionPreference): void {
+		writeMotionPreference(preference);
+		setMotionPreference(preference);
+	}
+
 	return (
 		<>
 			<Card eyebrow="Meet the mascot" heading="About Parsec">
@@ -29,6 +37,18 @@ export default function ParsecPage() {
 				<p class={cardStyles.metadata}>
 					Current state: <strong>{appState.parsecState}</strong>
 				</p>
+				<label>
+					Motion{' '}
+					<select
+						aria-label="Parsec motion"
+						value={motionPreference()}
+						onChange={(event) => updateMotionPreference(event.currentTarget.value as MotionPreference)}
+					>
+						<option value="animate">Animate</option>
+						<option value="follow-system">Follow system preference</option>
+						<option value="reduce">Reduce motion</option>
+					</select>
+				</label>
 				<button type="button" onClick={() => react('happy')}>
 					Happy (pat)
 				</button>

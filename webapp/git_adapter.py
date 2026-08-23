@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import re
 import shutil
 import subprocess
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
+
+from tools.lore_editor.reconcile import scan_canonical_records
+from webapp.store.metadata import ProjectionRevision, active_projection_metadata
 
 
 class GitAdapterError(ValueError):
@@ -29,10 +35,41 @@ class RepositoryStatus:
 		return bool(self.conflict_files)
 
 
+@dataclass(frozen=True)
+class WorkspaceRevision:
+	worktree_id: str
+	branch: str
+	head: str
+	content_revision: str
+	projection_revision: ProjectionRevision | None
+
+
+@dataclass(frozen=True)
+class OwnedChange:
+	path: str
+	kind: str
+	record_id: str
+	summary: str
+
+
+TOOL_CANONICAL_ROOTS = {
+	"tools/lore_editor/content/overrides/": "override",
+	"tools/lore_editor/content/groups/": "group",
+	"tools/lore_editor/content/reviews/": "review",
+	"tools/lore_editor/content/assignments/": "assignment",
+}
+TOOL_CATALOG_PATHS = {
+	"tools/lore_editor/catalog/manifest.json": "catalog_manifest",
+	"tools/lore_editor/catalog/targets.json": "catalog_seed",
+}
+GAME_GENERATED_PATH = "modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm"
+
+
 CONFLICT_STATUS_CODES = frozenset(("DD", "AU", "UD", "UA", "DU", "AA", "UU"))
 
 MAX_GIT_OUTPUT_CHARACTERS = 8_000
 MAX_CHANGED_FILES = 2_000
+GIT_TIMEOUT_SECONDS = 60
 
 _REPO_LOCKS: dict[Path, Lock] = {}
 _REPO_LOCKS_REGISTRY_LOCK = Lock()
@@ -102,7 +139,10 @@ def _run_git(repo_root: Path, arguments: list[str], *, allow_nonzero: bool = Fal
 			text=True,
 			encoding="utf-8",
 			errors="replace",
+			timeout=GIT_TIMEOUT_SECONDS,
 		)
+	except subprocess.TimeoutExpired as exc:
+		raise GitAdapterError(f"Git command timed out after {GIT_TIMEOUT_SECONDS} seconds.") from exc
 	except OSError as exc:
 		raise GitAdapterError(f"Git could not be started: {exc}") from exc
 	if result.returncode != 0 and not allow_nonzero:
@@ -113,7 +153,7 @@ def _run_git(repo_root: Path, arguments: list[str], *, allow_nonzero: bool = Fal
 
 def repository_status(repo_root: Path) -> RepositoryStatus:
 	with _repo_lock(repo_root):
-		status_result = _run_git(repo_root, ["status", "--porcelain=v1", "-b"])
+		status_result = _run_git(repo_root, ["status", "--porcelain=v1", "--untracked-files=all", "-b"])
 	lines = status_result.stdout.splitlines()
 	if not lines or not lines[0].startswith("## "):
 		raise GitAdapterError("Git did not return a branch status.")
@@ -164,6 +204,25 @@ def repository_status(repo_root: Path) -> RepositoryStatus:
 def repository_revision(repo_root: Path) -> str:
 	with _repo_lock(repo_root):
 		return _run_git(repo_root, ["rev-parse", "HEAD"]).stdout.strip()
+
+
+def workspace_revision(repo_root: Path) -> WorkspaceRevision:
+	resolved_root = repo_root.resolve()
+	with _repo_lock(resolved_root):
+		head = _run_git(resolved_root, ["rev-parse", "HEAD"]).stdout.strip()
+		branch_result = _run_git(resolved_root, ["symbolic-ref", "--quiet", "--short", "HEAD"], allow_nonzero=True)
+		branch = branch_result.stdout.strip() if branch_result.returncode == 0 else "(detached HEAD)"
+		git_directory = _run_git(resolved_root, ["rev-parse", "--absolute-git-dir"]).stdout.strip()
+	worktree_id = hashlib.sha256(str(Path(git_directory).resolve()).casefold().encode("utf-8")).hexdigest()[:16]
+	content_revision = scan_canonical_records(resolved_root).content_revision
+	projection = active_projection_metadata(resolved_root)
+	return WorkspaceRevision(
+		worktree_id=worktree_id,
+		branch=branch,
+		head=head,
+		content_revision=content_revision,
+		projection_revision=projection.revision if projection is not None else None,
+	)
 
 
 def repository_remote_url(repo_root: Path, remote_name: str = "origin") -> str | None:
@@ -258,6 +317,75 @@ def _resolve_tracked_path(repo_root: Path, relative_path: str) -> Path:
 	return resolved_path
 
 
+def _canonical_record_id(path: str, root: str, kind: str) -> str:
+	relative = path[len(root):]
+	without_suffix = relative[:-5] if relative.endswith(".json") else relative
+	if kind in ("review", "assignment"):
+		return "/" + without_suffix
+	return Path(without_suffix).name
+
+
+def classify_owned_change(repo_root: Path, repository: str, relative_path: str) -> OwnedChange | None:
+	path = Path(relative_path).as_posix()
+	resolved_path = _resolve_tracked_path(repo_root, path)
+	if repository == "game":
+		if path == GAME_GENERATED_PATH:
+			return OwnedChange(path=path, kind="generated_artifact", record_id="lore_overrides", summary="Generated lore overrides")
+		return None
+	if repository != "tool":
+		raise ValueError("Repository must be 'tool' or 'game'.")
+	if path in TOOL_CATALOG_PATHS:
+		kind = TOOL_CATALOG_PATHS[path]
+		return OwnedChange(path=path, kind=kind, record_id=Path(path).stem, summary=kind.replace("_", " ").title())
+	for root, kind in TOOL_CANONICAL_ROOTS.items():
+		if not path.startswith(root) or not path.endswith(".json"):
+			continue
+		record_id = _canonical_record_id(path, root, kind)
+		summary = f"Deleted {kind} {record_id}"
+		if resolved_path.is_file():
+			try:
+				payload = json.loads(resolved_path.read_text(encoding="utf-8"))
+			except (OSError, json.JSONDecodeError):
+				payload = None
+			if isinstance(payload, dict):
+				payload_id = payload.get("id") if kind in ("override", "group") else payload.get("type_path")
+				if isinstance(payload_id, str):
+					record_id = payload_id
+				summary_value = payload.get("label") or payload.get("name") or payload.get("status") or payload.get("notes")
+				if isinstance(summary_value, str) and summary_value.strip():
+					summary = summary_value.strip()
+				elif kind == "assignment" and isinstance(payload.get("group_ids"), list):
+					summary = ", ".join(str(group_id) for group_id in payload["group_ids"]) or "Clear assignment"
+		return OwnedChange(path=path, kind=kind, record_id=record_id, summary=summary)
+	return None
+
+
+def list_owned_changes(repo_root: Path, repository: str) -> tuple[OwnedChange, ...]:
+	status = repository_status(repo_root)
+	owned = [
+		change
+		for path in status.changed_files
+		if (change := classify_owned_change(repo_root, repository, path)) is not None
+	]
+	return tuple(owned)
+
+
+def stage_owned_and_commit(
+	repo_root: Path,
+	repository: str,
+	relative_paths: tuple[str, ...],
+	message: str,
+) -> str:
+	unowned = [
+		Path(path).as_posix()
+		for path in relative_paths
+		if classify_owned_change(repo_root, repository, path) is None
+	]
+	if unowned:
+		raise ValueError(f"Selected path is not owned by the {repository} authoring workflow: {', '.join(unowned)}")
+	return stage_and_commit(repo_root, relative_paths, message)
+
+
 def stage_and_commit(repo_root: Path, relative_paths: tuple[str, ...], message: str) -> str:
 	if not relative_paths:
 		raise ValueError("At least one repository-relative path is required to commit.")
@@ -268,12 +396,30 @@ def stage_and_commit(repo_root: Path, relative_paths: tuple[str, ...], message: 
 		_resolve_tracked_path(repo_root, relative_path)
 		validated_paths.append(Path(relative_path).as_posix())
 	with _repo_lock(repo_root):
-		_run_git(repo_root, ["add", "--", *validated_paths])
-		no_changes = _run_git(repo_root, ["diff", "--cached", "--quiet", "--", *validated_paths], allow_nonzero=True)
-		if no_changes.returncode == 0:
-			raise ValueError("The requested paths contain no staged changes.")
-		_run_git(repo_root, ["commit", "--only", "-m", message, "--", *validated_paths])
-		return _run_git(repo_root, ["rev-parse", "HEAD"]).stdout.strip()
+		index_name = _run_git(repo_root, ["rev-parse", "--git-path", "index"]).stdout.strip()
+		index_path = Path(index_name)
+		if not index_path.is_absolute():
+			index_path = (repo_root.resolve() / index_path).resolve()
+		index_existed = index_path.is_file()
+		original_index = index_path.read_bytes() if index_existed else None
+		try:
+			_run_git(repo_root, ["add", "--", *validated_paths])
+			no_changes = _run_git(repo_root, ["diff", "--cached", "--quiet", "--", *validated_paths], allow_nonzero=True)
+			if no_changes.returncode == 0:
+				raise ValueError("The requested paths contain no staged changes.")
+			_run_git(repo_root, ["commit", "--only", "-m", message, "--", *validated_paths])
+			return _run_git(repo_root, ["rev-parse", "HEAD"]).stdout.strip()
+		except Exception:
+			if index_existed and original_index is not None:
+				temporary_path = index_path.with_name(f".{index_path.name}.{uuid.uuid4().hex}.tmp")
+				try:
+					temporary_path.write_bytes(original_index)
+					os.replace(temporary_path, index_path)
+				finally:
+					temporary_path.unlink(missing_ok=True)
+			else:
+				index_path.unlink(missing_ok=True)
+			raise
 
 
 def open_in_github_desktop(repo_root: Path) -> None:

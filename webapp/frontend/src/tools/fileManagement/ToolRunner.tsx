@@ -1,4 +1,4 @@
-import { For, Show, createResource, createSignal, onCleanup } from 'solid-js';
+import { For, Show, createEffect, createResource, createSignal, onCleanup } from 'solid-js';
 import Card, { cardStyles } from '~/components/Card';
 import { api } from '~/lib/api';
 import { announceError, announceSuccess } from '~/lib/notify';
@@ -37,6 +37,7 @@ export default function ToolRunner() {
 	const [stopping, setStopping] = createSignal(false);
 
 	let pollTimer: ReturnType<typeof setTimeout> | undefined;
+	const attachedRunIds = new Set<string>();
 	onCleanup(() => clearTimeout(pollTimer));
 
 	const inGroup = (group: string) =>
@@ -63,6 +64,14 @@ export default function ToolRunner() {
 			setStopping(false);
 		}
 	}
+
+	createEffect(() => {
+		const repositoryRun = appState.activeRuns[0];
+		if (!repositoryRun || activeRunId() !== null || attachedRunIds.has(repositoryRun.run_id)) return;
+		attachedRunIds.add(repositoryRun.run_id);
+		setActiveRunId(repositoryRun.run_id);
+		void poll(repositoryRun.run_id);
+	});
 
 	async function runTool(toolId: string): Promise<void> {
 		setOutput(`Starting ${toolId}…`);

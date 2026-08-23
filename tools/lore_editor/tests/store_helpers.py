@@ -47,9 +47,8 @@ def seed_group(repo_root: Path, group: dict[str, object]) -> None:
 
 def seed_review(repo_root: Path, type_path: str, review: dict[str, object]) -> None:
 	reviews_table = table(repo_root, "reviews")
-	slug = type_path.strip("/").replace("/", "-").casefold() or "root"
 	db.upsert_rows(reviews_table, "id", [{
-		"id": slug,
+		"id": type_path,
 		"type_path": type_path,
 		"raw_json": encode({"type_path": type_path, **review}),
 		"text": type_path,
@@ -58,9 +57,8 @@ def seed_review(repo_root: Path, type_path: str, review: dict[str, object]) -> N
 
 def seed_assignment(repo_root: Path, type_path: str, group_ids: list[str]) -> None:
 	assignments_table = table(repo_root, "assignments")
-	slug = type_path.strip("/").replace("/", "-").casefold() or "root"
 	db.upsert_rows(assignments_table, "id", [{
-		"id": slug,
+		"id": type_path,
 		"type_path": type_path,
 		"raw_json": encode({"type_path": type_path, "group_ids": group_ids}),
 		"text": type_path,

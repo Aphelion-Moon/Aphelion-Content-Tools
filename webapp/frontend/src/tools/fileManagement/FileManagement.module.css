@@ -29,6 +29,17 @@
 .changedFile summary {
 	cursor: pointer;
 	overflow-wrap: anywhere;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.pin {
+	width: auto;
+	flex: none;
+	padding: 0.25rem 0.4rem;
+	font-size: 0.72rem;
 }
 
 .diff,

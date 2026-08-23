@@ -9,12 +9,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from webapp.game_repository import validate_game_repository
-from webapp.git_adapter import repository_revision, repository_status
+from webapp.git_adapter import list_owned_changes, repository_revision, repository_status
 from webapp.json_storage import canonical_json_bytes
 
 from .app.manifest import ExportManifest, sha256_bytes
 from .catalog import read_current_targets
 from .generate import generate_dm
+from .reconcile import scan_canonical_records
 from .source import load_corpus
 from .validation import validate_corpus
 
@@ -98,6 +99,13 @@ def prepare_export(tool_root: Path, game_repo_root: Path, stage_root: Path) -> P
 	resolved_tool_root = tool_root.resolve()
 	resolved_game_root = game_repo_root.resolve()
 	validate_game_repository(resolved_game_root)
+	owned_changes = list_owned_changes(resolved_tool_root, "tool")
+	if owned_changes:
+		paths = ", ".join(change.path for change in owned_changes)
+		raise ValueError(
+			"The authored content has uncommitted changes. Commit the selected records before preparing an export: "
+			f"{paths}"
+		)
 	validation_error = _validation_error(resolved_tool_root, resolved_game_root)
 	if validation_error is not None:
 		raise ValueError(validation_error)
@@ -119,6 +127,7 @@ def prepare_export(tool_root: Path, game_repo_root: Path, stage_root: Path) -> P
 	manifest = ExportManifest(
 		tool_repo_revision=tool_revision,
 		tool_branch=tool_status.branch,
+		content_revision=scan_canonical_records(resolved_tool_root).content_revision,
 		catalog_sha256=catalog_sha256,
 		game_repo_revision=game_revision,
 		entry_ids=tuple(sorted(entry.entry_id for entry in corpus.entries if entry.entry_id is not None)),
@@ -152,14 +161,8 @@ def _load_prepared_manifest(stage_directory: Path) -> ExportManifest:
 	return ExportManifest.from_dict(payload)
 
 
-def apply_export(stage_directory: Path, game_repo_root: Path, *, allow_dirty: bool = False) -> Path:
-	"""Apply a prepared artifact only when the recorded clean-game checks still hold.
-
-	`allow_dirty` lets a caller override the uncommitted-changes block after the user has explicitly
-	confirmed it (the export only ever touches the one generated artifact file, so overwriting it
-	alongside other uncommitted game-repo changes is a deliberate, reviewable choice) -- unresolved Git
-	conflicts remain a hard block regardless, since applying on top of those is never safe.
-	"""
+def apply_export(stage_directory: Path, game_repo_root: Path) -> Path:
+	"""Apply a prepared artifact only when the recorded clean-game checks still hold."""
 	resolved_stage_directory = stage_directory.resolve()
 	resolved_game_root = game_repo_root.resolve()
 	validate_game_repository(resolved_game_root)
@@ -174,7 +177,7 @@ def apply_export(stage_directory: Path, game_repo_root: Path, *, allow_dirty: bo
 	status = repository_status(resolved_game_root)
 	if status.conflicted:
 		raise ValueError("The game checkout has unresolved Git conflicts; resolve them in GitHub Desktop first.")
-	if status.dirty and not allow_dirty:
+	if status.dirty:
 		raise ValueError("The game checkout has uncommitted changes; review or commit them in GitHub Desktop before applying an export.")
 	if repository_revision(resolved_game_root) != manifest.game_repo_revision:
 		raise ValueError("The game checkout revision changed after this export was prepared; prepare a new export.")

@@ -1,8 +1,10 @@
 import { For, Show, createSignal, createMemo } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { api } from '~/lib/api';
+import type { components } from '~/lib/api-schema';
 import { TOOLS } from '~/tools/registry';
-import type { SearchResult } from '~/store/appStore';
+import { appState, setSelectedContext, type SearchResult } from '~/store/appStore';
+import { buildSearchRequest, contextFromResult, navigationRoute } from './globalSearchModel';
 import styles from './GlobalSearch.module.css';
 
 // Global search, backed by /api/search.
@@ -16,24 +18,17 @@ import styles from './GlobalSearch.module.css';
 
 const DEBOUNCE_MS = 200;
 const RESULT_LIMIT = 6;
+const LISTBOX_ID = 'global-search-results';
+const SEARCH_SCOPES = {
+	everything: [] as readonly string[],
+	lore: ['catalog_targets', 'overrides', 'groups', 'reviews', 'assignments'],
+	graph: ['graph_nodes', 'graph_edges', 'unresolved_markers'],
+	files: ['manifests', 'references'],
+} as const;
+type SearchScopeName = keyof typeof SEARCH_SCOPES;
 
-interface SearchResponse {
-	readonly results: readonly SearchResult[];
-}
-
-/** Which tool owns a given store table, so a result can route somewhere useful. */
-const TABLE_OWNER: Record<string, string> = {
-	catalog_targets: '/lore-editor',
-	overrides: '/lore-editor',
-	groups: '/lore-editor',
-	reviews: '/lore-editor',
-	assignments: '/lore-editor',
-	graph_nodes: '/graph',
-	graph_edges: '/graph',
-	unresolved_markers: '/graph',
-	manifests: '/file-management',
-	references: '/file-management',
-};
+type SearchResponse = components['schemas']['SearchResponse'];
+type SemanticSearchHealth = components['schemas']['SemanticSearchHealth'];
 
 function resultLabel(result: SearchResult): string {
 	const record = result.record as Record<string, unknown>;
@@ -59,6 +54,10 @@ export default function GlobalSearch() {
 	const [results, setResults] = createSignal<readonly SearchResult[]>([]);
 	const [open, setOpen] = createSignal(false);
 	const [searching, setSearching] = createSignal(false);
+	const [semanticStatus, setSemanticStatus] = createSignal<SemanticSearchHealth | null>(null);
+	const [scope, setScope] = createSignal<SearchScopeName>('everything');
+	const [activeIndex, setActiveIndex] = createSignal(-1);
+	const [searchError, setSearchError] = createSignal<string | null>(null);
 
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 	// Guards against an earlier, slower request overwriting a later one's results.
@@ -75,19 +74,27 @@ export default function GlobalSearch() {
 		if (!trimmed) {
 			setResults([]);
 			setOpen(false);
+			setActiveIndex(-1);
+			setSearchError(null);
 			return;
 		}
 		const requestId = ++latestRequest;
 		setSearching(true);
 		try {
-			const payload = await api.get<SearchResponse>(
-				`/api/search?q=${encodeURIComponent(trimmed)}&limit=${RESULT_LIMIT}`,
+			const payload = await api.post<SearchResponse>(
+				'/api/search',
+				buildSearchRequest(trimmed, appState.selectedContext, RESULT_LIMIT, SEARCH_SCOPES[scope()]),
 			);
 			if (requestId !== latestRequest) return;
 			setResults(payload.results ?? []);
-		} catch {
+			setSemanticStatus(payload.semantic_search);
+			setSearchError(null);
+		} catch (caught) {
 			// Page matches still render even when the store search fails, so the box stays useful.
-			if (requestId === latestRequest) setResults([]);
+			if (requestId === latestRequest) {
+				setResults([]);
+				setSearchError(caught instanceof Error ? caught.message : String(caught));
+			}
 		} finally {
 			if (requestId === latestRequest) setSearching(false);
 		}
@@ -98,19 +105,78 @@ export default function GlobalSearch() {
 		const value = event.currentTarget.value;
 		setQuery(value);
 		setOpen(Boolean(value.trim()));
+		setActiveIndex(-1);
 		clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(() => void runSearch(value), DEBOUNCE_MS);
 	}
 
 	function goTo(route: string) {
 		setOpen(false);
+		setActiveIndex(-1);
 		navigate(route);
 	}
 
+	function goToResult(result: SearchResult) {
+		setSelectedContext(contextFromResult(result));
+		goTo(navigationRoute(result));
+	}
+
 	const hasAnything = () => pageMatches().length > 0 || results().length > 0;
+	const optionCount = () => pageMatches().length + results().length;
+	const optionId = (index: number) => `global-search-option-${index}`;
+	const statusText = () => {
+		if (searching()) return 'Searching.';
+		if (searchError()) return `Search failed: ${searchError()}`;
+		const count = optionCount();
+		return count === 1 ? '1 result available.' : `${count} results available.`;
+	};
+
+	function activateOption(index: number): void {
+		const page = pageMatches()[index];
+		if (page) {
+			goTo(page.route);
+			return;
+		}
+		const result = results()[index - pageMatches().length];
+		if (result) goToResult(result);
+	}
+
+	function onKeyDown(event: KeyboardEvent): void {
+		const count = optionCount();
+		if (event.key === 'Escape') {
+			setOpen(false);
+			setActiveIndex(-1);
+			return;
+		}
+		if (event.key === 'ArrowDown') {
+			event.preventDefault();
+			setOpen(Boolean(query().trim()));
+			if (count > 0) setActiveIndex((current) => Math.min(current + 1, count - 1));
+			return;
+		}
+		if (event.key === 'ArrowUp') {
+			event.preventDefault();
+			setOpen(Boolean(query().trim()));
+			if (count > 0) setActiveIndex((current) => current <= 0 ? count - 1 : current - 1);
+			return;
+		}
+		if (event.key === 'Enter' && activeIndex() >= 0) {
+			event.preventDefault();
+			activateOption(activeIndex());
+		}
+	}
 
 	return (
-		<div class={styles.wrapper}>
+		<div
+			class={styles.wrapper}
+			onFocusOut={(event) => {
+				const next = event.relatedTarget;
+				if (!(next instanceof Node) || !event.currentTarget.contains(next)) {
+					setOpen(false);
+					setActiveIndex(-1);
+				}
+			}}
+		>
 			<label class={styles.label} for="global-search">
 				Search
 			</label>
@@ -119,21 +185,57 @@ export default function GlobalSearch() {
 				type="search"
 				placeholder="Search everything…"
 				value={query()}
+				role="combobox"
+				aria-autocomplete="list"
+				aria-haspopup="listbox"
+				aria-expanded={open()}
+				aria-controls={open() ? LISTBOX_ID : undefined}
+				aria-activedescendant={open() && activeIndex() >= 0 ? optionId(activeIndex()) : undefined}
 				onInput={onInput}
 				onFocus={() => setOpen(Boolean(query().trim()))}
-				onKeyDown={(event) => {
-					if (event.key === 'Escape') setOpen(false);
-				}}
+				onKeyDown={onKeyDown}
 			/>
+			<label class={styles.scopeLabel}>
+				<span>Scope</span>
+				<select
+					value={scope()}
+					onChange={(event) => {
+						setScope(event.currentTarget.value as SearchScopeName);
+						if (query().trim()) void runSearch(query());
+					}}
+				>
+					<option value="everything">Everything</option>
+					<option value="lore">Lore</option>
+					<option value="graph">Content graph</option>
+					<option value="files">Files &amp; references</option>
+				</select>
+			</label>
 
 			<Show when={open()}>
-				<div class={styles.results}>
+				<div id={LISTBOX_ID} class={styles.results} role="listbox" aria-label="Search suggestions">
+					<Show when={appState.selectedContext?.record_id || appState.selectedContext?.type_path}>
+						{(selected) => <p class={styles.contextNote}>Related results boosted for {selected()}.</p>}
+					</Show>
+					<Show when={semanticStatus()?.mode === 'keyword-only'}>
+						<p class={styles.statusNote}>Keyword-only search; semantic ranking is currently unavailable.</p>
+					</Show>
+					<Show when={searchError()}>{(message) => <p class={styles.error} role="alert">{message()}</p>}</Show>
 					<Show when={hasAnything()} fallback={<p class={styles.empty}>{searching() ? 'Searching…' : 'No matches.'}</p>}>
 						<Show when={pageMatches().length > 0}>
 							<p class={styles.sectionHeading}>Pages</p>
 							<For each={pageMatches()}>
-								{(tool) => (
-									<button type="button" class={styles.result} onClick={() => goTo(tool.route)}>
+								{(tool, index) => (
+									<button
+										id={optionId(index())}
+										type="button"
+										role="option"
+										aria-selected={activeIndex() === index()}
+										tabIndex={-1}
+										class={activeIndex() === index() ? `${styles.result} ${styles.resultActive}` : styles.result}
+										onMouseDown={(event) => event.preventDefault()}
+										onMouseEnter={() => setActiveIndex(index())}
+										onClick={() => goTo(tool.route)}
+									>
 										<strong>{tool.navLabel}</strong>
 									</button>
 								)}
@@ -143,24 +245,39 @@ export default function GlobalSearch() {
 						<Show when={results().length > 0}>
 							<p class={styles.sectionHeading}>Catalog &amp; content</p>
 							<For each={results()}>
-								{(result) => (
+								{(result, resultIndex) => {
+									const index = () => pageMatches().length + resultIndex();
+									return (
 									<button
+										id={optionId(index())}
 										type="button"
-										class={styles.result}
-										onClick={() => goTo(TABLE_OWNER[result.table] ?? '/')}
+										role="option"
+										aria-selected={activeIndex() === index()}
+										tabIndex={-1}
+										class={activeIndex() === index() ? `${styles.result} ${styles.resultActive}` : styles.result}
+										onMouseDown={(event) => event.preventDefault()}
+										onMouseEnter={() => setActiveIndex(index())}
+										onClick={() => goToResult(result)}
 									>
 										<span class={styles.tableTag}>{result.table.replace(/_/g, ' ')}</span>
 										<strong>{resultLabel(result)}</strong>
 										<Show when={resultDetail(result)}>
 											{(detail) => <span class={styles.resultMeta}>{detail()}</span>}
 										</Show>
+										<Show when={result.context_reason}>
+											{(reason) => <span class={styles.contextReason}>Boosted: {reason()}</span>}
+										</Show>
 									</button>
-								)}
+									);
+								}}
 							</For>
 						</Show>
 					</Show>
 				</div>
 			</Show>
+			<p class={styles.srOnly} role="status" aria-live="polite" aria-atomic="true">
+				{statusText()}
+			</p>
 		</div>
 	);
 }

@@ -14,8 +14,9 @@ from .model import (
     as_bool,
     as_object,
     as_string,
-    freeze_json,
+	freeze_json,
 )
+from .records import CONTENT_ROOT, read_record
 
 # Overrides no longer live in real files -- each one carries a free-text `group` label instead (still
 # picked/typed the same way in the UI, see app.js's "entity group" selector), but `LoreEntry.source_path`
@@ -129,11 +130,18 @@ def load_catalog_targets(repo_root: Path) -> tuple[CatalogTarget, ...]:
 
 def load_corpus(repo_root: Path) -> LoreCorpus:
     targets = load_catalog_targets(repo_root)
-    override_rows = db.all_rows(table(repo_root, "overrides"))
-    entries = tuple(
-        make_lore_entry(source_path_for_group(row["group"]), decode(row))
-        for row in override_rows
-    )
+    override_directory = repo_root.resolve() / CONTENT_ROOT / "overrides"
+    if override_directory.is_dir():
+        entries = tuple(
+            make_lore_entry(source_path_for_group(str(payload.get("id", "")).partition(".")[0]), payload)
+            for payload in (read_record(path) for path in sorted(override_directory.rglob("*.json")))
+        )
+    else:
+        override_rows = db.all_rows(table(repo_root, "overrides"))
+        entries = tuple(
+            make_lore_entry(source_path_for_group(row["group"]), decode(row))
+            for row in override_rows
+        )
     # Deterministic order regardless of the store's own row order -- several validation/generation code
     # paths (duplicate-id/duplicate-field-ownership messages, generated DM ordering) depend on a stable
     # entry order, the same way the old per-file JSON store's alphabetical file listing was implicitly
@@ -143,6 +151,12 @@ def load_corpus(repo_root: Path) -> LoreCorpus:
 
 
 def list_entity_groups(repo_root: Path) -> list[str]:
+    override_directory = repo_root.resolve() / CONTENT_ROOT / "overrides"
+    if override_directory.is_dir():
+        return sorted({
+            str(read_record(path).get("id", "")).partition(".")[0]
+            for path in override_directory.rglob("*.json")
+        })
     rows = db.all_rows(table(repo_root, "overrides"))
     return sorted({row["group"] for row in rows})
 

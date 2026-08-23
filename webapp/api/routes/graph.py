@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api/graph", tags=["content-graph"])
 Ctx = Annotated[AppContext, Depends(context)]
 
 
-@router.get("", response_model=GraphResponse)
+@router.get("", response_model=GraphResponse, response_model_exclude_none=True)
 def read_graph(ctx: Ctx) -> object:
 	"""The cached content graph. `scanned: false` means no scan has run yet -- not an error."""
 	cached = read_graph_cache(ctx.repo_root)

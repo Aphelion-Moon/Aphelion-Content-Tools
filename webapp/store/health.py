@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from pathlib import Path
 
+from tools.lore_editor.reconcile import scan_canonical_records
+
 from .db import store_path
+from .embeddings import embedding_status
+from .metadata import projection_status
 from .schema import TABLE_SCHEMAS, table
 
 
@@ -35,9 +40,24 @@ def store_health(repo_root: Path) -> dict[str, object]:
 	rather than leaving it as a black box behind a handful of job buttons."""
 	tables = {name: table(repo_root, name).count_rows() for name in TABLE_SCHEMAS}
 	disk_bytes, last_write_time = _directory_stats(store_path(repo_root))
+	semantic_status = embedding_status()
+	canonical_snapshot = scan_canonical_records(repo_root)
+	projection = projection_status(repo_root, canonical_snapshot.content_revision)
 	return {
 		"tables": tables,
 		"total_rows": sum(tables.values()),
 		"disk_bytes": disk_bytes,
 		"last_write_time": last_write_time,
+		"semantic_search": {
+			"mode": "hybrid" if semantic_status.available else "keyword-only",
+			"model_id": semantic_status.model_id,
+			"reason": semantic_status.reason,
+		},
+		"projection": {
+			"current": projection.current,
+			"reason": projection.reason,
+			"path": str(projection.path),
+			"content_revision": canonical_snapshot.content_revision,
+			"active": asdict(projection.active) if projection.active is not None else None,
+		},
 	}

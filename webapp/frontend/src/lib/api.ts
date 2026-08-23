@@ -5,11 +5,15 @@
 
 export class ApiError extends Error {
 	readonly status: number;
+	readonly code: string | null;
+	readonly details: Readonly<Record<string, unknown>>;
 
-	constructor(message: string, status: number) {
+	constructor(message: string, status: number, body: Readonly<Record<string, unknown>> = {}) {
 		super(message);
 		this.name = 'ApiError';
 		this.status = status;
+		this.code = typeof body['code'] === 'string' ? body['code'] : null;
+		this.details = body;
 	}
 }
 
@@ -37,7 +41,8 @@ export async function requestJson<T>(path: string, options: RequestInit = {}): P
 
 	if (!response.ok) {
 		const message = (payload as ErrorBody).error ?? `Request failed (${response.status}).`;
-		throw new ApiError(message, response.status);
+		const details = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {};
+		throw new ApiError(message, response.status, details);
 	}
 	return payload as T;
 }
@@ -47,7 +52,7 @@ function withBody(method: string, body: unknown): RequestInit {
 }
 
 export const api = {
-	get: <T>(path: string) => requestJson<T>(path),
+	get: <T>(path: string, options: RequestInit = {}) => requestJson<T>(path, options),
 	post: <T>(path: string, body?: unknown) => requestJson<T>(path, withBody('POST', body)),
 	put: <T>(path: string, body?: unknown) => requestJson<T>(path, withBody('PUT', body)),
 	delete: <T>(path: string, body?: unknown) => requestJson<T>(path, withBody('DELETE', body)),

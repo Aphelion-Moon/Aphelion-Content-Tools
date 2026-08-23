@@ -12,6 +12,20 @@
 	letter-spacing: 0.1em;
 }
 
+.scopeLabel {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	font-size: 0.7rem;
+	color: var(--muted);
+}
+
+.scopeLabel select {
+	min-width: 0;
+	font-size: 0.72rem;
+}
+
 .results {
 	display: flex;
 	flex-direction: column;
@@ -51,6 +65,12 @@
 	background: rgba(102, 0, 148, 0.45);
 }
 
+.resultActive {
+	background: rgba(102, 0, 148, 0.62);
+	outline: 2px solid var(--plasma);
+	outline-offset: -2px;
+}
+
 .resultMeta {
 	font-size: 0.72rem;
 	color: var(--muted);
@@ -68,4 +88,38 @@
 	margin: 0.3rem;
 	font-size: 0.8rem;
 	color: var(--muted);
+}
+
+.contextNote,
+.statusNote {
+	margin: 0.2rem 0.35rem;
+	font-size: 0.7rem;
+	color: var(--muted);
+}
+
+.statusNote {
+	color: var(--plasma);
+}
+
+.contextReason {
+	font-size: 0.68rem;
+	color: var(--plasma);
+}
+
+.error {
+	margin: 0.3rem;
+	font-size: 0.75rem;
+	color: var(--danger, #ff8ca1);
+}
+
+.srOnly {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
 }

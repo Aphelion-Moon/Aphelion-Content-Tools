@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import cast
+
+from .models import GraphEditType, MarkerAttribution, MarkerOwner
 
 EDIT_TYPES = frozenset(("addition", "removal", "change", "unspecified"))
 ATTRIBUTIONS = frozenset(("exact", "path-derived", "unattributed"))
@@ -22,11 +25,11 @@ _LEADING_TOKEN_PATTERN = re.compile(r"^\(?([A-Za-z0-9_-]+)")
 
 @dataclass(frozen=True)
 class MarkerEdge:
-	owner: str
-	edit_type: str
+	owner: MarkerOwner
+	edit_type: GraphEditType
 	line_number: int
 	source_module_id: str | None
-	attribution: str
+	attribution: MarkerAttribution
 	raw_label: str
 	original_text: str | None
 	line_text: str
@@ -39,7 +42,10 @@ def _strip_trailing_comment_close(label: str) -> str:
 	return label
 
 
-def _extract_module_id(label_for_attribution: str, known_module_ids_by_fold: dict[str, str]) -> tuple[str | None, str]:
+def _extract_module_id(
+	label_for_attribution: str,
+	known_module_ids_by_fold: dict[str, str],
+) -> tuple[str | None, MarkerAttribution]:
 	if not label_for_attribution:
 		return None, "unattributed"
 	path_match = _PATH_MODULE_PATTERN.search(label_for_attribution)
@@ -102,8 +108,8 @@ def parse_markers(text: str, known_module_ids: frozenset[str]) -> list[MarkerEdg
 			continue
 		if match.group("terminator") == "END":
 			continue
-		owner = match.group("owner")
-		edit_type = _KIND_BY_TOKEN.get(match.group("kind"), "unspecified")
+		owner = cast(MarkerOwner, match.group("owner"))
+		edit_type = cast(GraphEditType, _KIND_BY_TOKEN.get(match.group("kind"), "unspecified"))
 		raw_label = _strip_trailing_comment_close(match.group("label") or "")
 
 		original_text: str | None = None

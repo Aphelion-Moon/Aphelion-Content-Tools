@@ -7,12 +7,14 @@ from pathlib import Path
 if __package__ in (None, ""):
 	sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 	from tools.lore_editor.catalog import compute_catalog_drift, read_current_targets, refresh_catalog
+	from tools.lore_editor.catalog_seed import bootstrap_catalog, package_catalog_seed
 	from tools.lore_editor.export import apply_export, prepare_export
 	from tools.lore_editor.generate import write_generated_dm
 	from tools.lore_editor.source import load_corpus
 	from tools.lore_editor.validation import validate_corpus
 else:
 	from .catalog import compute_catalog_drift, read_current_targets, refresh_catalog
+	from .catalog_seed import bootstrap_catalog, package_catalog_seed
 	from .export import apply_export, prepare_export
 	from .generate import write_generated_dm
 	from .source import load_corpus
@@ -34,6 +36,19 @@ def build_parser() -> argparse.ArgumentParser:
 	catalog_parser = subparsers.add_parser("catalog-refresh", help="Refresh the BYOND target catalog.")
 	catalog_parser.add_argument("--repo-root", type=Path, required=True)
 	catalog_parser.add_argument("--game-repo", type=Path)
+
+	bootstrap_parser = subparsers.add_parser("catalog-bootstrap", help="Activate a verified release catalog or rebuild it locally.")
+	bootstrap_parser.add_argument("--repo-root", type=Path, required=True)
+	bootstrap_parser.add_argument("--game-repo", type=Path)
+	bootstrap_parser.add_argument("--manifest", type=Path)
+	bootstrap_parser.add_argument("--cache-root", type=Path)
+
+	seed_package_parser = subparsers.add_parser("catalog-seed-package", help="Package the active catalog for a release.")
+	seed_package_parser.add_argument("--repo-root", type=Path, required=True)
+	seed_package_parser.add_argument("--seed-output", type=Path, required=True)
+	seed_package_parser.add_argument("--manifest-output", type=Path, required=True)
+	seed_package_parser.add_argument("--source-game-commit", required=True)
+	seed_package_parser.add_argument("--download-url", required=True)
 
 	prepare_parser = subparsers.add_parser("prepare-export", help="Validate and stage a game-repository export.")
 	prepare_parser.add_argument("--repo-root", type=Path, required=True)
@@ -102,6 +117,29 @@ def main(argv: list[str] | None = None) -> int:
 				print(f"Overrides affected by these changes ({len(drift.stale_entry_type_paths)}):")
 				for type_path in drift.stale_entry_type_paths:
 					print(f"  - {type_path}")
+			return 0
+		if args.command == "catalog-bootstrap":
+			assert repo_root is not None
+			result = bootstrap_catalog(
+				repo_root,
+				manifest_path=args.manifest,
+				cache_root=args.cache_root,
+				game_repo_root=args.game_repo,
+			)
+			print(f"Catalog bootstrap: {result.source} ({result.target_count} targets).")
+			if result.warning:
+				print(f"warning: {result.warning}", file=sys.stderr)
+			return 0
+		if args.command == "catalog-seed-package":
+			assert repo_root is not None
+			manifest = package_catalog_seed(
+				repo_root,
+				seed_path=args.seed_output,
+				manifest_path=args.manifest_output,
+				source_game_commit=args.source_game_commit,
+				download_url=args.download_url,
+			)
+			print(f"Packaged catalog seed {manifest.sha256} ({manifest.byte_size} bytes).")
 			return 0
 		if args.command == "prepare-export":
 			assert repo_root is not None

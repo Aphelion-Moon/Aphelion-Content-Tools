@@ -85,6 +85,21 @@ class ValidateCorpusTests(unittest.TestCase):
 				],
 			)
 
+	def test_validate_corpus_rejects_entry_ids_outside_the_schema_grammar(self) -> None:
+		with tempfile.TemporaryDirectory() as temp_dir:
+			repo_root = Path(temp_dir)
+			self.init_repo(repo_root)
+			seed_override(
+				repo_root,
+				"alpha",
+				{"id": "missing' OR true OR id = 'alpha.entry", "type_path": "/obj/item/radio"},
+			)
+
+			issues = self.issue_rows(repo_root)
+
+			self.assertEqual(len(issues), 1)
+			self.assertEqual(issues[0][1], "Entry id must match ^[A-Za-z0-9][A-Za-z0-9._-]*$.")
+
 	def test_validate_corpus_rejects_invalid_absolute_type_paths(self) -> None:
 		with tempfile.TemporaryDirectory() as temp_dir:
 			repo_root = Path(temp_dir)

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
+from tools.lore_editor.reconcile import reconcile_projection
 from webapp.store.health import store_health
-from webapp.store.search import search
+from webapp.store.search import SearchContext, SearchReport, search
 
 from ..deps import AppContext, context
-from ..models import SearchResponse, StoreHealth
+from ..models import SearchRequest, SearchResponse, SelectedSearchContext, StoreHealth
 
 router = APIRouter(prefix="/api", tags=["store"])
 
@@ -20,12 +22,28 @@ def read_store_health(ctx: Ctx) -> object:
 	return store_health(ctx.repo_root)
 
 
+@router.post("/store/reconcile")
+def reconcile_store(ctx: Ctx) -> object:
+	result = reconcile_projection(ctx.repo_root)
+	return {
+		"counts": result.counts,
+		"content_revision": result.content_revision,
+		"projection_revision": asdict(result.projection_revision),
+	}
+
+
 @router.get("/search", response_model=SearchResponse)
 def hybrid_search(
 	ctx: Ctx,
 	q: Annotated[str, Query(description="Query text.")] = "",
 	tables: Annotated[str, Query(description="Comma-separated table names. Empty searches every table.")] = "",
 	limit: Annotated[int, Query(ge=1, le=100)] = 20,
+	context_tool: str | None = None,
+	context_kind: str | None = None,
+	context_id: str | None = None,
+	context_type_path: str | None = None,
+	context_group: Annotated[list[str] | None, Query()] = None,
+	context_module: str | None = None,
 ) -> object:
 	"""Hybrid keyword + semantic search across the shared store.
 
@@ -35,4 +53,59 @@ def hybrid_search(
 	cross-tool lookup rather than any single tool's search.
 	"""
 	requested = [name for name in tables.split(",") if name] or None
-	return {"results": search(ctx.repo_root, q, tables=requested, limit=limit)}
+	selected_context = SelectedSearchContext(
+		tool=context_tool,
+		record_kind=context_kind,
+		record_id=context_id,
+		type_path=context_type_path,
+		groups=context_group or [],
+		module=context_module,
+	)
+	context_value = selected_context if any((
+		context_tool,
+		context_kind,
+		context_id,
+		context_type_path,
+		context_group,
+		context_module,
+	)) else None
+	return _search_response(search(ctx.repo_root, q, tables=requested, limit=limit, context=_context(context_value)))
+
+
+@router.post("/search", response_model=SearchResponse)
+def contextual_search(payload: SearchRequest, ctx: Ctx) -> object:
+	"""Typed contextual search used by the SPA; scope filters are always explicit."""
+	tables = payload.scope.tables or None if payload.scope is not None else None
+	return _search_response(
+		search(
+			ctx.repo_root,
+			payload.query,
+			tables=tables,
+			limit=payload.limit,
+			context=_context(payload.selected_context),
+		)
+	)
+
+
+def _context(value: SelectedSearchContext | None) -> SearchContext | None:
+	if value is None:
+		return None
+	return SearchContext(
+		tool=value.tool,
+		record_kind=value.record_kind,
+		record_id=value.record_id,
+		type_path=value.type_path,
+		groups=tuple(value.groups),
+		module=value.module,
+	)
+
+
+def _search_response(report: SearchReport) -> dict[str, object]:
+	return {
+		"results": report.results,
+		"semantic_search": {
+			"mode": report.semantic_mode,
+			"model_id": report.semantic_model_id,
+			"reason": report.semantic_reason,
+		},
+	}

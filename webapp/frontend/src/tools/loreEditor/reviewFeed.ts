@@ -1,5 +1,6 @@
-import { createSignal } from 'solid-js';
+import { createSignal, onCleanup } from 'solid-js';
 import { api } from '~/lib/api';
+import type { components } from '~/lib/api-schema';
 
 // Paged access to the catalog review feed.
 //
@@ -15,47 +16,14 @@ import { api } from '~/lib/api';
 
 export const PAGE_SIZE = 200;
 
-export interface ReviewEntry {
-	readonly id: string;
-	readonly type_path: string | null;
-	readonly name: string | null;
-	readonly label: string | null;
-	readonly base_name: string | null;
-	readonly description: string | null;
-	readonly base_description: string | null;
-	readonly category: string;
-	readonly status: string;
-	readonly approved: boolean;
-	readonly has_override: boolean;
-	readonly group_labels: readonly string[];
-	readonly issues: readonly unknown[];
-	readonly directional: boolean;
-	readonly redundant: boolean;
-}
-
-export interface ReviewGroup {
-	readonly id: string;
-	readonly label: string;
-	readonly color?: string | null;
-}
-
-interface ReviewResponse {
-	readonly entries: readonly ReviewEntry[];
-	readonly matched_entry_count: number;
-	readonly returned_entry_count: number;
-	readonly has_more: boolean;
-	readonly catalog_count: number;
-	readonly approved_count: number;
-	readonly status_counts: Readonly<Record<string, number>>;
-	readonly suppressed_counts: Readonly<Record<string, number>>;
-	readonly groups: readonly ReviewGroup[];
-	readonly visible_entry_count: number;
-}
+export type ReviewEntry = components['schemas']['ReviewEntryModel'];
+export type ReviewGroup = components['schemas']['ReviewGroupModel'];
+type ReviewResponse = components['schemas']['ReviewFeedResponse'];
 
 export interface ReviewFilters {
 	readonly query: string;
-	readonly status: string;
-	readonly group: string;
+	readonly statuses: readonly string[];
+	readonly groups: readonly string[];
 	readonly sort: string;
 	readonly includeDirectional: boolean;
 	readonly includeRedundant: boolean;
@@ -63,8 +31,8 @@ export interface ReviewFilters {
 
 export const DEFAULT_FILTERS: ReviewFilters = {
 	query: '',
-	status: '',
-	group: '',
+	statuses: [],
+	groups: [],
 	sort: 'name',
 	includeDirectional: false,
 	includeRedundant: false,
@@ -77,19 +45,19 @@ function buildQuery(filters: ReviewFilters, offset: number): string {
 		sort: filters.sort,
 	});
 	if (filters.query) params.set('q', filters.query);
-	if (filters.status) params.append('status', filters.status);
-	if (filters.group) params.append('group', filters.group);
+	for (const status of filters.statuses) params.append('status', status);
+	for (const group of filters.groups) params.append('group', group);
 	if (filters.includeDirectional) params.set('include_directional', 'true');
 	if (filters.includeRedundant) params.set('include_redundant', 'true');
 	return `/api/review?${params.toString()}`;
 }
 
-export function createReviewFeed() {
+export function createReviewFeed(initialFilters: ReviewFilters = DEFAULT_FILTERS) {
 	const [entries, setEntries] = createSignal<readonly ReviewEntry[]>([]);
 	const [meta, setMeta] = createSignal<ReviewResponse | null>(null);
 	const [loading, setLoading] = createSignal(false);
 	const [error, setError] = createSignal<string | null>(null);
-	const [filters, setFiltersInternal] = createSignal<ReviewFilters>(DEFAULT_FILTERS);
+	const [filters, setFiltersInternal] = createSignal<ReviewFilters>({ ...initialFilters });
 
 	// `exhausted` must be a signal, not a closure variable: the footer reads it to decide whether to
 	// offer "load more", and a plain variable gives Solid nothing to track, so the button would linger
@@ -98,28 +66,41 @@ export function createReviewFeed() {
 
 	// Guards against a slower earlier request landing after a newer one and corrupting the list.
 	let generation = 0;
+	let activeController: AbortController | undefined;
+	onCleanup(() => activeController?.abort());
 
 	async function fetchPage(offset: number, requestGeneration: number): Promise<void> {
-		if (loading() || exhausted()) return;
+		if ((offset > 0 && loading()) || exhausted()) return;
+		const controller = new AbortController();
+		activeController = controller;
+		const requestFilters = filters();
 		setLoading(true);
 		try {
-			const payload = await api.get<ReviewResponse>(buildQuery(filters(), offset));
+			const payload = await api.get<ReviewResponse>(buildQuery(requestFilters, offset), {
+				signal: controller.signal,
+			});
 			if (requestGeneration !== generation) return;
 			setMeta(payload);
 			setEntries((current) => (offset === 0 ? payload.entries : [...current, ...payload.entries]));
 			setExhausted(!payload.has_more);
 			setError(null);
 		} catch (caught) {
+			if (controller.signal.aborted) return;
 			if (requestGeneration === generation) {
 				setError(caught instanceof Error ? caught.message : String(caught));
 			}
 		} finally {
-			if (requestGeneration === generation) setLoading(false);
+			if (requestGeneration === generation && activeController === controller) {
+				activeController = undefined;
+				setLoading(false);
+			}
 		}
 	}
 
 	function reload(): void {
 		generation += 1;
+		activeController?.abort();
+		activeController = undefined;
 		setExhausted(false);
 		setEntries([]);
 		void fetchPage(0, generation);

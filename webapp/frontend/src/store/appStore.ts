@@ -22,6 +22,7 @@ export interface Announcement {
 export type ActiveRun = components['schemas']['ActiveRun'];
 export type StoreHealth = components['schemas']['StoreHealth'];
 export type SearchResult = components['schemas']['SearchResult'];
+export type SelectedContext = components['schemas']['SelectedSearchContext'];
 
 export type ParsecState = 'idle' | 'working' | 'happy' | 'twerking';
 
@@ -31,6 +32,7 @@ export interface AppState {
 	announcements: readonly Announcement[];
 	connected: boolean;
 	parsecState: ParsecState;
+	selectedContext: SelectedContext | null;
 }
 
 export const ANNOUNCEMENT_LIMIT = 20;
@@ -41,6 +43,7 @@ const [state, setState] = createStore<AppState>({
 	announcements: [],
 	connected: false,
 	parsecState: 'idle',
+	selectedContext: null,
 });
 
 export { state as appState };
@@ -81,6 +84,10 @@ export function setConnected(connected: boolean): void {
 
 export function setParsecState(next: ParsecState): void {
 	setState('parsecState', next);
+}
+
+export function setSelectedContext(context: SelectedContext | null): void {
+	setState('selectedContext', context);
 }
 
 export function isJobRunning(): boolean {

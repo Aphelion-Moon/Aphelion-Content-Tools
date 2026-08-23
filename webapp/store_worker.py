@@ -3,11 +3,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import json
+import os
 import sys
+import tempfile
 import threading
 import time
 import uuid
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout, suppress
 from multiprocessing.connection import Listener
 from pathlib import Path
 
@@ -27,6 +30,7 @@ MAX_OUTPUT_CHARACTERS = 64_000
 MAX_LOG_CHARACTERS = 1_000_000
 MAX_RETAINED_RUNS = 200
 LOG_ROOT = Path("tools/logs")
+RUN_STATE_ROOT = LOG_ROOT / "runs"
 
 
 def pipe_address(repo_root: Path) -> str:
@@ -37,19 +41,15 @@ def pipe_address(repo_root: Path) -> str:
 
 
 class JobCancelled(Exception):
-	"""Raised from inside a running job the moment a stop has been requested -- see `_RunOutputStream`."""
+	"""Raised from inside a running job when a stop has been requested."""
 
 
 class _RunOutputStream(io.TextIOBase):
 	"""Redirect target for a job's stdout/stderr while it runs.
 
-	Every `print(...)` a tool's `cli.main()` makes -- including the per-chunk progress lines already
-	printed by `sync_snapshot`/`rebuild_embeddings`/`scan_and_cache_content_graph` -- becomes a `write()`
-	call here, which appends the text to the run's in-memory output (and its log file) exactly as the
-	old subprocess-stdout-piping did. Checking the run's stop flag on every write reuses that same
-	per-print-call moment as a cooperative cancellation point -- there is no OS-level process to kill
-	inside a persistent worker without discarding the warm model/connection it exists to keep, so a
-	stop has to be noticed here instead.
+	Every `print(...)` a tool's `cli.main()` makes becomes a `write()` call here, which appends the text
+	to the run's in-memory output and log file. Output remains a cancellation point, while the worker's
+	per-line trace handles silent Python work independently of whether the tool prints progress.
 	"""
 
 	def __init__(self, worker: Worker, run_id: str) -> None:
@@ -102,10 +102,77 @@ class Worker:
 	named-pipe RPC loop client requests come in through."""
 
 	def __init__(self, repo_root: Path) -> None:
-		self.repo_root = repo_root
+		self.repo_root = repo_root.resolve()
 		self._runs: dict[str, dict[str, object]] = {}
-		self._runs_lock = threading.Lock()
+		# The cancellation trace checks the stop flag while traced tool code calls back into output and
+		# bookkeeping helpers. A re-entrant lock prevents that same worker thread deadlocking itself.
+		self._runs_lock = threading.RLock()
 		self._run_lock = threading.Lock()  # held for the duration of a job -- one job at a time, ever
+		self._load_run_state()
+
+	def _state_path(self, run_id: str) -> Path:
+		return self.repo_root / RUN_STATE_ROOT / f"{run_id}.json"
+
+	def _persist_run_locked(self, run_id: str) -> None:
+		run = self._runs[run_id]
+		payload = {key: value for key, value in run.items() if key != "output"}
+		payload["repo_root"] = str(self.repo_root)
+		path = self._state_path(run_id)
+		path.parent.mkdir(parents=True, exist_ok=True)
+		data = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+		file_descriptor, temporary_name = tempfile.mkstemp(prefix=f".{run_id}.", suffix=".tmp", dir=path.parent)
+		temporary_path = Path(temporary_name)
+		try:
+			with os.fdopen(file_descriptor, "wb") as handle:
+				handle.write(data)
+				handle.flush()
+				os.fsync(handle.fileno())
+			os.replace(temporary_path, path)
+		finally:
+			temporary_path.unlink(missing_ok=True)
+
+	def _read_log_tail(self, run_id: str) -> str:
+		try:
+			return (self.repo_root / LOG_ROOT / f"{run_id}.log").read_text(
+				encoding="utf-8",
+				errors="replace",
+			)[-MAX_OUTPUT_CHARACTERS:]
+		except OSError:
+			return ""
+
+	def _load_run_state(self) -> None:
+		state_root = self.repo_root / RUN_STATE_ROOT
+		try:
+			paths = sorted(state_root.glob("*.json"), key=lambda path: path.stat().st_mtime)[-MAX_RETAINED_RUNS:]
+		except OSError:
+			return
+		for path in paths:
+			try:
+				payload = json.loads(path.read_text(encoding="utf-8"))
+				run_id = str(payload["run_id"])
+				if run_id != path.stem or Path(str(payload["repo_root"])).resolve() != self.repo_root:
+					continue
+				status = str(payload["status"])
+				if status not in ("queued", "running", "succeeded", "failed", "stopped"):
+					continue
+			except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+				continue
+			payload.pop("repo_root", None)
+			payload["output"] = self._read_log_tail(run_id)
+			self._runs[run_id] = payload
+			if status in ("queued", "running"):
+				payload["status"] = "failed"
+				payload["exit_code"] = None
+				payload["stop_requested"] = False
+				message = "Worker exited before job completed; rerun the operation.\n"
+				payload["output"] = (str(payload["output"]) + message)[-MAX_OUTPUT_CHARACTERS:]
+				self._append_log(run_id, message)
+				self._persist_run_locked(run_id)
+
+	def _update_run(self, run_id: str, **values: object) -> None:
+		with self._runs_lock:
+			self._runs[run_id].update(values)
+			self._persist_run_locked(run_id)
 
 	def append_output(self, run_id: str, text: str) -> None:
 		with self._runs_lock:
@@ -131,6 +198,17 @@ class Worker:
 			run = self._runs.get(run_id)
 			return bool(run and run.get("stop_requested"))
 
+	def _raise_if_cancelled(self, run_id: str) -> None:
+		if self.is_stop_requested(run_id):
+			raise JobCancelled()
+
+	def _cancellation_trace(self, run_id: str):
+		def check_cancelled(frame, event, arg):
+			self._raise_if_cancelled(run_id)
+			return check_cancelled
+
+		return check_cancelled
+
 	def start(self, definition: ToolDefinition, game_repo_root: Path | None) -> dict[str, object]:
 		run_id = uuid.uuid4().hex
 		log_path = LOG_ROOT / f"{run_id}.log"
@@ -145,6 +223,7 @@ class Worker:
 				"stop_requested": False,
 				"queued_at": time.time(),
 			}
+			self._persist_run_locked(run_id)
 			self._evict_old_runs_locked()
 		self._append_log(run_id, f"Queued {definition.id}.\n")
 		thread = threading.Thread(target=self._execute, args=(run_id, definition, game_repo_root), daemon=True)
@@ -170,40 +249,40 @@ class Worker:
 		excess = len(self._runs) - MAX_RETAINED_RUNS
 		for run_id in finished_ids[:excess]:
 			del self._runs[run_id]
+			with suppress(OSError):
+				self._state_path(run_id).unlink()
 
 	def _execute(self, run_id: str, definition: ToolDefinition, game_repo_root: Path | None) -> None:
 		with self._run_lock:  # serializes every job against every other -- never two writers at once
-			with self._runs_lock:
-				self._runs[run_id]["status"] = "running"
+			self._update_run(run_id, status="running")
 			self.append_output(run_id, f"Starting {definition.id}.\n")
 			try:
+				self._raise_if_cancelled(run_id)
 				for command_index in range(len(definition.commands)):
 					cli_main = _load_cli_main(definition.tool_root)
 					argv = _build_argv(self.repo_root, definition, command_index, game_repo_root=game_repo_root)
 					self.append_output(run_id, f"Command {command_index + 1}: {' '.join(argv)}\n")
 					stream = _RunOutputStream(self, run_id)
-					with redirect_stdout(stream), redirect_stderr(stream):
-						return_code = cli_main(argv)
+					previous_trace = sys.gettrace()
+					sys.settrace(self._cancellation_trace(run_id))
+					try:
+						with redirect_stdout(stream), redirect_stderr(stream):
+							return_code = cli_main(argv)
+					finally:
+						sys.settrace(previous_trace)
+					self._raise_if_cancelled(run_id)
 					if return_code != 0:
 						self.append_output(run_id, f"Command exited with code {return_code}.\n")
-						with self._runs_lock:
-							self._runs[run_id]["status"] = "failed"
-							self._runs[run_id]["exit_code"] = return_code
+						self._update_run(run_id, status="failed", exit_code=return_code)
 						return
-				with self._runs_lock:
-					self._runs[run_id]["status"] = "succeeded"
-					self._runs[run_id]["exit_code"] = 0
+				self._update_run(run_id, status="succeeded", exit_code=0)
 				self.append_output(run_id, "Completed successfully.\n")
 			except JobCancelled:
 				self.append_output(run_id, "Stopped by user request.\n")
-				with self._runs_lock:
-					self._runs[run_id]["status"] = "stopped"
-					self._runs[run_id]["exit_code"] = None
+				self._update_run(run_id, status="stopped", exit_code=None)
 			except Exception as exc:
 				self.append_output(run_id, f"error: {exc}\n")
-				with self._runs_lock:
-					self._runs[run_id]["status"] = "failed"
-					self._runs[run_id]["exit_code"] = None
+				self._update_run(run_id, status="failed", exit_code=None)
 
 	def status(self, run_id: str) -> dict[str, object]:
 		with self._runs_lock:
@@ -216,13 +295,21 @@ class Worker:
 			if run_id not in self._runs:
 				raise ValueError(f"Unknown tool run '{run_id}'.")
 			self._runs[run_id]["stop_requested"] = True
+			self._persist_run_locked(run_id)
 		return self.status(run_id)
+
+
+def _validate_request_repo(worker: Worker, request: dict[str, object]) -> None:
+	claimed_root = request.get("repo_root")
+	if not isinstance(claimed_root, str) or Path(claimed_root).resolve() != worker.repo_root:
+		raise ValueError("Tool request repository does not match the worker repository.")
 
 
 def _handle_connection(worker: Worker, definitions: tuple[ToolDefinition, ...], conn) -> bool:
 	"""Handle one request on `conn`. Returns True if the worker should keep serving, False on shutdown."""
 	try:
 		request = conn.recv()
+		_validate_request_repo(worker, request)
 		action = request.get("action")
 		if action == "shutdown":
 			conn.send({"ok": True, "result": None})
@@ -244,10 +331,8 @@ def _handle_connection(worker: Worker, definitions: tuple[ToolDefinition, ...], 
 			raise ValueError(f"Unknown action '{action}'.")
 		conn.send({"ok": True, "result": result})
 	except Exception as exc:
-		try:
+		with suppress(OSError):
 			conn.send({"ok": False, "error_type": type(exc).__name__, "error": str(exc)})
-		except OSError:
-			pass
 	return True
 
 

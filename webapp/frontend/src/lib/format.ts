@@ -14,8 +14,8 @@ export function formatBytes(bytes: number): string {
 }
 
 /** Elapsed time since a Unix timestamp (seconds), as a compact human string. */
-export function formatElapsed(sinceEpochSeconds: number): string {
-	const seconds = Math.max(0, Math.round(Date.now() / 1000 - sinceEpochSeconds));
+export function formatElapsed(sinceEpochSeconds: number, nowEpochSeconds = Date.now() / 1000): string {
+	const seconds = Math.max(0, Math.round(nowEpochSeconds - sinceEpochSeconds));
 	if (seconds < 60) return `${seconds}s`;
 	const minutes = Math.floor(seconds / 60);
 	if (minutes < 60) return `${minutes}m ${seconds % 60}s`;

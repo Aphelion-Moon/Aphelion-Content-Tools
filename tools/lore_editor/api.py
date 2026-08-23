@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -10,7 +11,7 @@ from tools.dmi import Dmi
 from webapp.git_adapter import find_line_in_tracked_files
 from webapp.path_safety import resolve_repo_path
 from webapp.store import db
-from webapp.store.schema import encode, table
+from webapp.store.metadata import active_projection_metadata
 
 from .generate import write_generated_dm
 from .icon_preview import list_icon_files, list_icon_states
@@ -24,19 +25,38 @@ from .model import (
 	ValidationIssue,
 	thaw_json,
 )
+from .reconcile import materialize_legacy_records, reconcile_projection
+from .records import atomic_write_record, canonical_record_hash, read_record, record_path
 from .source import group_for_source_path, load_corpus, make_lore_entry, source_path_for_group
 from .source import list_entity_files as _list_entity_files
 from .taxonomy import (
 	REVIEW_STATUSES,
 	classify_target_details,
+	delete_group,
 	load_groups,
 	load_reviews,
 	save_group,
 	save_group_assignments,
 	save_review,
 )
-from .validation import validate_corpus
+from .validation import validate_corpus, validate_entry_id
 from .workspace import WorkspaceLayout
+from .write_coordinator import RecordConflict, repository_write_lock
+
+LOGGER = logging.getLogger(__name__)
+
+
+def _refresh_projection(repo_root: Path) -> dict[str, object]:
+	try:
+		result = reconcile_projection(repo_root)
+	except Exception as exc:
+		LOGGER.warning("Canonical write succeeded but projection reconciliation failed: %s", exc)
+		return {"current": False, "reason": str(exc)}
+	return {
+		"current": True,
+		"reason": None,
+		"content_revision": result.content_revision,
+	}
 
 
 def _issue_payload(issue: ValidationIssue) -> dict[str, str]:
@@ -102,13 +122,28 @@ class _ReviewCatalogIndex:
 	target_groups: dict[str, tuple[str, ...]]
 
 
-_REVIEW_CATALOG_INDEX_CACHE: dict[tuple[Path, int], _ReviewCatalogIndex] = {}
+_REVIEW_CATALOG_INDEX_CACHE: dict[tuple[object, ...], _ReviewCatalogIndex] = {}
 _REVIEW_CATALOG_INDEX_CACHE_LOCK = Lock()
+
+
+def _store_cache_revision(repo_root: Path) -> tuple[object, ...]:
+	"""Combine same-process writes with the durable projection generation used across processes."""
+	active = active_projection_metadata(repo_root)
+	if active is None:
+		return (db.current_generation(), None)
+	return (
+		db.current_generation(),
+		active.generation_id,
+		active.revision.schema_version,
+		active.revision.content_revision,
+		active.revision.embedding_model_id,
+		active.revision.state,
+	)
 
 
 def _review_catalog_index(repo_root: Path, corpus: LoreCorpus, group_config: GroupConfig) -> _ReviewCatalogIndex:
 	resolved_root = repo_root.resolve()
-	key = (resolved_root, db.current_generation())
+	key = (resolved_root, *_store_cache_revision(resolved_root))
 	with _REVIEW_CATALOG_INDEX_CACHE_LOCK:
 		cached_index = _REVIEW_CATALOG_INDEX_CACHE.get(key)
 		if cached_index is not None:
@@ -160,6 +195,7 @@ def _entry_payload(entry: LoreEntry, target_by_type: dict[str, dict[str, object]
 		"base_description": base_values.get("description"),
 		"icon_metadata": target.get("icon_metadata", {}),
 		"raw": raw_data,
+		"record_hash": canonical_record_hash(raw_data) if isinstance(raw_data, dict) else None,
 		"issues": issues,
 	}
 
@@ -356,7 +392,7 @@ def find_type_definition(game_repo_root: Path, type_path: str) -> dict[str, obje
 
 
 def _group_payload(group: GroupRecord) -> dict[str, object]:
-	return {
+	payload = {
 		"id": group.id,
 		"label": group.label,
 		"color": group.color,
@@ -364,17 +400,22 @@ def _group_payload(group: GroupRecord) -> dict[str, object]:
 		"type_path_prefixes": list(group.type_path_prefixes),
 		"keyword_scope": list(group.keyword_scope),
 	}
+	return {**payload, "record_hash": canonical_record_hash(payload)}
 
 
-def _review_payload(review: ReviewRecord | None) -> dict[str, object] | None:
+def _review_payload(review: ReviewRecord | None, *, type_path: str | None = None) -> dict[str, object] | None:
 	if review is None:
 		return None
-	return {
+	payload = {
 		"status": review.status,
 		"reviewed_by": review.reviewed_by,
 		"reviewed_at": review.reviewed_at,
 		"notes": review.notes,
 	}
+	if type_path is None:
+		return payload
+	record_payload = {"type_path": type_path, **payload}
+	return {**payload, "record_hash": canonical_record_hash(record_payload)}
 
 
 def _decorate_review_item(
@@ -395,7 +436,7 @@ def _decorate_review_item(
 		for group_id in group_ids
 		if group_id in group_match_reasons
 	}
-	entry["review"] = _review_payload(review)
+	entry["review"] = _review_payload(review, type_path=type_path)
 	entry["has_override"] = bool(entry.get("approved"))
 	entry.update(visibility)
 	entry["base_status"] = "overridden" if entry["has_override"] else ("reviewed" if review and review.status == "reviewed" else "unreviewed")
@@ -545,7 +586,7 @@ def _review_entries_snapshot(
 ) -> _ReviewEntriesSnapshot:
 	resolved_root = repo_root.resolve()
 	resolved_asset_root = (asset_root or repo_root).resolve()
-	key = (resolved_root, resolved_asset_root, db.current_generation())
+	key = (resolved_root, resolved_asset_root, *_store_cache_revision(resolved_root))
 	with _REVIEW_ENTRIES_CACHE_LOCK:
 		cached_snapshot = _REVIEW_ENTRIES_CACHE.get(key)
 		if cached_snapshot is not None:
@@ -647,11 +688,22 @@ def groups_response(repo_root: Path) -> dict[str, object]:
 			for group in group_config.groups
 		],
 		"assignments": {type_path: list(group_ids) for type_path, group_ids in group_config.assignments.items()},
+		"assignment_record_hashes": {
+			type_path: canonical_record_hash({"type_path": type_path, "group_ids": list(group_ids)})
+			for type_path, group_ids in group_config.assignments.items()
+		},
 		"counts": group_counts,
 	}
 
 
-def save_group_response(repo_root: Path, payload: object) -> dict[str, object]:
+def save_group_response(
+	repo_root: Path,
+	payload: object,
+	*,
+	expected_record_hash: str | None = None,
+	enforce_record_hash: bool = False,
+	require_new: bool = False,
+) -> dict[str, object]:
 	if not isinstance(payload, dict):
 		raise ValueError("Group payload must be a JSON object.")
 	for field_name in ("id", "label", "color"):
@@ -671,7 +723,13 @@ def save_group_response(repo_root: Path, payload: object) -> dict[str, object]:
 		type_path_prefixes=tuple(payload.get("type_path_prefixes", [])),
 		keyword_scope=tuple(payload["keyword_scope"]) if "keyword_scope" in payload else DEFAULT_KEYWORD_SCOPE,
 	)
-	save_group(repo_root, group)
+	save_group(
+		repo_root,
+		group,
+		expected_record_hash=expected_record_hash,
+		enforce_record_hash=enforce_record_hash,
+		require_new=require_new,
+	)
 	assignments = payload.get("assignments", [])
 	if not isinstance(assignments, list) or any(not isinstance(type_path, str) for type_path in assignments):
 		raise ValueError("Group assignments must be an array of type paths.")
@@ -680,16 +738,39 @@ def save_group_response(repo_root: Path, payload: object) -> dict[str, object]:
 		updated = tuple(group.id if existing != group.id else existing for existing in current)
 		if group.id not in updated:
 			updated += (group.id,)
-		save_group_assignments(repo_root, type_path, updated)
-	return {"group": _group_payload(group), "issues": []}
+			save_group_assignments(repo_root, type_path, updated)
+	return {"group": _group_payload(group), "issues": [], "projection": _refresh_projection(repo_root)}
 
 
-def save_review_response(repo_root: Path, type_path: str, payload: object) -> dict[str, object]:
+def delete_group_response(repo_root: Path, group_id: str, *, expected_record_hash: str) -> dict[str, object]:
+	updated_assignments = delete_group(repo_root, group_id, expected_record_hash=expected_record_hash)
+	return {
+		"deleted": True,
+		"id": group_id,
+		"updated_assignments": updated_assignments,
+		"projection": _refresh_projection(repo_root),
+	}
+
+
+def save_review_response(
+	repo_root: Path,
+	type_path: str,
+	payload: object,
+	*,
+	expected_record_hash: str | None = None,
+	enforce_record_hash: bool = False,
+) -> dict[str, object]:
 	if not type_path.startswith("/"):
 		raise ValueError("Review type paths must be absolute.")
 	if payload is None or (isinstance(payload, dict) and payload.get("status") in (None, "")):
-		save_review(repo_root, type_path, None)
-		return {"review": None, "issues": []}
+		save_review(
+			repo_root,
+			type_path,
+			None,
+			expected_record_hash=expected_record_hash,
+			enforce_record_hash=enforce_record_hash,
+		)
+		return {"review": None, "issues": [], "projection": _refresh_projection(repo_root)}
 	if not isinstance(payload, dict) or payload.get("status") not in REVIEW_STATUSES:
 		raise ValueError("Review payload status must be 'reviewed', 'needs-attention', or null.")
 	reviewed_by = payload.get("reviewed_by")
@@ -701,8 +782,48 @@ def save_review_response(repo_root: Path, type_path: str, payload: object) -> di
 		reviewed_at=datetime.now(UTC).isoformat(),
 		notes=payload.get("notes", "") if isinstance(payload.get("notes", ""), str) else "",
 	)
-	save_review(repo_root, type_path, record)
-	return {"review": _review_payload(record), "issues": []}
+	save_review(
+		repo_root,
+		type_path,
+		record,
+		expected_record_hash=expected_record_hash,
+		enforce_record_hash=enforce_record_hash,
+	)
+	return {
+		"review": _review_payload(record, type_path=type_path),
+		"issues": [],
+		"projection": _refresh_projection(repo_root),
+	}
+
+
+def save_group_assignment_response(
+	repo_root: Path,
+	type_path: str,
+	group_ids: tuple[str, ...],
+	*,
+	expected_record_hash: str | None,
+) -> dict[str, object]:
+	save_group_assignments(
+		repo_root,
+		type_path,
+		group_ids,
+		expected_record_hash=expected_record_hash,
+		enforce_record_hash=True,
+	)
+	if not group_ids:
+		return {
+			"assignment": None,
+			"record_hash": None,
+			"issues": [],
+			"projection": _refresh_projection(repo_root),
+		}
+	payload = {"type_path": type_path, "group_ids": list(group_ids)}
+	return {
+		"assignment": payload,
+		"record_hash": canonical_record_hash(payload),
+		"issues": [],
+		"projection": _refresh_projection(repo_root),
+	}
 
 
 def catalog_response(repo_root: Path) -> dict[str, object]:
@@ -805,24 +926,6 @@ def validate_entries(
 	return {"valid": not issues, "issues": [_issue_payload(issue) for issue in issues]}
 
 
-def _entry_search_text(entry: dict[str, object]) -> str:
-	return " ".join(
-		str(value) for value in (entry.get("id"), entry.get("type_path"), entry.get("name"), entry.get("description"))
-		if value
-	)
-
-
-def _write_entry_row(repo_root: Path, entry_id: str, group: str, entry: dict[str, object]) -> None:
-	overrides_table = table(repo_root, "overrides")
-	db.upsert_rows(overrides_table, "id", [{
-		"id": entry_id,
-		"type_path": str(entry.get("type_path") or ""),
-		"group": group,
-		"raw_json": encode(entry),
-		"text": _entry_search_text(entry),
-	}])
-
-
 def _upsert_override(
 	repo_root: Path,
 	*,
@@ -831,12 +934,54 @@ def _upsert_override(
 	entry: dict[str, object],
 	asset_root: Path | None,
 	require_new: bool,
+	expected_record_hash: str | None = None,
 ) -> dict[str, object]:
+	with repository_write_lock(repo_root):
+		return _upsert_override_locked(
+			repo_root,
+			entry_id=entry_id,
+			group=group,
+			entry=entry,
+			asset_root=asset_root,
+			require_new=require_new,
+			expected_record_hash=expected_record_hash,
+		)
+
+
+def _upsert_override_locked(
+	repo_root: Path,
+	*,
+	entry_id: str,
+	group: str,
+	entry: dict[str, object],
+	asset_root: Path | None,
+	require_new: bool,
+	expected_record_hash: str | None = None,
+) -> dict[str, object]:
+	validate_entry_id(entry_id)
 	resolved_root = repo_root.resolve()
-	overrides_table = table(resolved_root, "overrides")
-	previous_row = db.get_row(overrides_table, f"id = '{entry_id}'")
-	if require_new and previous_row is not None:
-		raise ValueError(f"Lore entry '{entry_id}' already exists.")
+	materialize_legacy_records(resolved_root, "override")
+	canonical_path = record_path(resolved_root, "override", entry_id)
+	previous_payload = read_record(canonical_path) if canonical_path.exists() else None
+	if require_new and previous_payload is not None:
+		raise RecordConflict(
+			record_id=entry_id,
+			expected_hash=None,
+			current_hash=canonical_record_hash(previous_payload),
+			base=None,
+			current=previous_payload,
+			proposed=entry,
+		)
+	current_hash = canonical_record_hash(previous_payload) if previous_payload is not None else None
+	if expected_record_hash is not None and expected_record_hash != current_hash:
+		raise RecordConflict(
+			record_id=entry_id,
+			expected_hash=expected_record_hash,
+			current_hash=current_hash,
+			base=None,
+			current=previous_payload,
+			proposed=entry,
+		)
 
 	source_path = source_path_for_group(group)
 	candidate = _candidate_corpus(resolved_root, source_path, entry_id, entry)
@@ -847,23 +992,25 @@ def _upsert_override(
 	generated_path = resolved_root / WorkspaceLayout.from_root(resolved_root).generated_dm_path
 	original_generated_exists = generated_path.exists()
 	original_generated_bytes = generated_path.read_bytes() if original_generated_exists else None
+	canonical_existed = canonical_path.exists()
 	try:
-		_write_entry_row(resolved_root, entry_id, group, entry)
-		write_generated_dm(resolved_root)
+		atomic_write_record(canonical_path, entry)
+		write_generated_dm(resolved_root, corpus=candidate)
 	except Exception:
-		if previous_row is not None:
-			overrides_table.merge_insert("id").when_matched_update_all().when_not_matched_insert_all().execute([previous_row])
-		else:
-			db.delete_rows(overrides_table, f"id = '{entry_id}'")
+		if previous_payload is not None:
+			atomic_write_record(canonical_path, previous_payload)
+		elif not canonical_existed:
+			canonical_path.unlink(missing_ok=True)
 		if original_generated_exists and original_generated_bytes is not None:
 			generated_path.write_bytes(original_generated_bytes)
 		elif generated_path.exists():
 			generated_path.unlink()
 		raise
 
+	projection = _refresh_projection(resolved_root)
 	for saved_entry in list_entries_response(resolved_root, asset_root=asset_root)["entries"]:
 		if isinstance(saved_entry, dict) and saved_entry.get("id") == entry_id:
-			return saved_entry
+			return {**saved_entry, "_projection": projection}
 	raise ValueError(f"Saved lore entry '{entry_id}' could not be reloaded.")
 
 
@@ -876,6 +1023,7 @@ def create_entry(
 ) -> dict[str, object]:
 	if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
 		raise ValueError("New lore entry must contain a string id.")
+	validate_entry_id(entry["id"])
 	group = _group_from_source_file(source_file)
 	return _upsert_override(repo_root, entry_id=entry["id"], group=group, entry=entry, asset_root=asset_root, require_new=True)
 
@@ -887,13 +1035,23 @@ def save_entry(
 	source_file: str,
 	entry: object,
 	asset_root: Path | None = None,
+	expected_record_hash: str | None = None,
 ) -> dict[str, object]:
 	if not isinstance(entry, dict):
 		raise ValueError("Lore entry must be a JSON object.")
+	validate_entry_id(entry_id)
 	if entry.get("id") != entry_id:
 		raise ValueError("The route entry id must match entry.id.")
 	group = _group_from_source_file(source_file)
-	return _upsert_override(repo_root, entry_id=entry_id, group=group, entry=entry, asset_root=asset_root, require_new=False)
+	return _upsert_override(
+		repo_root,
+		entry_id=entry_id,
+		group=group,
+		entry=entry,
+		asset_root=asset_root,
+		require_new=False,
+		expected_record_hash=expected_record_hash,
+	)
 
 
 def delete_entry(
@@ -901,29 +1059,58 @@ def delete_entry(
 	*,
 	entry_id: str,
 	source_file: str,
+	expected_record_hash: str | None = None,
 ) -> dict[str, object]:
+	with repository_write_lock(repo_root):
+		return _delete_entry_locked(
+			repo_root,
+			entry_id=entry_id,
+			source_file=source_file,
+			expected_record_hash=expected_record_hash,
+		)
+
+
+def _delete_entry_locked(
+	repo_root: Path,
+	*,
+	entry_id: str,
+	source_file: str,
+	expected_record_hash: str | None,
+) -> dict[str, object]:
+	validate_entry_id(entry_id)
 	resolved_root = repo_root.resolve()
 	_group_from_source_file(source_file)  # validates shape; the row's own `group` column is authoritative
-	overrides_table = table(resolved_root, "overrides")
-	previous_row = db.get_row(overrides_table, f"id = '{entry_id}'")
-	if previous_row is None:
+	materialize_legacy_records(resolved_root, "override")
+	canonical_path = record_path(resolved_root, "override", entry_id)
+	if not canonical_path.exists():
 		raise ValueError(f"Lore entry '{entry_id}' was not found.")
+	previous_payload = read_record(canonical_path)
+	current_hash = canonical_record_hash(previous_payload)
+	if expected_record_hash is not None and expected_record_hash != current_hash:
+		raise RecordConflict(
+			record_id=entry_id,
+			expected_hash=expected_record_hash,
+			current_hash=current_hash,
+			base=None,
+			current=previous_payload,
+			proposed=None,
+		)
 
 	generated_path = resolved_root / WorkspaceLayout.from_root(resolved_root).generated_dm_path
 	original_generated_exists = generated_path.exists()
 	original_generated_bytes = generated_path.read_bytes() if original_generated_exists else None
 	try:
-		db.delete_rows(overrides_table, f"id = '{entry_id}'")
+		canonical_path.unlink()
 		write_generated_dm(resolved_root)
 	except Exception:
-		overrides_table.merge_insert("id").when_matched_update_all().when_not_matched_insert_all().execute([previous_row])
+		atomic_write_record(canonical_path, previous_payload)
 		if original_generated_exists and original_generated_bytes is not None:
 			generated_path.write_bytes(original_generated_bytes)
 		elif generated_path.exists():
 			generated_path.unlink()
 		raise
 
-	return {"deleted": True, "id": entry_id}
+	return {"deleted": True, "id": entry_id, "projection": _refresh_projection(resolved_root)}
 
 
 def generate_output(repo_root: Path) -> dict[str, object]:

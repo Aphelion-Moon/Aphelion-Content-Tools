@@ -3,6 +3,7 @@
 
 const state = {
   repositories: {tool: null, game: null},
+  selectedPaths: {tool: new Set(), game: new Set()},
   exportStages: [],
 };
 
@@ -93,12 +94,33 @@ function renderRepositoryStatus(repository) {
     container.append(metaLine);
   }
 
-  if (status?.changed_files?.length) {
+  if (status?.owned_changes?.length) {
     const fileList = document.createElement('div');
     fileList.className = 'changed-file-list';
-    for (const filePath of status.changed_files) {
-      fileList.append(renderChangedFileRow(repository, filePath));
+    for (const change of status.owned_changes) {
+      const wrapper = document.createElement('div');
+      const selectLabel = document.createElement('label');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = state.selectedPaths[repository].has(change.path);
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) state.selectedPaths[repository].add(change.path);
+        else state.selectedPaths[repository].delete(change.path);
+      });
+      selectLabel.append(checkbox, ' Select ' + change.kind.replaceAll('_', ' ') + ': ' + change.summary);
+      wrapper.append(selectLabel, renderChangedFileRow(repository, change.path));
+      fileList.append(wrapper);
     }
+    container.append(fileList);
+  }
+  if (status?.unowned_changes?.length) {
+    const note = document.createElement('p');
+    note.className = 'metadata';
+    note.textContent = 'Unrelated changes are shown for awareness and cannot be committed by the app.';
+    container.append(note);
+    const fileList = document.createElement('div');
+    fileList.className = 'changed-file-list';
+    for (const filePath of status.unowned_changes) fileList.append(renderChangedFileRow(repository, filePath));
     container.append(fileList);
   }
 }
@@ -108,7 +130,13 @@ async function loadRepositoryStatus() {
     repository,
     await requestJson('/api/git/status?repository=' + repository),
   ]));
-  for (const [repository, status] of statuses) state.repositories[repository] = status;
+  for (const [repository, status] of statuses) {
+    state.repositories[repository] = status;
+    const ownedPaths = new Set((status.owned_changes || []).map((change) => change.path));
+    state.selectedPaths[repository] = new Set(
+      Array.from(state.selectedPaths[repository]).filter((path) => ownedPaths.has(path))
+    );
+  }
   renderRepositoryStatus('tool');
   renderRepositoryStatus('game');
 }
@@ -158,15 +186,17 @@ async function switchRepositoryBranch(repository) {
 async function commitRepositoryChanges(repository) {
   const status = state.repositories[repository];
   const message = document.querySelector('#' + repository + '-commit-message').value.trim();
-  if (!status?.changed_files?.length) throw new Error('No changed files to commit.');
+  const selectedPaths = Array.from(state.selectedPaths[repository]);
+  if (!status?.owned_changes?.length || !selectedPaths.length) throw new Error('Select at least one owned change to commit.');
   if (!message) throw new Error('Enter a commit message first.');
   await requestJson('/api/git/commit', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({repository, paths: status.changed_files, message}),
+    body: JSON.stringify({repository, paths: selectedPaths, message}),
   });
-  setText('#' + repository + '-message', 'Committed ' + status.changed_files.length + ' file(s).');
-  announceSuccess('Committed ' + status.changed_files.length + ' file(s).');
+  setText('#' + repository + '-message', 'Committed ' + selectedPaths.length + ' file(s).');
+  announceSuccess('Committed ' + selectedPaths.length + ' file(s).');
+  state.selectedPaths[repository].clear();
   document.querySelector('#' + repository + '-commit-message').value = '';
   await loadRepositoryStatus();
 }
@@ -236,32 +266,19 @@ async function prepareExport() {
   await Promise.all([loadExportStages(), loadRepositoryStatus()]);
 }
 
-async function applySelectedExport(force = false) {
+async function applySelectedExport() {
   const stage = document.querySelector('#export-stage-select').value;
   if (!stage) throw new Error('Prepare an export before applying one.');
-  let payload;
-  try {
-    payload = await requestJson('/api/export/apply', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({stage, force}),
-    });
-  } catch (error) {
-    if (!force && /uncommitted changes/i.test(error.message)) {
-      const proceed = window.confirm(
-        'Meridian-Rift has uncommitted changes.\n\n' +
-        'Apply the export anyway? This only overwrites the generated lore artifact file — your other ' +
-        'uncommitted changes are left alone, but review them before committing.'
-      );
-      if (proceed) return applySelectedExport(true);
-    }
-    throw error;
-  }
+  const payload = await requestJson('/api/export/apply', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({stage}),
+  });
   const desktopNote = payload.opened_in_github_desktop
     ? 'GitHub Desktop opened automatically for the game checkout.'
     : 'Could not open GitHub Desktop automatically' + (payload.github_desktop_error ? (': ' + payload.github_desktop_error) : '.') + ' Open it manually to review, commit, and open a pull request.';
   document.querySelector('#export-output').textContent =
-    'Applied ' + payload.artifact + (force ? ' (overrode the uncommitted-changes check)' : '') + '.\n' +
+    'Applied ' + payload.artifact + '.\n' +
     'Review the game diff above under Meridian-Rift, then commit it locally.\n' + desktopNote;
   announceSuccess('Applied ' + payload.artifact + '.');
   await loadRepositoryStatus();

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from threading import Lock
 
 EMBEDDING_MODEL_NAME = "BAAI/bge-small-en-v1.5"
@@ -9,6 +10,18 @@ EMBEDDING_DIM = 384
 _model = None
 _model_lock = Lock()
 _model_load_failed = False
+_model_load_error: str | None = None
+
+
+class EmbeddingUnavailableError(RuntimeError):
+	"""Raised when an operation requires semantic embeddings but the model is unavailable."""
+
+
+@dataclass(frozen=True)
+class EmbeddingStatus:
+	available: bool
+	model_id: str
+	reason: str | None = None
 
 
 def _model_cache_dir() -> str | None:
@@ -19,7 +32,7 @@ def _model_cache_dir() -> str | None:
 
 
 def _load_model():
-	global _model, _model_load_failed
+	global _model, _model_load_error, _model_load_failed
 	if _model is not None or _model_load_failed:
 		return _model
 	with _model_lock:
@@ -28,14 +41,24 @@ def _load_model():
 		try:
 			from fastembed import TextEmbedding
 			_model = TextEmbedding(model_name=EMBEDDING_MODEL_NAME, cache_dir=_model_cache_dir())
-		except Exception:
+		except Exception as exc:
 			_model_load_failed = True
+			_model_load_error = str(exc) or exc.__class__.__name__
 			_model = None
 	return _model
 
 
 def embeddings_available() -> bool:
 	return _load_model() is not None
+
+
+def embedding_status() -> EmbeddingStatus:
+	available = embeddings_available()
+	return EmbeddingStatus(
+		available=available,
+		model_id=EMBEDDING_MODEL_NAME,
+		reason=None if available else (_model_load_error or "Embedding model is unavailable."),
+	)
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:

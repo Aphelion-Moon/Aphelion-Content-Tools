@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.content_graph.graph import (
 	build_content_graph,
@@ -188,6 +189,10 @@ class ContentGraphScanTests(unittest.TestCase):
 			graph, cached_manifest = cached
 			self.assertEqual(manifest.snapshot_sha256, cached_manifest.snapshot_sha256)
 			self.assertEqual(2, len([node for node in graph["nodes"] if node["kind"] == "module"]))
+
+			with patch("tools.content_graph.graph.db.all_rows", side_effect=AssertionError("snapshot should be self-contained")):
+				graph_from_snapshot, _manifest = read_graph_cache(tool_root)
+			self.assertEqual(graph, graph_from_snapshot)
 
 	def test_read_graph_cache_returns_none_when_never_scanned(self) -> None:
 		with tempfile.TemporaryDirectory() as temp_dir:

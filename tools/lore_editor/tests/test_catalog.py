@@ -221,9 +221,11 @@ class RefreshCatalogTests(unittest.TestCase):
 				],
 			)
 
-			with patch.object(catalog_module, "_run_catalog_probe", return_value=probe_output_path):
-				with self.assertRaisesRegex(ValueError, "/obj/item/flashlight"):
-					catalog_module.refresh_catalog(repo_root)
+			with (
+				patch.object(catalog_module, "_run_catalog_probe", return_value=probe_output_path),
+				self.assertRaisesRegex(ValueError, "/obj/item/flashlight"),
+			):
+				catalog_module.refresh_catalog(repo_root)
 
 			self.assertEqual(catalog_module.read_current_targets(repo_root), before)
 
@@ -263,9 +265,11 @@ class RefreshCatalogTests(unittest.TestCase):
 			probe_output_path.parent.mkdir(parents=True, exist_ok=True)
 			probe_output_path.write_text("{not valid json", encoding="utf-8")
 
-			with patch.object(catalog_module, "_run_catalog_probe", return_value=probe_output_path):
-				with self.assertRaisesRegex(ValueError, "malformed JSON"):
-					catalog_module.refresh_catalog(repo_root)
+			with (
+				patch.object(catalog_module, "_run_catalog_probe", return_value=probe_output_path),
+				self.assertRaisesRegex(ValueError, "malformed JSON"),
+			):
+				catalog_module.refresh_catalog(repo_root)
 
 			self.assertEqual(catalog_module.read_current_targets(repo_root), before)
 
@@ -364,9 +368,11 @@ class RefreshCatalogTests(unittest.TestCase):
 			repo_root = Path(temp_dir)
 			# No tgstation.dmb written at all -- the compile step (mocked as a no-op) is presumed to have
 			# genuinely failed to produce anything, which is the one case this check still needs to catch.
-			with patch.object(catalog_module, "_run_external_command"):
-				with self.assertRaisesRegex(ValueError, "did not produce tgstation.dmb"):
-					catalog_module._run_catalog_probe(repo_root)
+			with (
+				patch.object(catalog_module, "_run_external_command"),
+				self.assertRaisesRegex(ValueError, "did not produce tgstation.dmb"),
+			):
+				catalog_module._run_catalog_probe(repo_root)
 
 	def test_run_catalog_probe_accepts_a_stale_compiled_dmb_the_build_skipped_as_up_to_date(self) -> None:
 		"""The build entrypoint (Juke Build) may legitimately skip recompiling tgstation.dmb -- "Skipping
@@ -382,13 +388,15 @@ class RefreshCatalogTests(unittest.TestCase):
 			stale_time_ns = time.time_ns() - 5_000_000_000
 			os.utime(compiled_dmb_path, ns=(stale_time_ns, stale_time_ns))
 
-			with patch.object(catalog_module, "_run_external_command"), \
-				patch.object(catalog_module, "_find_dreamdaemon_path", return_value="DreamDaemon.exe"), \
-				patch.object(catalog_module, "_find_free_port", return_value=1337):
+			with (
+				patch.object(catalog_module, "_run_external_command"),
+				patch.object(catalog_module, "_find_dreamdaemon_path", return_value="DreamDaemon.exe"),
+				patch.object(catalog_module, "_find_free_port", return_value=1337),
+				self.assertRaisesRegex(ValueError, r"did not produce data/lore_overhaul_targets\.json"),
+			):
 				# The mocked DreamDaemon run never actually writes lore_overhaul_targets.json, so the
 				# function still ends up failing -- but on *that* check, not the removed dmb-freshness one.
-				with self.assertRaisesRegex(ValueError, r"did not produce data/lore_overhaul_targets\.json"):
-					catalog_module._run_catalog_probe(repo_root)
+				catalog_module._run_catalog_probe(repo_root)
 
 	def test_external_command_can_accept_probe_shutdown_code(self) -> None:
 		catalog_module, _source_module, _validation_module = self.import_modules()

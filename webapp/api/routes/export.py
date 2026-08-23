@@ -65,13 +65,11 @@ def post_prepare(ctx: Ctx) -> object:
 def post_apply(payload: ApplyExportRequest, ctx: Ctx) -> object:
 	"""Write a prepared stage into the game checkout, then open GitHub Desktop to review the diff.
 
-	A dirty checkout, changed revision, or unexpected artifact hash is refused by apply_export rather
-	than overwritten; `force` exists for the case where the user has decided the dirt is theirs.
+	A dirty checkout, changed revision, or unexpected artifact hash is always refused by apply_export.
 	"""
 	artifact_path = apply_export(
 		_stage_path(ctx, payload.stage),
 		ctx.game_repo_root,
-		allow_dirty=payload.force,
 	)
 	opened = False
 	desktop_error: str | None = None

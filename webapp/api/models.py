@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # The single definition of every shape crossing the HTTP boundary.
 #
@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 # `raw_json` stops being the *interface*; it is decoded into a model at the boundary.
 
 RepositoryName = Literal["tool", "game"]
+RecordHash = Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
 
 
 class ErrorResponse(BaseModel):
@@ -22,7 +23,38 @@ class ErrorResponse(BaseModel):
 	code: str = Field(description="Stable machine-readable error code; branch on this, not on `error`.")
 
 
+class RecordConflictResponse(ErrorResponse):
+	"""Optimistic-write conflict with all three records needed for a safe comparison UI."""
+
+	record_id: str
+	expected_hash: str | None
+	current_hash: str | None
+	base: dict[str, object] | None
+	current: dict[str, object] | None
+	proposed: dict[str, object] | None
+
+
 # ---- Store ----------------------------------------------------------------------------------------
+
+
+class SemanticSearchHealth(BaseModel):
+	mode: Literal["hybrid", "keyword-only"]
+	model_id: str
+	reason: str | None = None
+
+
+class ProjectionHealth(BaseModel):
+	current: bool
+	reason: str | None = None
+	path: str
+	content_revision: str
+	active: dict[str, object] | None = None
+
+
+class ProjectionWriteState(BaseModel):
+	current: bool
+	reason: str | None = None
+	content_revision: str | None = None
 
 
 class StoreHealth(BaseModel):
@@ -33,17 +65,58 @@ class StoreHealth(BaseModel):
 		default=None,
 		description="Unix timestamp of the most recent write, from file mtimes. Null if the store is empty.",
 	)
+	semantic_search: SemanticSearchHealth
+	projection: ProjectionHealth
+
+
+class SelectedSearchContext(BaseModel):
+	tool: str | None = None
+	record_kind: str | None = None
+	record_id: str | None = None
+	type_path: str | None = None
+	groups: list[str] = Field(default_factory=list)
+	module: str | None = None
+
+
+class SearchScope(BaseModel):
+	tables: list[str] = Field(default_factory=list)
+
+
+class SearchRequest(BaseModel):
+	query: str = ""
+	limit: int = Field(default=20, ge=1, le=100)
+	selected_context: SelectedSearchContext | None = None
+	scope: SearchScope | None = None
+
+
+class SearchScoreComponents(BaseModel):
+	keyword_rrf: float
+	semantic_rrf: float
+	context_boost: float
+	final: float
+
+
+class SearchNavigation(BaseModel):
+	tool: str
+	route: str
+	record_kind: str
+	record_id: str
+	type_path: str | None = None
 
 
 class SearchResult(BaseModel):
 	table: str
-	score: float = Field(description="Reciprocal-rank-fusion score combining full-text and vector rank.")
+	score: float = Field(description="Global hybrid score after the bounded selected-context boost.")
 	id: str
 	record: dict[str, object]
+	scores: SearchScoreComponents
+	context_reason: str | None = None
+	navigation: SearchNavigation
 
 
 class SearchResponse(BaseModel):
 	results: list[SearchResult]
+	semantic_search: SemanticSearchHealth
 
 
 # ---- Background tool runs -------------------------------------------------------------------------
@@ -86,6 +159,13 @@ class ToolRun(BaseModel):
 # ---- Git ------------------------------------------------------------------------------------------
 
 
+class OwnedChange(BaseModel):
+	path: str
+	kind: str
+	record_id: str
+	summary: str
+
+
 class RepositoryStatus(BaseModel):
 	"""Mirrors webapp.git_adapter.RepositoryStatus, plus its derived `conflicted` flag.
 
@@ -105,6 +185,8 @@ class RepositoryStatus(BaseModel):
 	conflict_files: list[str]
 	truncated_change_count: int = Field(description="Changes omitted from `changed_files` because the list was capped.")
 	conflicted: bool = Field(description="True when conflict_files is non-empty.")
+	owned_changes: list[OwnedChange] = Field(default_factory=list)
+	unowned_changes: list[str] = Field(default_factory=list)
 
 
 class BranchListResponse(BaseModel):
@@ -163,10 +245,13 @@ class OpenFileResponse(BaseModel):
 
 
 class CommitInfo(BaseModel):
-	sha: str
-	author: str | None = None
-	date: str | None = None
-	summary: str | None = None
+	commit: str
+	short_commit: str
+	author: str
+	date: str
+	subject: str
+	diff: str
+	pr_url: str | None = None
 
 
 class MarkerHistoryResponse(BaseModel):
@@ -176,30 +261,130 @@ class MarkerHistoryResponse(BaseModel):
 # ---- Content graph --------------------------------------------------------------------------------
 
 
+GraphNodeKind = Literal["module", "master_file", "core_file", "directory", "file"]
+GraphNodeOwner = Literal["nova", "aphelion"]
+GraphEdgeRelation = Literal[
+	"master_files_mirror",
+	"marker_edit",
+	"contains",
+	"module_reference",
+	"core_reference",
+]
+GraphEditType = Literal["addition", "removal", "change", "unspecified"]
+
+
+class GraphNodeModel(BaseModel):
+	id: str
+	kind: GraphNodeKind
+	owner: GraphNodeOwner | None = None
+	module_id: str | None = None
+	path: str | None = None
+	name: str | None = None
+	core_path: str | None = None
+	has_readme: bool | None = None
+	marker_count: int | None = None
+	file_count: int | None = None
+	total_bytes: int | None = None
+	size_bytes: int | None = None
+	line_count: int | None = None
+
+
+class GraphEdgeModel(BaseModel):
+	source: str
+	target: str
+	relation: GraphEdgeRelation
+	edit_type: GraphEditType | None = None
+	attribution: str | None = None
+	line_number: int | None = None
+	raw_label: str | None = None
+	original_text: str | None = None
+
+
+class UnresolvedMarkerModel(BaseModel):
+	core_file: str
+	owner: Literal["NOVA", "APHELION"]
+	edit_type: GraphEditType
+	line_number: int
+	source_module_id: str | None = None
+	attribution: Literal["exact", "path-derived", "unattributed"]
+	raw_label: str
+	original_text: str | None = None
+	line_text: str
+
+
+class GraphCountsModel(BaseModel):
+	module_count: int
+	master_files_count: int
+	core_file_count: int
+	marker_count: int
+	unresolved_marker_count: int
+	file_count: int
+	directory_count: int
+	reference_count: int
+
+
+class GraphDocumentModel(BaseModel):
+	nodes: list[GraphNodeModel]
+	edges: list[GraphEdgeModel]
+	unresolved_markers: list[UnresolvedMarkerModel]
+	counts: GraphCountsModel
+
+
+class GraphManifestModel(BaseModel):
+	format_version: int
+	snapshot_sha256: str
+	game_repo_revision: str
+	generated_at: str
+	node_count: int
+	edge_count: int
+	module_count: int
+	master_files_count: int
+	marker_count: int
+	file_count: int
+	directory_count: int
+	reference_count: int
+
+
 class GraphResponse(BaseModel):
 	scanned: bool
-	graph: dict[str, object] | None = None
-	manifest: dict[str, object] | None = None
+	graph: GraphDocumentModel | None = None
+	manifest: GraphManifestModel | None = None
 
 
 class GraphStatusResponse(BaseModel):
 	scanned: bool
-	manifest: dict[str, object] | None = None
+	manifest: GraphManifestModel | None = None
+
+
+class GraphEditModel(BaseModel):
+	resolved: bool
+	source: str | None = None
+	target: str | None = None
+	relation: GraphEdgeRelation | None = None
+	core_file: str | None = None
+	owner: str | None = None
+	edit_type: GraphEditType | None = None
+	line_number: int | None = None
+	source_module_id: str | None = None
+	attribution: str | None = None
+	raw_label: str | None = None
+	original_text: str | None = None
+	line_text: str | None = None
 
 
 class GraphEditsResponse(BaseModel):
 	scanned: bool
-	edits: list[dict[str, object]] = Field(default_factory=list)
+	edits: list[GraphEditModel] = Field(default_factory=list)
 
 
 class GraphModulesResponse(BaseModel):
 	scanned: bool
-	modules: list[dict[str, object]] = Field(default_factory=list)
+	modules: list[GraphNodeModel] = Field(default_factory=list)
 
 
 class GraphUnresolvedResponse(BaseModel):
 	scanned: bool
-	unresolved_markers: list[dict[str, object]] = Field(default_factory=list)
+	unresolved_markers: list[UnresolvedMarkerModel] = Field(default_factory=list)
 
 
 class MarkerEditRequest(BaseModel):
@@ -218,13 +403,148 @@ class MarkerEditResponse(BaseModel):
 # ---- Lore editor ----------------------------------------------------------------------------------
 
 
-class SaveEntryRequest(BaseModel):
+class ValidationIssueModel(BaseModel):
+	path: str
+	message: str
+	severity: str
+
+
+class ReviewRecordModel(BaseModel):
+	status: Literal["reviewed", "needs-attention"]
+	reviewed_by: str
+	reviewed_at: str
+	notes: str
+	record_hash: RecordHash
+
+
+class ReviewGroupModel(BaseModel):
+	id: str
+	label: str
+	color: str | None = None
+	keywords: list[str] = Field(default_factory=list)
+	type_path_prefixes: list[str] = Field(default_factory=list)
+	keyword_scope: list[str] = Field(default_factory=list)
+	record_hash: RecordHash | None = None
+	count: int = 0
+
+
+class ReviewEntryModel(BaseModel):
+	id: str
+	type_path: str
+	name: str | None = None
+	description: str | None = None
+	special_desc_requirement: str | None = None
+	special_desc: str | None = None
+	source_file: str | None = None
+	category: str
+	field_profile: str | None = None
+	label: str | None = None
+	editable_root: str | None = None
+	parent_type: str | None = None
+	base_name: str | None = None
+	base_description: str | None = None
+	icon_metadata: dict[str, object] = Field(default_factory=dict)
+	raw: dict[str, object] | None = None
+	record_hash: RecordHash | None = None
+	approved: bool = False
+	has_override: bool = False
+	base_status: str
+	status: str
+	issues: list[ValidationIssueModel] = Field(default_factory=list)
+	groups: list[str] = Field(default_factory=list)
+	group_labels: list[str] = Field(default_factory=list)
+	group_match_reasons: dict[str, list[str]] = Field(default_factory=dict)
+	review: ReviewRecordModel | None = None
+	directional: bool = False
+	redundant: bool = False
+	suppression_reasons: list[str] = Field(default_factory=list)
+
+
+class ReviewFeedResponse(BaseModel):
+	entries: list[ReviewEntryModel]
+	matched_entry_count: int
+	returned_entry_count: int
+	has_more: bool
+	offset: int
+	limit: int | None = None
+	catalog_count: int
+	approved_count: int
+	review_count: int
+	status_counts: dict[str, int]
+	group_counts: dict[str, int]
+	visible_entry_count: int
+	visible_catalog_count: int
+	suppressed_counts: dict[str, int]
+	groups: list[ReviewGroupModel]
+	issues: list[ValidationIssueModel]
+
+
+class GroupsResponse(BaseModel):
+	groups: list[ReviewGroupModel]
+	assignments: dict[str, list[str]]
+	assignment_record_hashes: dict[str, RecordHash]
+	counts: dict[str, int]
+
+
+class GroupWriteResponse(BaseModel):
+	group: ReviewGroupModel
+	issues: list[ValidationIssueModel] = Field(default_factory=list)
+	projection: ProjectionWriteState
+
+
+class ReviewWriteResponse(BaseModel):
+	review: ReviewRecordModel | None
+	issues: list[ValidationIssueModel] = Field(default_factory=list)
+	projection: ProjectionWriteState
+
+
+class AssignmentRecordModel(BaseModel):
+	type_path: str
+	group_ids: list[str]
+
+
+class AssignmentWriteResponse(BaseModel):
+	assignment: AssignmentRecordModel | None
+	record_hash: RecordHash | None = None
+	issues: list[ValidationIssueModel] = Field(default_factory=list)
+	projection: ProjectionWriteState
+
+
+class EntityFilesResponse(BaseModel):
+	files: list[str]
+
+
+class IconFilesResponse(BaseModel):
+	files: list[str]
+
+
+class IconStatesResponse(BaseModel):
+	states: list[str]
+
+
+class ValidationResponse(BaseModel):
+	valid: bool
+	issues: list[ValidationIssueModel]
+
+
+class DeleteEntryResponse(BaseModel):
+	deleted: bool
+	id: str
+	projection: ProjectionWriteState
+
+
+class CreateEntryRequest(BaseModel):
 	source_file: str = Field(min_length=1)
-	entry: dict[str, object] | None = None
+	entry: dict[str, object]
+
+
+class SaveEntryRequest(CreateEntryRequest):
+	expected_record_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
 
 
 class DeleteEntryRequest(BaseModel):
 	source_file: str = Field(min_length=1)
+	expected_record_hash: RecordHash
 
 
 class ValidateRequest(BaseModel):
@@ -240,12 +560,55 @@ class SaveEntryResponse(BaseModel):
 	saved: bool
 	created: bool = False
 	entry: dict[str, object]
+	record_hash: str
 	issues: list[dict[str, object]] = Field(default_factory=list)
+	projection: ProjectionWriteState
 
 
 class DefinitionResponse(BaseModel):
 	path: str | None
 	line: int | None
+
+
+class GroupFields(BaseModel):
+	label: str = Field(min_length=1)
+	color: str = Field(min_length=1)
+	keywords: list[str] = Field(default_factory=list)
+	type_path_prefixes: list[str] = Field(default_factory=list)
+	keyword_scope: list[str] | None = None
+	assignments: list[str] = Field(default_factory=list)
+
+
+class CreateGroupRequest(GroupFields):
+	id: str = Field(min_length=1)
+
+
+class UpdateGroupRequest(GroupFields):
+	id: str | None = None
+	expected_record_hash: RecordHash
+
+
+class DeleteGroupRequest(BaseModel):
+	expected_record_hash: RecordHash
+
+
+class DeleteGroupResponse(BaseModel):
+	deleted: bool
+	id: str
+	updated_assignments: int
+	projection: ProjectionWriteState
+
+
+class ReviewWriteRequest(BaseModel):
+	status: Literal["reviewed", "needs-attention"] | None
+	reviewed_by: str = ""
+	notes: str = ""
+	expected_record_hash: RecordHash | None
+
+
+class AssignmentWriteRequest(BaseModel):
+	group_ids: list[str]
+	expected_record_hash: RecordHash | None
 
 
 # ---- Export ---------------------------------------------------------------------------------------
@@ -268,11 +631,9 @@ class PrepareExportResponse(BaseModel):
 
 
 class ApplyExportRequest(BaseModel):
+	model_config = ConfigDict(extra="forbid")
+
 	stage: str = Field(min_length=1)
-	force: bool = Field(
-		default=False,
-		description="Apply to a dirty checkout. Off by default -- a dirty checkout is normally a stop condition.",
-	)
 
 
 class ApplyExportResponse(BaseModel):

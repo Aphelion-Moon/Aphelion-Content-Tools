@@ -1,0 +1,55 @@
+.panel {
+	padding: 0.7rem;
+	border: 1px solid var(--border);
+	border-radius: 0.6rem;
+	background: rgba(23, 7, 46, 0.68);
+}
+
+.heading {
+	margin: 0 0 0.45rem;
+	font-size: 0.82rem;
+	color: var(--ink);
+}
+
+.empty,
+.status {
+	margin: 0;
+	font-size: 0.75rem;
+	color: var(--muted);
+}
+
+.list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.item {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.select,
+.remove {
+	min-width: 0;
+	width: auto;
+	padding: 0.3rem 0.4rem;
+	font-size: 0.75rem;
+}
+
+.select {
+	flex: 1 1 auto;
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.remove {
+	flex: none;
+	color: var(--danger);
+}

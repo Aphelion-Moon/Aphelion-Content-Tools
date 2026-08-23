@@ -1,4 +1,4 @@
-import { Show, createSignal, onCleanup, onMount } from 'solid-js';
+import { Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import { appState } from '~/store/appStore';
 import { announce, react } from '~/lib/notify';
 import {
@@ -51,6 +51,14 @@ export default function Parsec() {
 	const [bubble, setBubble] = createSignal<{ text: string; kind: string } | null>(null);
 	let patTimestamps: readonly number[] = [];
 	let bubbleTimer: ReturnType<typeof setTimeout> | undefined;
+	let lastAnnouncementId = appState.announcements[0]?.id ?? 0;
+
+	createEffect(() => {
+		const current = appState.announcements[0];
+		if (!current || current.id <= lastAnnouncementId) return;
+		lastAnnouncementId = current.id;
+		showBubble(current.message, current.kind);
+	});
 
 	onMount(() => {
 		let frameIndex = 0;

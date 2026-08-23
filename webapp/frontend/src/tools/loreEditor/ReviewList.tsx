@@ -5,13 +5,24 @@ import type { ReviewEntry } from './reviewFeed';
 import { PAGE_SIZE, createReviewFeed } from './reviewFeed';
 import styles from './LoreEditor.module.css';
 
-const ROW_HEIGHT = 46;
+const ROW_HEIGHT = 62;
 // Start fetching the next page while this many rows are still ahead of the viewport, so scrolling
 // rarely reaches an unloaded region.
 const PREFETCH_ROWS = 40;
 
 function entryTitle(entry: ReviewEntry): string {
 	return entry.name || entry.base_name || entry.label || entry.type_path || entry.id;
+}
+
+const STATUS_LABELS: Readonly<Record<string, string>> = {
+	unreviewed: 'Unreviewed',
+	reviewed: 'Reviewed',
+	overridden: 'Overridden',
+	'needs-attention': 'Needs attention',
+};
+
+function statusLabel(entry: ReviewEntry): string {
+	return entry.status ? (STATUS_LABELS[entry.status] ?? entry.status) : 'Unknown status';
 }
 
 interface ReviewListProps {
@@ -57,7 +68,7 @@ export default function ReviewList(props: ReviewListProps) {
 
 	return (
 		<>
-			<div ref={scroller} class={styles.scroller}>
+			<div ref={scroller} class={styles.scroller} role="listbox" aria-label="Lore catalog entries">
 				<div class={styles.rows} style={{ height: `${virtualizer.getTotalSize()}px` }}>
 					<For each={virtualizer.getVirtualItems()}>
 						{(item) => {
@@ -65,8 +76,11 @@ export default function ReviewList(props: ReviewListProps) {
 							return (
 								<Show when={entry()}>
 									{(current) => (
-										<div
-											class={cx(styles.row, props.selectedId === current().id && styles.rowSelected)}
+									<button
+										type="button"
+										role="option"
+										aria-selected={props.selectedId === current().id}
+										class={cx(styles.row, props.selectedId === current().id && styles.rowSelected)}
 											style={{ height: `${item.size}px`, transform: `translateY(${item.start}px)` }}
 											onClick={() => props.onSelect(current())}
 										>
@@ -77,13 +91,14 @@ export default function ReviewList(props: ReviewListProps) {
 												<Show when={current().has_override}>
 													<span class={cx(styles.badge, styles.badgeOverride)}>override</span>
 												</Show>
-												<Show when={current().issues.length > 0}>
+												<Show when={(current().issues ?? []).length > 0}>
 													<span class={cx(styles.badge, styles.badgeIssue)}>issue</span>
 												</Show>
 												{entryTitle(current())}
 											</span>
-											<span class={styles.rowMeta}>{current().type_path}</span>
-										</div>
+											<span class={styles.rowMeta}>{current().type_path} · {statusLabel(current())}</span>
+											<Show when={(current().group_labels ?? []).length > 0}><span class={styles.rowMeta}>{(current().group_labels ?? []).join(' · ')}</span></Show>
+									</button>
 									)}
 								</Show>
 							);
@@ -92,7 +107,7 @@ export default function ReviewList(props: ReviewListProps) {
 				</div>
 			</div>
 
-			<div class={styles.footer}>
+			<div class={styles.footer} role="status" aria-live="polite" aria-atomic="true">
 				<span>
 					Showing {props.feed.entries().length.toLocaleString()} of{' '}
 					{props.feed.matchedCount().toLocaleString()} matching

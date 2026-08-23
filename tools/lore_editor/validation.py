@@ -18,6 +18,7 @@ from .model import (
 )
 
 TYPE_PATH_PATTERN = re.compile(r"^/(?:[A-Za-z0-9_]+)(?:/[A-Za-z0-9_]+)*$")
+ENTRY_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 WIKI_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SUPPORTED_TOP_LEVEL_KEYS = {
 	"id",
@@ -51,6 +52,12 @@ def resolve_icon_path(repo_root: Path, icon_file: str, *, asset_root: Path | Non
 		return None
 
 
+def validate_entry_id(value: object) -> str:
+	if not isinstance(value, str) or not ENTRY_ID_PATTERN.fullmatch(value):
+		raise ValueError("Entry id must match ^[A-Za-z0-9][A-Za-z0-9._-]*$.")
+	return value
+
+
 def validate_entry_shape(entry: LoreEntry, issues: list[ValidationIssue]) -> None:
     raw_object = as_object(entry.raw_data)
     if raw_object is None:
@@ -63,6 +70,8 @@ def validate_entry_shape(entry: LoreEntry, issues: list[ValidationIssue]) -> Non
     raw_id = raw_object.get("id")
     if not isinstance(raw_id, str) or not raw_id:
         issues.append(make_issue(entry, "id", "Field 'id' must be a non-empty string."))
+    elif not ENTRY_ID_PATTERN.fullmatch(raw_id):
+        issues.append(make_issue(entry, "id", "Entry id must match ^[A-Za-z0-9][A-Za-z0-9._-]*$."))
 
     raw_type_path = raw_object.get("type_path")
     if not isinstance(raw_type_path, str) or not raw_type_path:

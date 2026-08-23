@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import threading
 import unittest
@@ -7,6 +8,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
+from tools.lore_editor.reconcile import reconcile_projection
+from tools.lore_editor.records import atomic_write_record, record_path
 from webapp import git_adapter
 from webapp.git_adapter import (
 	GitAdapterError,
@@ -16,6 +19,7 @@ from webapp.git_adapter import (
 	github_blob_url,
 	line_history,
 	list_branches,
+	list_owned_changes,
 	list_tracked_files,
 	open_file_in_default_app,
 	open_in_github_desktop,
@@ -24,7 +28,9 @@ from webapp.git_adapter import (
 	repository_status,
 	reveal_file_in_file_explorer,
 	stage_and_commit,
+	stage_owned_and_commit,
 	switch_branch,
+	workspace_revision,
 )
 
 
@@ -67,6 +73,26 @@ class GitAdapterTests(unittest.TestCase):
 		self.assertEqual(("change.txt",), status.changed_files)
 		self.assertFalse(status.conflicted)
 
+	def test_workspace_revision_joins_git_canonical_content_and_projection_state(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		group_path = record_path(repo_root, "group", "items")
+		atomic_write_record(group_path, {
+			"id": "items",
+			"label": "Items",
+			"color": "#fff",
+			"keywords": [],
+			"type_path_prefixes": [],
+		})
+		reconcile_projection(repo_root)
+
+		revision = workspace_revision(repo_root)
+
+		self.assertEqual(revision.branch, "main")
+		self.assertEqual(revision.head, git_adapter.repository_revision(repo_root))
+		self.assertTrue(revision.worktree_id)
+		self.assertEqual(revision.content_revision, revision.projection_revision.content_revision)
+
 	def test_status_does_not_treat_staged_additions_as_conflicts(self) -> None:
 		temporary_directory, repo_root = self.make_repo()
 		self.addCleanup(temporary_directory.cleanup)
@@ -99,6 +125,47 @@ class GitAdapterTests(unittest.TestCase):
 		self.assertTrue(commit_sha)
 		self.assertEqual(("unrelated.txt",), repository_status(repo_root).changed_files)
 
+	def test_owned_commit_rejects_unrelated_paths_without_staging_them(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		canonical_path = repo_root / "tools/lore_editor/content/groups/items.json"
+		canonical_path.parent.mkdir(parents=True)
+		canonical_path.write_text(json.dumps({"id": "items", "label": "Items"}), encoding="utf-8")
+		generated_path = repo_root / "tools/lore_editor/stages/current/generated_lore_overrides.dm"
+		generated_path.parent.mkdir(parents=True)
+		generated_path.write_text("generated\n", encoding="utf-8")
+		(repo_root / "unrelated.txt").write_text("do not stage\n", encoding="utf-8")
+
+		with self.assertRaisesRegex(ValueError, "not owned"):
+			stage_owned_and_commit(
+				repo_root,
+				"tool",
+				(
+					"tools/lore_editor/content/groups/items.json",
+					"tools/lore_editor/stages/current/generated_lore_overrides.dm",
+					"unrelated.txt",
+				),
+				"Update items",
+			)
+
+		staged = run_git_allow_fail(repo_root, "diff", "--cached", "--name-only").stdout
+		self.assertEqual(staged, "")
+
+	def test_owned_changes_include_record_identity_and_leave_unowned_changes_separate(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		canonical_path = repo_root / "tools/lore_editor/content/groups/items.json"
+		canonical_path.parent.mkdir(parents=True)
+		canonical_path.write_text(json.dumps({"id": "items", "label": "Items"}), encoding="utf-8")
+		(repo_root / "unrelated.txt").write_text("pending\n", encoding="utf-8")
+
+		owned = list_owned_changes(repo_root, "tool")
+
+		self.assertEqual(len(owned), 1)
+		self.assertEqual(owned[0].kind, "group")
+		self.assertEqual(owned[0].record_id, "items")
+		self.assertEqual(owned[0].summary, "Items")
+
 	def test_stage_and_commit_leaves_preexisting_staged_unrelated_files_alone(self) -> None:
 		temporary_directory, repo_root = self.make_repo()
 		self.addCleanup(temporary_directory.cleanup)
@@ -110,6 +177,37 @@ class GitAdapterTests(unittest.TestCase):
 
 		self.assertEqual(("unrelated.txt",), repository_status(repo_root).changed_files)
 		self.assertEqual("unrelated\n", (repo_root / "unrelated.txt").read_text(encoding="utf-8"))
+
+	def test_stage_and_commit_restores_the_exact_index_when_commit_fails(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		(repo_root / "README.md").write_text("staged unrelated change\n", encoding="utf-8")
+		run_git(repo_root, "add", "README.md")
+		canonical_path = repo_root / "tools/lore_editor/content/groups/items.json"
+		canonical_path.parent.mkdir(parents=True)
+		canonical_path.write_text(json.dumps({"id": "items", "label": "Items"}), encoding="utf-8")
+		index_path = Path(run_git_allow_fail(repo_root, "rev-parse", "--git-path", "index").stdout.strip())
+		if not index_path.is_absolute():
+			index_path = repo_root / index_path
+		original_index = index_path.read_bytes()
+		original_run_git = git_adapter._run_git
+
+		def fail_commit(root: Path, arguments: list[str], *, allow_nonzero: bool = False):
+			if arguments and arguments[0] == "commit":
+				raise GitAdapterError("commit hook failed")
+			return original_run_git(root, arguments, allow_nonzero=allow_nonzero)
+
+		with (
+			patch("webapp.git_adapter._run_git", side_effect=fail_commit),
+			self.assertRaisesRegex(GitAdapterError, "commit hook failed"),
+		):
+			stage_and_commit(
+				repo_root,
+				("tools/lore_editor/content/groups/items.json",),
+				"Update items",
+			)
+
+		self.assertEqual(index_path.read_bytes(), original_index)
 
 	def test_status_reports_clean_repository_with_no_pending_changes(self) -> None:
 		temporary_directory, repo_root = self.make_repo()
@@ -279,9 +377,11 @@ class GitAdapterTests(unittest.TestCase):
 		temporary_directory, repo_root = self.make_repo()
 		self.addCleanup(temporary_directory.cleanup)
 
-		with patch("webapp.git_adapter.find_github_desktop_launcher", return_value=None):
-			with self.assertRaisesRegex(GitAdapterError, "GitHub Desktop"):
-				open_in_github_desktop(repo_root)
+		with (
+			patch("webapp.git_adapter.find_github_desktop_launcher", return_value=None),
+			self.assertRaisesRegex(GitAdapterError, "GitHub Desktop"),
+		):
+			open_in_github_desktop(repo_root)
 
 	def test_repository_remote_url_returns_configured_origin(self) -> None:
 		temporary_directory, repo_root = self.make_repo()
@@ -322,6 +422,15 @@ class GitAdapterTests(unittest.TestCase):
 
 		self.assertTrue(truncated.startswith("x" * 100))
 		self.assertIn("truncated, 19900 more characters", truncated)
+
+	def test_git_timeout_is_reported_as_a_bounded_adapter_failure(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		with (
+			patch("webapp.git_adapter.subprocess.run", side_effect=subprocess.TimeoutExpired("git", 60)),
+			self.assertRaisesRegex(GitAdapterError, "timed out"),
+		):
+			git_adapter.repository_revision(repo_root)
 
 	def test_status_caps_changed_file_list_and_reports_truncated_count(self) -> None:
 		temporary_directory, repo_root = self.make_repo()
@@ -438,9 +547,11 @@ class GitAdapterTests(unittest.TestCase):
 		temporary_directory, repo_root = self.make_repo()
 		self.addCleanup(temporary_directory.cleanup)
 
-		with patch("webapp.git_adapter.os.startfile", create=True) as startfile:
-			with self.assertRaises(GitAdapterError):
-				open_file_in_default_app(repo_root, "missing.txt")
+		with (
+			patch("webapp.git_adapter.os.startfile", create=True) as startfile,
+			self.assertRaises(GitAdapterError),
+		):
+			open_file_in_default_app(repo_root, "missing.txt")
 		startfile.assert_not_called()
 
 	def test_open_file_in_default_app_accepts_a_directory(self) -> None:

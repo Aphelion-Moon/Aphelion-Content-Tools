@@ -99,8 +99,8 @@ class Dmi:
         gridwidth = width // dmi.width
         i = 0
         for state in dmi.states:
-            for frame in range(state._nframes):
-                for dir in range(state.dirs):
+            for _frame in range(state._nframes):
+                for _dir in range(state.dirs):
                     px = dmi.width * (i % gridwidth)
                     py = dmi.height * (i // gridwidth)
                     im = image.crop((px, py, px + dmi.width, py + dmi.height))

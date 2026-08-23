@@ -269,7 +269,9 @@ class StandaloneServerTests(unittest.TestCase):
 			(tool_root / "README.md").write_text("initial\n", encoding="utf-8")
 			run_git(tool_root, "add", "--", "README.md")
 			run_git(tool_root, "commit", "-m", "Initial")
-			(tool_root / "lore.json").write_text("lore\n", encoding="utf-8")
+			owned_path = tool_root / "tools/lore_editor/content/groups/items.json"
+			owned_path.parent.mkdir(parents=True)
+			owned_path.write_text('{"id":"items","label":"Items"}\n', encoding="utf-8")
 			(tool_root / "unrelated.txt").write_text("leave pending\n", encoding="utf-8")
 
 			server = create_server(tool_root, 0)
@@ -278,7 +280,11 @@ class StandaloneServerTests(unittest.TestCase):
 			try:
 				commit_request = Request(
 					f"http://127.0.0.1:{server.server_address[1]}/api/git/commit",
-					data=json.dumps({"repository": "tool", "paths": ["lore.json"], "message": "Update lore"}).encode("utf-8"),
+					data=json.dumps({
+						"repository": "tool",
+						"paths": ["tools/lore_editor/content/groups/items.json"],
+						"message": "Update lore",
+					}).encode("utf-8"),
 					method="POST",
 					headers={"Content-Type": "application/json"},
 				)
@@ -392,6 +398,7 @@ class StandaloneServerTests(unittest.TestCase):
 			manifest = ExportManifest(
 				tool_repo_revision="tool-sha",
 				tool_branch="main",
+				content_revision="content-sha",
 				catalog_sha256=sha256_bytes(b"catalog"),
 				game_repo_revision="game-sha",
 				entry_ids=(),
@@ -437,7 +444,6 @@ class StandaloneServerTests(unittest.TestCase):
 					apply.assert_called_once_with(
 						(tool_root / "tools/lore_editor/stages/example").resolve(),
 						game_root.resolve(),
-						allow_dirty=False,
 					)
 					self.assertFalse(apply_payload["opened_in_github_desktop"])
 					self.assertIsNotNone(apply_payload["github_desktop_error"])
@@ -453,20 +459,6 @@ class StandaloneServerTests(unittest.TestCase):
 			game_root = root / "game"
 			game_root.mkdir(parents=True)
 			(tool_root / "tools/lore_editor/stages/example").mkdir(parents=True)
-			manifest = ExportManifest(
-				tool_repo_revision="tool-sha",
-				tool_branch="main",
-				catalog_sha256=sha256_bytes(b"catalog"),
-				game_repo_revision="game-sha",
-				entry_ids=(),
-				type_paths=(),
-				generated_artifact_sha256=sha256_bytes(b"artifact"),
-			)
-			prepared = PreparedExport(
-				directory=tool_root / "tools/lore_editor/stages/example",
-				artifact_path=tool_root / "tools/lore_editor/stages/example/artifact.dm",
-				manifest=manifest,
-			)
 			server = create_server(tool_root, 0, game_repo_root=game_root)
 			thread = threading.Thread(target=server.serve_forever, daemon=True)
 			thread.start()

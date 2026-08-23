@@ -5,6 +5,23 @@ build integration, and the release/bootstrap path. Writer-facing Lore Editor wor
 the [writer guide](writer-guide.md); architecture and implementation history are in
 [architecture/](architecture/).
 
+## Normative status
+
+This working-tree version is the normative architecture for Aphelion Content Tools. Historical design
+records explain prior decisions but do not override this guide.
+
+Target architecture: FastAPI and the Solid SPA.
+
+Legacy pages are transitional and must not receive new product behavior except for a
+documented migration or rollback fix. Pydantic models are the canonical HTTP schema, and
+tools/lore_editor/content/ is canonical authored source. Catalogs, projections, generated TypeScript,
+the production SPA, generated DreamMaker, and AutoWiki material are derived outputs.
+
+Focused implementation rules are indexed in the [development guides](development/README.md). They
+divide backend/schema, frontend/state, canonical data/generation, Content Graph, export safety,
+verification, and Meridian integration responsibilities without replacing the operational detail in
+this guide.
+
 ## Repository structure
 
 `aphelion-content-tools` is a multi-tool suite, not a single app:
@@ -80,8 +97,34 @@ separate temporary directories. `webapp/serve_api.py` is the ASGI entry point.
   separate `store_worker.py` process behind a request/response pipe that cannot push, so the server polls
   it centrally and fans out; adding a real push channel later changes only `live.py`.
 
-The package is installable (`pip install -e .`), which is what lets modules use plain absolute imports.
-`pyproject.toml` also configures `ruff` and `pyright` — run both before calling a change done.
+### Background-job ownership and recovery
+
+There is one lazily started worker per resolved content-tools workspace. Every start, status, stop,
+active-list, and shutdown request carries that workspace path; the worker rejects a request whose path
+does not match its own. Never restore a process-global "current" repository shortcut.
+
+The worker remains out of process deliberately. The embedding model is roughly 130 MB and its observed
+cold load took about two minutes, so an API-owned thread would both lose crash isolation and make a
+worker restart capable of taking down the HTTP server. The persistent process amortizes that load while
+serializing its repository jobs. Run metadata is atomically persisted under `tools/logs/runs/`; after a
+crash, completed runs remain inspectable and formerly queued/running runs are recovered as failed with
+an explicit rerun message. Worker startup stdout/stderr is retained in
+`tools/logs/store-worker-startup.log` and included in startup exceptions.
+
+Stop requests are checked by a per-line Python trace as well as on output writes, so a silent Python
+loop is cancellable. A single blocking native-library call cannot be interrupted safely inside the warm
+process; cancellation is applied immediately when that call returns to Python, before the next command
+or successful completion is published.
+
+LanceDB connections use a zero-second read-consistency interval, which checks other-process writes on
+every read. Lore Editor's expensive computed-view caches combine the in-process generation counter with
+the active projection's durable generation ID, so an atomic projection activated by the worker invalidates
+API-process caches without a restart.
+
+The package is installable (`pip install -e ".[dev]"`), which is what lets modules use plain absolute
+imports. `pyproject.toml` configures `ruff` and an initial Pyright production boundary. Legacy DMI,
+dictionary-shaped graph code, and tests remain outside that type boundary; do not describe the whole
+repository as strict-typed until that debt is removed.
 
 ### Legacy pages (`webapp/web/`, `tools/*/web/`) — do not extend
 
@@ -109,8 +152,10 @@ cropped/repacked from "Husky Sprites" (opengameart.org/content/husky-sprites, CC
 
 ## Architecture summary (Lore Editor)
 
-The `tools/lore_editor/content/` tree is the source of truth for catalog snapshots, writer groups,
-reviews, assignments, and per-record overrides. `Meridian-Rift` supplies BYOND/DMI assets for catalog
+The `tools/lore_editor/content/` tree is the source of truth for writer groups, reviews, assignments,
+and per-record overrides. LanceDB is a worktree-local, ignored projection. The catalog is derived data,
+distributed through a release seed or rebuilt locally; neither it nor projection generations belong in
+normal pull requests. `Meridian-Rift` supplies BYOND/DMI assets for catalog
 generation and icon previews, and receives only the generated runtime artifact
 (`modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm`) through the staged export
 workflow — it never receives editor code or raw per-record content. Authentication, pushes, pull
@@ -147,8 +192,20 @@ Run this whenever the game repository's target list changes (new items, renamed 
 python tools/lore_editor/cli.py catalog-refresh --repo-root . --game-repo <path-to-Meridian-Rift>
 ```
 
-This writes `tools/lore_editor/catalog/targets.json` and its provenance manifest — nothing in the game
-checkout is modified. Writers pick this up automatically the next time they load or refresh the page.
+This builds and atomically activates a new LanceDB projection generation containing the catalog and its
+provenance manifest — nothing in the game checkout is modified. A failed projection build leaves the
+previous generation active.
+
+To package the active catalog as a release asset plus its small tracked manifest:
+
+```bash
+python tools/lore_editor/cli.py catalog-seed-package --repo-root . --seed-output <release-dir>/catalog-targets.json --manifest-output tools/lore_editor/catalog-seed.json --source-game-commit <Meridian-Rift-SHA> --download-url <published-release-asset-URL>
+```
+
+Publish the seed bytes at the exact URL before merging the manifest. Bootstrap downloads to a temporary
+file, verifies schema, byte size, SHA-256, canonical JSON, and every catalog target, then atomically moves
+it into `%LOCALAPPDATA%\AphelionContentTools\catalog-seeds`. `catalog-bootstrap` uses the cache first and
+falls back to `catalog-refresh` when a game checkout is available.
 
 Two safeguards apply whenever `--game-repo` is passed (to `catalog-refresh`, and always for
 `prepare-export`/`apply-export`):
@@ -183,6 +240,11 @@ characters, and a status response lists at most 2,000 changed files (`truncated_
 how many were left off). `open_in_github_desktop` is deliberately not locked — it only launches a
 detached GUI process and never touches the working tree or index.
 
+Only explicitly selected files under the canonical content roots, catalog release-manifest roots, or
+the exact generated game-artifact path can be committed through the app. The previous Git index bytes
+are restored if staging or commit fails. Pushes, pull requests, merges, and authentication stay in
+GitHub Desktop. A workspace lease permits one mutating backend per worktree while allowing multiple tabs.
+
 ## The staged export mechanism
 
 `prepare-export` and `apply-export` (exposed in the UI as **Prepare export** / **Apply selected
@@ -193,8 +255,9 @@ python tools/lore_editor/cli.py prepare-export --repo-root . --game-repo <path> 
 python tools/lore_editor/cli.py apply-export --stage <stage-directory> --game-repo <path>
 ```
 
-`prepare-export` validates the tool-repo corpus, generates the DM artifact, and writes it plus a
-manifest (tool revision, tool branch, catalog hash, game revision, entry/type-path lists, generated
+`prepare-export` first refuses uncommitted authored records. It validates the tool-repo corpus,
+generates the DM artifact, and writes it plus a manifest (tool revision, tool branch, canonical content
+revision, catalog hash, game revision, entry/type-path lists, generated
 artifact hash, and the game artifact's hash *at prepare time*) into a new timestamped directory under
 `tools/lore_editor/stages/`. It never touches the game checkout.
 
@@ -206,6 +269,8 @@ anything, and refuses (leaving the game checkout untouched) if any fail:
 - the game checkout's current generated-artifact hash still matches the manifest's
   `base_artifact_sha256` (`None` if the artifact didn't exist yet),
 - the module directory (`modular_aphelion/modules/lore_overhaul/code/`) exists.
+
+There is intentionally no dirty-checkout force flag in the API, CLI, or UI.
 
 If everything holds, it atomically replaces the generated artifact and returns its path. See
 [test_export.py](../tools/lore_editor/tests/test_export.py) for the exact refusal behavior.
@@ -263,7 +328,7 @@ be committed (`tgstation.dmb` and `data/**/*` are already gitignored).
 [`Launch Aphelion Content Tools.cmd`](../Launch%20Aphelion%20Content%20Tools.cmd) calls
 [`tools/launcher/launch.ps1`](../tools/launcher/launch.ps1), which:
 
-1. Looks for a compatible Python (3.11+, with Pillow) via `python.exe`, `py -3`, or a previously
+1. Looks for a compatible Python (3.11+, with all pinned runtime imports) via `python.exe`, `py -3`, or a previously
    installed private runtime, in that order.
 2. If none is found, asks before downloading the pinned installer named in
    [`tools/launcher/runtime_manifest.json`](../tools/launcher/runtime_manifest.json), verifies its
@@ -272,7 +337,11 @@ be committed (`tgstation.dmb` and `data/**/*` are already gitignored).
    all-users install). Declining leaves manual-install instructions on screen and changes nothing.
 3. Resolves the game-checkout path (from `%LOCALAPPDATA%\AphelionContentTools\settings.json`, a nearby
    `Meridian-Rift` folder, or a manual prompt) and persists it for next time.
-4. Starts `webapp/serve.py` on a loopback port and opens the browser to it.
+4. Runs `catalog-bootstrap`; release-seed failure never blocks canonical content, and a configured game
+   checkout supplies the local-rebuild fallback.
+5. Starts `webapp/serve_api.py` on a loopback port and opens the built Solid SPA. The minified
+   `webapp/frontend/dist/` artifact is tracked so writers do not need Node; CI rebuilds it and refuses
+   source/artifact drift. The legacy server remains available only during the rollback window.
 
 To change the pinned Python version, edit `runtime_manifest.json`'s `version`, `installer_url`, and
 `signature_subject_contains` fields together — an installer whose signature doesn't match the expected
@@ -284,6 +353,12 @@ subject is rejected outright, so all three must stay consistent.
 python -m unittest discover -s tools/lore_editor/tests -p 'test_*.py'
 python -m unittest discover -s webapp/tests -p 'test_*.py'
 python -m unittest discover -s tools/content_graph/tests -p 'test_*.py'
+python -m ruff check .
+python -m pyright
+npm --prefix webapp/frontend run gen:api
+npm --prefix webapp/frontend run typecheck
+npm --prefix webapp/frontend test -- --run
+npm --prefix webapp/frontend run build
 node --check webapp/web/app.js
 node --check tools/lore_editor/web/app.js
 node --check tools/content_graph/web/graph.js

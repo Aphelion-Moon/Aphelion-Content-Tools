@@ -5,7 +5,10 @@ from pathlib import Path
 
 from fastapi import Request
 
-from .errors import BadRequest
+from tools.lore_editor.reconcile import scan_canonical_records
+from webapp.store.metadata import projection_status
+
+from .errors import BadRequest, Conflict
 from .models import RepositoryName
 
 
@@ -34,3 +37,14 @@ class AppContext:
 
 def context(request: Request) -> AppContext:
 	return request.app.state.context  # type: ignore[no-any-return]
+
+
+def mutation_context(request: Request) -> AppContext:
+	app_context = context(request)
+	snapshot = scan_canonical_records(app_context.repo_root)
+	status = projection_status(app_context.repo_root, snapshot.content_revision)
+	if not status.current:
+		raise Conflict(
+			"Canonical content changed outside this backend. Reconcile the projection before authoring."
+		)
+	return app_context

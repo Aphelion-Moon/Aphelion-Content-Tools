@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import subprocess
 import sys
 import threading
@@ -40,7 +41,7 @@ WORKER_SHUTDOWN_TIMEOUT_SECONDS = 5.0
 
 class _WorkerHandle:
 	def __init__(self, repo_root: Path) -> None:
-		self.repo_root = repo_root
+		self.repo_root = repo_root.resolve()
 		self.process: subprocess.Popen | None = None
 		self.lock = threading.Lock()
 
@@ -48,6 +49,17 @@ class _WorkerHandle:
 	def address(self) -> str:
 		from .store_worker import pipe_address
 		return pipe_address(self.repo_root)
+
+	@property
+	def startup_log_path(self) -> Path:
+		return self.repo_root / "tools/logs/store-worker-startup.log"
+
+	def _startup_diagnostics(self) -> str:
+		try:
+			text = self.startup_log_path.read_text(encoding="utf-8", errors="replace")
+		except OSError:
+			return "No worker startup log was available."
+		return text[-8_000:] or "The worker startup log was empty."
 
 	def ensure_started(self) -> None:
 		with self.lock:
@@ -58,12 +70,16 @@ class _WorkerHandle:
 			# tests) -- it must not be confused with *this* installation's own directory, which is what
 			# the child process actually needs on its import path to find the `webapp`/`tools` packages.
 			worker_script = Path(__file__).resolve().with_name("store_worker.py")
-			self.process = subprocess.Popen(
-				[sys.executable, str(worker_script), "--repo-root", str(self.repo_root)],
-				stdin=subprocess.DEVNULL,
-				stdout=subprocess.DEVNULL,
-				stderr=subprocess.DEVNULL,
-			)
+			self.startup_log_path.parent.mkdir(parents=True, exist_ok=True)
+			with self.startup_log_path.open("a", encoding="utf-8", newline="") as startup_log:
+				startup_log.write(f"\nStarting store worker for {self.repo_root}.\n")
+				startup_log.flush()
+				self.process = subprocess.Popen(
+					[sys.executable, str(worker_script), "--repo-root", str(self.repo_root)],
+					stdin=subprocess.DEVNULL,
+					stdout=startup_log,
+					stderr=subprocess.STDOUT,
+				)
 			self._wait_until_reachable()
 
 	def _wait_until_reachable(self) -> None:
@@ -73,23 +89,27 @@ class _WorkerHandle:
 		last_error: Exception | None = None
 		while _now() < deadline:
 			if self.process.poll() is not None:
-				raise RuntimeError("The store worker process exited immediately on startup.")
+				raise RuntimeError(
+					"The store worker process exited immediately on startup.\n"
+					f"Startup diagnostics:\n{self._startup_diagnostics()}"
+				)
 			try:
 				with Client(self.address, family="AF_PIPE", authkey=AUTH_KEY):
 					return
 			except OSError as exc:
 				last_error = exc
 				_sleep(WORKER_POLL_INTERVAL_SECONDS)
-		raise RuntimeError(f"Store worker did not become reachable in time: {last_error}")
+		raise RuntimeError(
+			f"Store worker did not become reachable in time: {last_error}\n"
+			f"Startup diagnostics:\n{self._startup_diagnostics()}"
+		)
 
 	def shut_down(self) -> None:
 		with self.lock:
 			if self.process is None:
 				return
-			try:
-				_send(self.address, {"action": "shutdown"})
-			except OSError:
-				pass
+			with contextlib.suppress(OSError):
+				_send(self.address, {"action": "shutdown", "repo_root": str(self.repo_root)})
 			try:
 				self.process.wait(timeout=WORKER_SHUTDOWN_TIMEOUT_SECONDS)
 			except subprocess.TimeoutExpired:
@@ -115,11 +135,9 @@ def _send(address: str, message: dict[str, object]) -> dict[str, object]:
 
 _workers: dict[str, _WorkerHandle] = {}
 _workers_lock = threading.Lock()
-_default_repo_root: Path | None = None
 
 
 def _get_worker(repo_root: Path) -> _WorkerHandle:
-	global _default_repo_root
 	resolved = repo_root.resolve()
 	key = str(resolved)
 	with _workers_lock:
@@ -127,17 +145,11 @@ def _get_worker(repo_root: Path) -> _WorkerHandle:
 		if handle is None:
 			handle = _WorkerHandle(resolved)
 			_workers[key] = handle
-		_default_repo_root = resolved
 	return handle
 
 
-def _default_worker() -> _WorkerHandle:
-	if _default_repo_root is None:
-		raise ValueError("No tool run has been started in this process yet.")
-	return _get_worker(_default_repo_root)
-
-
 def _request(handle: _WorkerHandle, message: dict[str, object]) -> dict[str, object]:
+	message = {**message, "repo_root": str(handle.repo_root)}
 	handle.ensure_started()
 	try:
 		response = _send(handle.address, message)
@@ -186,7 +198,7 @@ def list_active_runs(repo_root: Path) -> list[dict[str, object]]:
 	if handle is None or handle.process is None or handle.process.poll() is not None:
 		return []
 	try:
-		response = _send(handle.address, {"action": "list_active"})
+		response = _send(handle.address, {"action": "list_active", "repo_root": str(handle.repo_root)})
 	except (OSError, EOFError):
 		return []
 	if not response.get("ok"):
@@ -194,12 +206,12 @@ def list_active_runs(repo_root: Path) -> list[dict[str, object]]:
 	return response["result"]  # type: ignore[return-value]
 
 
-def get_tool_run(run_id: str) -> dict[str, object]:
-	return _request(_default_worker(), {"action": "status", "run_id": run_id})
+def get_tool_run(repo_root: Path, run_id: str) -> dict[str, object]:
+	return _request(_get_worker(repo_root), {"action": "status", "run_id": run_id})
 
 
-def stop_tool(run_id: str) -> dict[str, object]:
-	return _request(_default_worker(), {"action": "stop", "run_id": run_id})
+def stop_tool(repo_root: Path, run_id: str) -> dict[str, object]:
+	return _request(_get_worker(repo_root), {"action": "stop", "run_id": run_id})
 
 
 def shut_down_worker(repo_root: Path) -> None:

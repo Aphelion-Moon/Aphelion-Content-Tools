@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 from tools.lore_editor import export
 from tools.lore_editor.export import apply_export, prepare_export
+from tools.lore_editor.reconcile import scan_canonical_records
+from tools.lore_editor.records import atomic_write_record, record_path
 from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
 
 RADIO_TARGET = {
@@ -80,11 +82,32 @@ class ExportTests(unittest.TestCase):
 			self.assertEqual(before, artifact.read_bytes())
 			self.assertTrue((prepared.directory / "manifest.json").is_file())
 			self.assertTrue(prepared.artifact_path.is_file())
+			self.assertEqual(
+				prepared.manifest.content_revision,
+				scan_canonical_records(tool_root).content_revision,
+			)
 
 			apply_export(prepared.directory, game_root)
 
 			self.assertNotEqual(before, artifact.read_bytes())
 			self.assertIn('name = "Updated radio"', artifact.read_text(encoding="utf-8"))
+
+	def test_prepare_export_requires_authored_records_to_be_committed(self) -> None:
+		with TemporaryDirectory() as temporary_directory:
+			root = Path(temporary_directory)
+			tool_root, game_root, stage_root = self.make_prepared_pair(root)
+			atomic_write_record(record_path(tool_root, "group", "items"), {
+				"id": "items",
+				"label": "Items",
+				"color": "#9614d0",
+				"keywords": [],
+				"type_path_prefixes": ["/obj/item"],
+			})
+
+			with self.assertRaisesRegex(ValueError, "Commit the selected records"):
+				prepare_export(tool_root, game_root, stage_root)
+
+			self.assertFalse(stage_root.exists())
 
 	def test_apply_export_refuses_when_game_artifact_changed(self) -> None:
 		with TemporaryDirectory() as temporary_directory:
@@ -142,7 +165,7 @@ class ExportTests(unittest.TestCase):
 				apply_export(prepared.directory, game_root)
 			self.assertEqual(before, artifact.read_bytes())
 
-	def test_apply_export_allow_dirty_overrides_the_uncommitted_changes_block(self) -> None:
+	def test_apply_export_has_no_dirty_checkout_override(self) -> None:
 		with TemporaryDirectory() as temporary_directory:
 			root = Path(temporary_directory)
 			tool_root, game_root, stage_root = self.make_prepared_pair(root)
@@ -153,9 +176,10 @@ class ExportTests(unittest.TestCase):
 			(game_root / "uncommitted.txt").write_text("pending\n", encoding="utf-8")
 			before = artifact.read_bytes()
 
-			apply_export(prepared.directory, game_root, allow_dirty=True)
+			with self.assertRaises(TypeError):
+				apply_export(prepared.directory, game_root, allow_dirty=True)
 
-			self.assertNotEqual(before, artifact.read_bytes())
+			self.assertEqual(before, artifact.read_bytes())
 
 	def test_apply_export_refuses_when_game_module_is_missing(self) -> None:
 		with TemporaryDirectory() as temporary_directory:
@@ -181,9 +205,11 @@ class ExportTests(unittest.TestCase):
 					raise OSError("simulated disk failure")
 				original_atomic_write(path, content)
 
-			with patch.object(export, "_atomic_write", side_effect=flaky_atomic_write):
-				with self.assertRaises(OSError):
-					prepare_export(tool_root, game_root, stage_root)
+			with (
+				patch.object(export, "_atomic_write", side_effect=flaky_atomic_write),
+				self.assertRaises(OSError),
+			):
+				prepare_export(tool_root, game_root, stage_root)
 
 			self.assertEqual([], list(stage_root.glob("*")) if stage_root.is_dir() else [])
 

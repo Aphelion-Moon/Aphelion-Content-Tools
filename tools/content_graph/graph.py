@@ -12,6 +12,13 @@ from webapp.store.schema import decode, encode, table
 
 from .manifest import GraphManifest
 from .markers import MarkerEdge
+from .models import (
+	ContentGraph,
+	GraphEdge,
+	GraphNode,
+	UnresolvedMarker,
+	content_graph_from_cache,
+)
 from .references import find_text_references
 from .scanner import (
 	scan_core_file_texts,
@@ -47,8 +54,8 @@ def _parent_posix(posix_path: str) -> str:
 
 
 def _add_full_tree(
-	nodes: list[dict[str, object]],
-	edges: list[dict[str, object]],
+	nodes: list[GraphNode],
+	edges: list[GraphEdge],
 	path_to_id: dict[str, str],
 	tracked_paths: tuple[str, ...],
 ) -> int:
@@ -62,10 +69,7 @@ def _add_full_tree(
 	dir_created: set[str] = set()
 
 	def ensure_dir(dir_posix: str) -> str:
-		if dir_posix == "":
-			node_id = ROOT_DIR_ID
-		else:
-			node_id = path_to_id.get(dir_posix, f"dir:{dir_posix}")
+		node_id = ROOT_DIR_ID if dir_posix == "" else path_to_id.get(dir_posix, f"dir:{dir_posix}")
 		if node_id in dir_created:
 			return node_id
 		dir_created.add(node_id)
@@ -97,7 +101,7 @@ def _add_full_tree(
 	return len(dir_created)
 
 
-def _marker_payload(core_path: str, marker: MarkerEdge) -> dict[str, object]:
+def _marker_payload(core_path: str, marker: MarkerEdge) -> UnresolvedMarker:
 	return {
 		"core_file": core_path,
 		"owner": marker.owner,
@@ -111,7 +115,7 @@ def _marker_payload(core_path: str, marker: MarkerEdge) -> dict[str, object]:
 	}
 
 
-def build_content_graph(game_repo_root: Path) -> dict[str, object]:
+def build_content_graph(game_repo_root: Path) -> ContentGraph:
 	"""Scan a game checkout and return a JSON-serializable node/edge graph document.
 
 	Modules, master_files overrides, and marker-bearing core files get the specialized `module`/
@@ -132,7 +136,7 @@ def build_content_graph(game_repo_root: Path) -> dict[str, object]:
 	module_contents = scan_module_file_texts(resolved_root, modules)
 	core_contents = scan_core_file_texts(resolved_root, frozenset(core_paths))
 
-	nodes: list[dict[str, object]] = []
+	nodes: list[GraphNode] = []
 	for module in modules:
 		content = module_contents.get(module.path)
 		nodes.append({
@@ -170,7 +174,7 @@ def build_content_graph(game_repo_root: Path) -> dict[str, object]:
 			"line_count": content.line_count if content else None,
 		})
 
-	edges: list[dict[str, object]] = []
+	edges: list[GraphEdge] = []
 	for master_file in master_files:
 		edges.append({
 			"source": _master_file_node_id(master_file.owner, master_file.path),
@@ -192,7 +196,7 @@ def build_content_graph(game_repo_root: Path) -> dict[str, object]:
 	for source_id, target_id in find_text_references(core_texts, core_fragment_ids):
 		edges.append({"source": source_id, "target": target_id, "relation": "core_reference"})
 
-	unresolved_markers: list[dict[str, object]] = []
+	unresolved_markers: list[UnresolvedMarker] = []
 	marker_count = 0
 	for core_path, markers in sorted(markers_by_path.items()):
 		for marker in markers:
@@ -234,7 +238,7 @@ def build_content_graph(game_repo_root: Path) -> dict[str, object]:
 	}
 
 
-def _node_text(node: dict[str, object]) -> str:
+def _node_text(node: GraphNode) -> str:
 	return " ".join(str(node.get(field)) for field in ("id", "kind", "path", "name", "module_id") if node.get(field))
 
 
@@ -281,7 +285,7 @@ def scan_and_cache_content_graph(repo_root: Path, game_repo_root: Path) -> Graph
 			"text": _node_text(node),
 		}
 		for node in graph["nodes"]
-	], on_progress=_print_progress("Nodes"))
+	], embed=False, on_progress=_print_progress("Nodes"))
 	# Edge/marker ids must be stable across scans for the above diffing to mean anything -- a positional
 	# index (the previous scheme) shifts for every edge/marker whenever an earlier one is added or
 	# removed, which would make nearly everything look "changed" on every scan even when it wasn't. A
@@ -296,7 +300,7 @@ def scan_and_cache_content_graph(repo_root: Path, game_repo_root: Path) -> Graph
 			"text": f"{edge['source']} {edge['target']} {edge['relation']}",
 		}
 		for edge in graph["edges"]
-	], on_progress=_print_progress("Edges"))
+	], embed=False, on_progress=_print_progress("Edges"))
 	db.sync_snapshot(table(resolved_repo_root, "unresolved_markers"), "id", [
 		{
 			"id": db.content_hash_for(encode(marker))[:24],
@@ -305,31 +309,35 @@ def scan_and_cache_content_graph(repo_root: Path, game_repo_root: Path) -> Graph
 			"text": f"{marker['core_file']} {marker.get('raw_label', '')} {marker.get('original_text', '')}",
 		}
 		for marker in graph["unresolved_markers"]
-	], on_progress=_print_progress("Unresolved markers"))
+	], embed=False, on_progress=_print_progress("Unresolved markers"))
 	db.upsert_rows(table(resolved_repo_root, "manifests"), "id", [{
 		"id": "graph",
-		"raw_json": encode({"manifest": manifest.to_dict(), "counts": counts}),
+		"raw_json": encode({"manifest": manifest.to_dict(), "counts": counts, "graph": graph}),
 		"text": "",
 	}])
 	return manifest
 
 
-def read_graph_cache(repo_root: Path) -> tuple[dict[str, object], GraphManifest] | None:
+def read_graph_cache(repo_root: Path) -> tuple[ContentGraph, GraphManifest] | None:
 	"""Return the cached (graph, manifest) pair, or None if no scan has been run yet."""
 	resolved_root = repo_root.resolve()
-	manifest_row = db.get_row(table(resolved_root, "manifests"), "id = 'graph'")
+	manifest_row = db.get_row_by_key(table(resolved_root, "manifests"), "id", "graph")
 	if manifest_row is None:
 		return None
 	stored = decode(manifest_row)
 	manifest = GraphManifest.from_dict(stored["manifest"])
+	stored_graph = stored.get("graph")
+	if isinstance(stored_graph, dict):
+		stored_nodes = stored_graph.get("nodes")
+		stored_edges = stored_graph.get("edges")
+		stored_markers = stored_graph.get("unresolved_markers")
+		counts = stored_graph.get("counts")
+		if not isinstance(stored_nodes, list) or not isinstance(stored_edges, list) or not isinstance(stored_markers, list):
+			raise ValueError("Stored graph snapshot is missing its node, edge, or marker list.")
+		return content_graph_from_cache(stored_nodes, stored_edges, stored_markers, counts), manifest
 
-	nodes = [decode(row) for row in db.all_rows(table(resolved_root, "graph_nodes"))]
-	edges = [decode(row) for row in db.all_rows(table(resolved_root, "graph_edges"))]
-	unresolved_markers = [decode(row) for row in db.all_rows(table(resolved_root, "unresolved_markers"))]
-	graph = {
-		"nodes": nodes,
-		"edges": edges,
-		"unresolved_markers": unresolved_markers,
-		"counts": stored["counts"],
-	}
+	nodes: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "graph_nodes"))]
+	edges: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "graph_edges"))]
+	unresolved_markers: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "unresolved_markers"))]
+	graph = content_graph_from_cache(nodes, edges, unresolved_markers, stored["counts"])
 	return graph, manifest

@@ -6,12 +6,13 @@ from pathlib import Path
 from webapp.git_adapter import GitAdapterError, list_tracked_files
 
 from .markers import MarkerEdge, parse_markers
+from .models import GraphNodeOwner
 
-MODULE_ROOTS = (
+MODULE_ROOTS: tuple[tuple[GraphNodeOwner, Path], ...] = (
 	("nova", Path("modular_nova/modules")),
 	("aphelion", Path("modular_aphelion/modules")),
 )
-MASTER_FILES_ROOTS = (
+MASTER_FILES_ROOTS: tuple[tuple[GraphNodeOwner, Path], ...] = (
 	("nova", Path("modular_nova/master_files")),
 	("aphelion", Path("modular_aphelion/master_files")),
 )
@@ -23,14 +24,14 @@ FULL_TREE_WALK_EXCLUDED_DIR_NAMES = frozenset((".git", "__pycache__", "node_modu
 @dataclass(frozen=True)
 class ModuleNode:
 	id: str
-	owner: str
+	owner: GraphNodeOwner
 	path: str
 	has_readme: bool
 
 
 @dataclass(frozen=True)
 class MasterFileNode:
-	owner: str
+	owner: GraphNodeOwner
 	path: str
 	core_path: str
 
@@ -147,10 +148,7 @@ def scan_core_file_texts(game_repo_root: Path, core_paths: frozenset[str]) -> di
 		except OSError:
 			continue
 		text = data.decode("utf-8", errors="replace")
-		if not text:
-			line_count = 0
-		else:
-			line_count = text.count("\n") + (0 if text.endswith("\n") else 1)
+		line_count = 0 if not text else text.count("\n") + (0 if text.endswith("\n") else 1)
 		contents[core_path] = CoreFileContent(text=text, size_bytes=len(data), line_count=line_count)
 	return contents
 

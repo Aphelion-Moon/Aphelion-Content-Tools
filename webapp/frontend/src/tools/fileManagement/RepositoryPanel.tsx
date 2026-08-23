@@ -4,9 +4,12 @@ import { api } from '~/lib/api';
 import { announceError, announceSuccess } from '~/lib/notify';
 import { cx } from '~/lib/cx';
 import type { components } from '~/lib/api-schema';
+import { addReference } from '~/lib/references';
+import { selectedOwnedPaths, toggleSelectedPath } from './commitSelection';
 import styles from './FileManagement.module.css';
 
 type RepositoryStatus = components['schemas']['RepositoryStatus'];
+type OwnedChange = components['schemas']['OwnedChange'];
 // RepositoryName is a Literal alias on the Python side, so it is inlined into each operation's
 // parameters rather than emitted as a named schema. Declared here to match, in one place.
 export type RepositoryName = 'tool' | 'game';
@@ -28,6 +31,7 @@ export default function RepositoryPanel(props: RepositoryPanelProps) {
 	const [newBranch, setNewBranch] = createSignal('');
 	const [commitMessage, setCommitMessage] = createSignal('');
 	const [selectedBranch, setSelectedBranch] = createSignal('');
+	const [selectedPaths, setSelectedPaths] = createSignal<readonly string[]>([]);
 
 	const [status, { refetch: refetchStatus }] = createResource(
 		() => props.repository,
@@ -39,6 +43,7 @@ export default function RepositoryPanel(props: RepositoryPanelProps) {
 	);
 
 	const currentBranch = () => selectedBranch() || status()?.branch || '';
+	const selectedOwned = () => selectedOwnedPaths(selectedPaths(), status()?.owned_changes ?? []);
 
 	async function refreshAll(): Promise<void> {
 		await Promise.all([refetchStatus(), refetchBranches()]);
@@ -80,9 +85,9 @@ export default function RepositoryPanel(props: RepositoryPanelProps) {
 
 	const commit = () =>
 		run(async () => {
-			const changed = status()?.changed_files ?? [];
+			const changed = selectedOwned();
 			const text = commitMessage().trim();
-			if (!changed.length) throw new Error('No changed files to commit.');
+			if (!changed.length) throw new Error('Select at least one owned change to commit.');
 			if (!text) throw new Error('Enter a commit message first.');
 			await api.post('/api/git/commit', {
 				message: text,
@@ -90,6 +95,7 @@ export default function RepositoryPanel(props: RepositoryPanelProps) {
 				repository: props.repository,
 			});
 			setCommitMessage('');
+			setSelectedPaths([]);
 			return `Committed ${changed.length} file(s).`;
 		});
 
@@ -121,9 +127,26 @@ export default function RepositoryPanel(props: RepositoryPanelProps) {
 							</Show>
 						</p>
 
-						<Show when={current().changed_files.length > 0}>
+						<Show when={(current().owned_changes ?? []).length > 0}>
 							<div class={styles.fileList}>
-								<For each={current().changed_files}>
+								<For each={current().owned_changes ?? []}>
+									{(change) => (
+										<OwnedChangedFile
+											repository={props.repository}
+											change={change}
+											selected={selectedPaths().includes(change.path)}
+											onToggle={() => setSelectedPaths(toggleSelectedPath(selectedPaths(), change.path))}
+										/>
+									)}
+								</For>
+							</div>
+						</Show>
+						<Show when={(current().unowned_changes ?? []).length > 0}>
+							<p class={cardStyles.metadata}>
+								Unrelated changes are shown for awareness and cannot be committed by the app.
+							</p>
+							<div class={styles.fileList}>
+								<For each={current().unowned_changes ?? []}>
 									{(path) => <ChangedFile repository={props.repository} path={path} />}
 								</For>
 							</div>
@@ -173,7 +196,7 @@ export default function RepositoryPanel(props: RepositoryPanelProps) {
 							onInput={(event) => setCommitMessage(event.currentTarget.value)}
 						/>
 					</label>
-					<button type="button" disabled={busy()} onClick={commit}>
+					<button type="button" disabled={busy() || selectedOwned().length === 0} onClick={commit}>
 						Commit
 					</button>
 				</div>
@@ -193,6 +216,23 @@ export default function RepositoryPanel(props: RepositoryPanelProps) {
 	);
 }
 
+function OwnedChangedFile(props: {
+	readonly repository: RepositoryName;
+	readonly change: OwnedChange;
+	readonly selected: boolean;
+	readonly onToggle: () => void;
+}) {
+	return (
+		<div>
+			<label>
+				<input type="checkbox" checked={props.selected} onChange={props.onToggle} />
+				 Select {props.change.kind.replaceAll('_', ' ')}: {props.change.summary}
+			</label>
+			<ChangedFile repository={props.repository} path={props.change.path} />
+		</div>
+	);
+}
+
 /** One changed file, expanding to show its diff. The diff is fetched on first open, not up front. */
 function ChangedFile(props: { readonly repository: RepositoryName; readonly path: string }) {
 	const [open, setOpen] = createSignal(false);
@@ -208,7 +248,30 @@ function ChangedFile(props: { readonly repository: RepositoryName; readonly path
 
 	return (
 		<details class={styles.changedFile} onToggle={(event) => setOpen(event.currentTarget.open)}>
-			<summary>{props.path}</summary>
+			<summary>
+				<span>{props.path}</span>
+				<button
+					type="button"
+					class={styles.pin}
+					onClick={(event) => {
+						event.preventDefault();
+						event.stopPropagation();
+						void addReference({
+							tool: 'file-management',
+							kind: 'file',
+							key: props.path,
+							label: props.path,
+							path: props.path,
+							note: props.repository,
+						}).then(
+							() => announceSuccess('Added file to shared references.', 'file-management'),
+							(error: unknown) => announceError(error, 'file-management'),
+						);
+					}}
+				>
+					Add to references
+				</button>
+			</summary>
 			<Show when={open()}>
 				<pre class={styles.diff}>{diff.loading ? 'Loading diff…' : (diff.error?.message ?? diff())}</pre>
 			</Show>

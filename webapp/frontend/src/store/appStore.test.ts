@@ -4,6 +4,7 @@ import {
 	appState,
 	recordAnnouncement,
 	setActiveRuns,
+	setSelectedContext,
 	type ActiveRun,
 } from './appStore';
 
@@ -28,5 +29,20 @@ describe('active runs drive Parsec resting state', () => {
 
 		setActiveRuns([]);
 		expect(appState.parsecState).toBe('idle');
+	});
+});
+
+describe('shared selected context', () => {
+	it('persists the selected record for cross-tool contextual search', () => {
+		setSelectedContext({
+			tool: 'lore-editor',
+			record_kind: 'catalog_target',
+			record_id: '/obj/item/radio',
+			type_path: '/obj/item/radio',
+			groups: ['items'],
+		});
+
+		expect(appState.selectedContext?.record_id).toBe('/obj/item/radio');
+		expect(appState.selectedContext?.groups).toEqual(['items']);
 	});
 });
