@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import json
 import shutil
 import subprocess
@@ -10,6 +11,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from tools.lore_editor import catalog_seed
 from tools.lore_editor.catalog import read_current_targets
 from tools.lore_editor.catalog_seed import (
 	CATALOG_SEED_SCHEMA_VERSION,
@@ -126,6 +128,28 @@ class CatalogSeedTests(unittest.TestCase):
 			)
 
 		self.assertEqual(list(self.cache_root.glob("*")), [])
+
+	def test_download_stops_at_the_manifest_size_and_sets_a_network_timeout(self) -> None:
+		class OversizedResponse(io.BytesIO):
+			consumed = 0
+
+			def read(self, size=-1):
+				chunk = super().read(size)
+				self.consumed += len(chunk)
+				return chunk
+
+		response = OversizedResponse(self.seed_bytes + b"x" * 4096)
+		with patch.object(catalog_seed, "urlopen", return_value=response) as opener, self.assertRaisesRegex(ValueError, "byte size"):
+			download_seed(self.manifest, self.cache_root)
+		self.assertLessEqual(response.consumed, self.manifest.byte_size + 1)
+		self.assertGreater(opener.call_args.kwargs["timeout"], 0)
+		self.assertEqual(list(self.cache_root.glob("*")), [])
+
+	def test_oversized_cache_is_rejected_without_loading_its_contents(self) -> None:
+		seed = self.root / "oversized.json"
+		seed.write_bytes(self.seed_bytes + b"extra")
+		with patch.object(Path, "read_bytes", side_effect=AssertionError("oversized cache must not be loaded")), self.assertRaisesRegex(ValueError, "byte size"):
+			catalog_seed._validate_seed(seed, self.manifest)
 
 	def test_offline_download_falls_back_to_local_catalog_rebuild(self) -> None:
 		game_root = self.root / "game"

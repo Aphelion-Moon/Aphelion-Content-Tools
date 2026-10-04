@@ -16,6 +16,7 @@ CATALOG_SEED_SCHEMA_VERSION = 1
 CATALOG_SEED_GENERATOR_VERSION = "1.0.0"
 DEFAULT_MANIFEST_PATH = Path("tools/lore_editor/catalog-seed.json")
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024
+DOWNLOAD_TIMEOUT_SECONDS = 30
 
 
 def _required_string(payload: dict[str, object], field: str) -> str:
@@ -109,7 +110,10 @@ def load_seed_manifest(path: Path) -> CatalogSeedManifest:
 
 
 def _validate_seed(path: Path, manifest: CatalogSeedManifest) -> list[dict[str, object]]:
-	seed_bytes = path.read_bytes()
+	if path.stat().st_size != manifest.byte_size:
+		raise ValueError("Catalog seed byte size does not match its release manifest.")
+	with path.open("rb") as handle:
+		seed_bytes = handle.read(manifest.byte_size + 1)
 	if len(seed_bytes) != manifest.byte_size:
 		raise ValueError("Catalog seed byte size does not match its release manifest.")
 	if hashlib.sha256(seed_bytes).hexdigest() != manifest.sha256:
@@ -135,7 +139,7 @@ def cached_seed_path(manifest: CatalogSeedManifest, cache_root: Path) -> Path:
 	return cache_root.resolve() / f"{manifest.sha256}.json"
 
 
-def download_seed(manifest: CatalogSeedManifest, cache_root: Path, *, opener=urlopen) -> Path:
+def download_seed(manifest: CatalogSeedManifest, cache_root: Path, *, opener=None) -> Path:
 	"""Download, verify, and atomically activate one release seed in the local cache."""
 	resolved_cache = cache_root.resolve()
 	resolved_cache.mkdir(parents=True, exist_ok=True)
@@ -143,8 +147,15 @@ def download_seed(manifest: CatalogSeedManifest, cache_root: Path, *, opener=url
 	file_descriptor, temporary_name = tempfile.mkstemp(prefix=".catalog-seed.", suffix=".download", dir=resolved_cache)
 	temporary_path = Path(temporary_name)
 	try:
-		with os.fdopen(file_descriptor, "wb") as output, opener(manifest.download_url) as response:
-			while chunk := response.read(DOWNLOAD_CHUNK_BYTES):
+		with (
+			os.fdopen(file_descriptor, "wb") as output,
+			(opener(manifest.download_url) if opener is not None else urlopen(manifest.download_url, timeout=DOWNLOAD_TIMEOUT_SECONDS)) as response,
+		):
+			written = 0
+			while chunk := response.read(min(DOWNLOAD_CHUNK_BYTES, manifest.byte_size - written + 1)):
+				written += len(chunk)
+				if written > manifest.byte_size:
+					raise ValueError("Catalog seed byte size exceeds its release manifest.")
 				output.write(chunk)
 			output.flush()
 			os.fsync(output.fileno())
