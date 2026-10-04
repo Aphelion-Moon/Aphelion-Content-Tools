@@ -174,6 +174,18 @@ class RenderMarkerLineTests(unittest.TestCase):
 
 		self.assertEqual("// NOVA EDIT START - shuttle_toggle", rendered)
 
+	def test_labels_bare_edit_markers_without_losing_their_grammar(self) -> None:
+		for owner in ("NOVA", "APHELION"):
+			for prefix, suffix in (("// ", ""), ("/* ", " */")):
+				with self.subTest(owner=owner, prefix=prefix):
+					line = f"{prefix}{owner}\tEDIT{suffix}"
+					rendered = render_marker_line(line, "shuttle_toggle")
+					self.assertEqual(f"{prefix}{owner}\tEDIT - shuttle_toggle{suffix}", rendered)
+					edges = parse_markers(rendered, frozenset({"shuttle_toggle"}))
+					self.assertEqual(len(edges), 1)
+					self.assertEqual(edges[0].owner, owner)
+					self.assertEqual(edges[0].source_module_id, "shuttle_toggle")
+
 	def test_preserves_a_same_line_trailing_comment_close(self) -> None:
 		line = "/* // NOVA EDIT ADDITION START - SHUTTLE_TOGGLE */"
 

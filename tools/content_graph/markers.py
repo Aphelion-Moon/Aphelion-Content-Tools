@@ -12,7 +12,7 @@ ATTRIBUTIONS = frozenset(("exact", "path-derived", "unattributed"))
 _KIND_BY_TOKEN = {"ADDITION": "addition", "REMOVAL": "removal", "CHANGE": "change"}
 
 _LINE_PATTERN = re.compile(
-	r"(?P<owner>NOVA|APHELION)\s+EDIT"
+	r"(?P<owner>NOVA|APHELION)\s+(?P<edit>EDIT)"
 	r"(?:\s+(?P<kind>ADDITION|REMOVAL|CHANGE))?"
 	r"(?:\s+(?P<terminator>START|BEGIN|END))?"
 	r"(?:\s*-\s*(?P<label>.+))?"
@@ -87,7 +87,7 @@ def render_marker_line(line: str, new_label: str) -> str:
 	insertion_point = (
 		match.end("terminator") if match.group("terminator")
 		else match.end("kind") if match.group("kind")
-		else match.end("owner")
+		else match.end("edit")
 	)
 	return line[:insertion_point] + " - " + new_label + line[insertion_point:]
 
