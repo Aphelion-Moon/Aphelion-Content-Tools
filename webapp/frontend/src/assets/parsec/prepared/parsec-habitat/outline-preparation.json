@@ -1,0 +1,231 @@
+{
+  "tool": "generated-strip-v4",
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-approach/habitat-bed-approach__d0__f0.png",
+      "sha256": "7fc18f3c94e7464cad3f852ee9e27266982cc56d0e81b1d9f8ab24df4cf427da",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-approach.png",
+      "sourceSha256": "700272f7e5e25d3da57cafcef990b022f1d2e43cf91d2a8291e3c1daca3da8f1"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-approach/habitat-bed-approach__d0__f1.png",
+      "sha256": "50779a528c71d08fe0da8b7777f5a06a4ca3787bf94ce0120a2c7a512b76faea",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-approach.png",
+      "sourceSha256": "700272f7e5e25d3da57cafcef990b022f1d2e43cf91d2a8291e3c1daca3da8f1"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-approach/habitat-bed-approach__d0__f2.png",
+      "sha256": "2db05236ef32bc663b2c7b7969ab488842076ff8eb904187a8612e2393a422ba",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-approach.png",
+      "sourceSha256": "700272f7e5e25d3da57cafcef990b022f1d2e43cf91d2a8291e3c1daca3da8f1"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-approach/habitat-bed-approach__d0__f3.png",
+      "sha256": "449385ebacbb20fbee415fb00897a402f10fea5ba1a636ce99f1aca9329cf85d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-approach.png",
+      "sourceSha256": "700272f7e5e25d3da57cafcef990b022f1d2e43cf91d2a8291e3c1daca3da8f1"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f0.png",
+      "sha256": "8b5d1c734f90f2e918d8b434f7c6fb0bbf709f1e821cbd976418ce30425de7a5",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-lie-down.png",
+      "sourceSha256": "7fc4ce25f8eaab5653eb9e373abe253b0ccae21d0e9b5b20b7b22aff95ad710d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f1.png",
+      "sha256": "661cbe8d72ac372947e202d2f87e784194dd26ef800740f8c5e4bb1e58e9e3bb",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-lie-down.png",
+      "sourceSha256": "7fc4ce25f8eaab5653eb9e373abe253b0ccae21d0e9b5b20b7b22aff95ad710d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f2.png",
+      "sha256": "54a61e44be27488eb50a0d2516f771eb00b90d8f317ca14b500e95ea0ec7f3a2",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-lie-down.png",
+      "sourceSha256": "7fc4ce25f8eaab5653eb9e373abe253b0ccae21d0e9b5b20b7b22aff95ad710d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f3.png",
+      "sha256": "a265d09da4587afb829adbbeb33f36e3beb9ad1afc019e22ac1a7d4d8a04a709",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-lie-down.png",
+      "sourceSha256": "7fc4ce25f8eaab5653eb9e373abe253b0ccae21d0e9b5b20b7b22aff95ad710d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f4.png",
+      "sha256": "3302036d37d8d66dbda45a6487b193a6731882079f1c274e25600cbac673448e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-lie-down.png",
+      "sourceSha256": "7fc4ce25f8eaab5653eb9e373abe253b0ccae21d0e9b5b20b7b22aff95ad710d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f0.png",
+      "sha256": "f82f2860b12d7b3706c4e34b1aceaa79f1936dec2308533eee298f6771b49010",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-sleep.png",
+      "sourceSha256": "1a11ae0b34b9a115dadbb214d06ff26d943db463f10c4ca48fa55cde22d60fc9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f1.png",
+      "sha256": "0813a8062ee8acf33fd2c6b419afb056c62b2eb5ba378ee050ebbdfd59a7e821",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-sleep.png",
+      "sourceSha256": "1a11ae0b34b9a115dadbb214d06ff26d943db463f10c4ca48fa55cde22d60fc9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f2.png",
+      "sha256": "22635628b7587a29e137ee9a3508e950c4bc3d2fb1cf38f6221ac678373c7615",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-sleep.png",
+      "sourceSha256": "1a11ae0b34b9a115dadbb214d06ff26d943db463f10c4ca48fa55cde22d60fc9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f3.png",
+      "sha256": "41b939b6c3be604f2ca9ad1a9e32528a9b3bfdaaf8cdb4716ad32dcff6d52b4a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-sleep.png",
+      "sourceSha256": "1a11ae0b34b9a115dadbb214d06ff26d943db463f10c4ca48fa55cde22d60fc9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f4.png",
+      "sha256": "896a2e63b694f18e8ceada89f7612b12147abbb1bcf5b9e7b363fbede9cfb698",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-sleep.png",
+      "sourceSha256": "1a11ae0b34b9a115dadbb214d06ff26d943db463f10c4ca48fa55cde22d60fc9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-timeout-pout/habitat-bed-timeout-pout__d0__f0.png",
+      "sha256": "64d2dfa007c7d5339a68b7010a7479785ebe8b47c78212d1a67c351d5b358714",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-timeout-pout.png",
+      "sourceSha256": "8422b65c87b88ac136a2860474000c1701131b6f8eecd967abd70783cca34c3d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-timeout-pout/habitat-bed-timeout-pout__d0__f1.png",
+      "sha256": "a9206ab1819d1b7aedc959a1e39a3152d4b9cf3f075570bf3516679570aa8ee9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-timeout-pout.png",
+      "sourceSha256": "8422b65c87b88ac136a2860474000c1701131b6f8eecd967abd70783cca34c3d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-timeout-pout/habitat-bed-timeout-pout__d0__f2.png",
+      "sha256": "0710265f6fb091fa7982b4330cf38b26bf37c011e178d9adf825d7a0e340bda9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-timeout-pout.png",
+      "sourceSha256": "8422b65c87b88ac136a2860474000c1701131b6f8eecd967abd70783cca34c3d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-timeout-pout/habitat-bed-timeout-pout__d0__f3.png",
+      "sha256": "8c967083dc2fadb11e1acaeb840f3b0411c9a24ebe92fedbdd407fa55aab7b7e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-timeout-pout.png",
+      "sourceSha256": "8422b65c87b88ac136a2860474000c1701131b6f8eecd967abd70783cca34c3d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-enter/habitat-cage-enter__d0__f0.png",
+      "sha256": "7a48eea87def8be3435c2f18d888387e4be9ed3cd3a68ff2a73dfcde7a9507d2",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-enter.png",
+      "sourceSha256": "051fe2349051e4c5fbb268ea3d8da2c6c7c0febedc1e41455ec1a88ff46865d9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-enter/habitat-cage-enter__d0__f1.png",
+      "sha256": "b26ca1a0ad8e392b9f54aed84df40c406b436d32ddad68d8d5b0c2ac885d5a29",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-enter.png",
+      "sourceSha256": "051fe2349051e4c5fbb268ea3d8da2c6c7c0febedc1e41455ec1a88ff46865d9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-enter/habitat-cage-enter__d0__f2.png",
+      "sha256": "b2c8a8ff2e20f749a57bb313d131829b0f19100c0afad408ca6ed86ab51b636b",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-enter.png",
+      "sourceSha256": "051fe2349051e4c5fbb268ea3d8da2c6c7c0febedc1e41455ec1a88ff46865d9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-enter/habitat-cage-enter__d0__f3.png",
+      "sha256": "cca854c4746bf84871b72c96e311d5bdbc68f9bda758841d7f01b93e5125c941",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-enter.png",
+      "sourceSha256": "051fe2349051e4c5fbb268ea3d8da2c6c7c0febedc1e41455ec1a88ff46865d9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-enter/habitat-cage-enter__d0__f4.png",
+      "sha256": "16bf095722229c64b453145f37a7517d6cf0f2ba7c149a6eb9bcc9980942e3da",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-enter.png",
+      "sourceSha256": "051fe2349051e4c5fbb268ea3d8da2c6c7c0febedc1e41455ec1a88ff46865d9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-latched-pout/habitat-cage-latched-pout__d0__f0.png",
+      "sha256": "ac20388d885c4f611fc789d85d989e2ffdcb6353914da407f506f2305754ed1c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-latched-pout.png",
+      "sourceSha256": "2aec51c64462acc4afe22f882f5103840ea365a91e7dcc020e3ec994c83565d2"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-latched-pout/habitat-cage-latched-pout__d0__f1.png",
+      "sha256": "4a2c0e8dd0268d565e5c24d6a5d062280d67dbe1970915402d5784e4ed5ebc64",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-latched-pout.png",
+      "sourceSha256": "2aec51c64462acc4afe22f882f5103840ea365a91e7dcc020e3ec994c83565d2"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-latched-pout/habitat-cage-latched-pout__d0__f2.png",
+      "sha256": "8a1a1c3ffe9d859203ddfbb06550deb6b4b51714c3f5b499118c5b6f51ec7e95",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-latched-pout.png",
+      "sourceSha256": "2aec51c64462acc4afe22f882f5103840ea365a91e7dcc020e3ec994c83565d2"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-latched-pout/habitat-cage-latched-pout__d0__f3.png",
+      "sha256": "1876b392e7ec859454917f3b680dbc28927ff61dabe90effbcf0f820edea4c48",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-latched-pout.png",
+      "sourceSha256": "2aec51c64462acc4afe22f882f5103840ea365a91e7dcc020e3ec994c83565d2"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-latched-pout/habitat-cage-latched-pout__d0__f4.png",
+      "sha256": "4e08cb61f004bb4711ff90c0d57148e7a35dfc94ba382878df2e8d2fe1f04a67",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-latched-pout.png",
+      "sourceSha256": "2aec51c64462acc4afe22f882f5103840ea365a91e7dcc020e3ec994c83565d2"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-open-idle/habitat-cage-open-idle__d0__f0.png",
+      "sha256": "d01e6c514a091a2e48a5fa66da1cd516d8a512da76eec2c23654a4cd9a653cc3",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-open-idle.png",
+      "sourceSha256": "032c1b117803392df7a4e3d7b6fc75a09ff7511238449dec048958f5152eb231"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-open-idle/habitat-cage-open-idle__d0__f1.png",
+      "sha256": "3ad0226478c594889f05cf125c07e95b2eacf04253bf50b28559c8864ce3c714",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-open-idle.png",
+      "sourceSha256": "032c1b117803392df7a4e3d7b6fc75a09ff7511238449dec048958f5152eb231"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-open-idle/habitat-cage-open-idle__d0__f2.png",
+      "sha256": "24ccd9060f2ca49507cdf7fb3dd13673c4fe7f8b122815311ae11adfcfa8c610",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-open-idle.png",
+      "sourceSha256": "032c1b117803392df7a4e3d7b6fc75a09ff7511238449dec048958f5152eb231"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-open-idle/habitat-cage-open-idle__d0__f3.png",
+      "sha256": "bf84bc7968834fc639ef355bb2e47c12b9aa069f8b32673ee80a239e4676250a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-open-idle.png",
+      "sourceSha256": "032c1b117803392df7a4e3d7b6fc75a09ff7511238449dec048958f5152eb231"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-release/habitat-cage-release__d0__f0.png",
+      "sha256": "b60713ff8ca4e3f8029aef304224e23a43de05a16c57773f5dd473b8274e258d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-release.png",
+      "sourceSha256": "5409a5cb250425a6aa4c54a3263069932e1148e3c0b072ef80af0f11ae350c63"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-release/habitat-cage-release__d0__f1.png",
+      "sha256": "0532bdae60bf0d92e0d489376b96da050b276499f11b3d340d93c0e5d6faa91e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-release.png",
+      "sourceSha256": "5409a5cb250425a6aa4c54a3263069932e1148e3c0b072ef80af0f11ae350c63"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-release/habitat-cage-release__d0__f2.png",
+      "sha256": "8cbdc8b4c75f428172f73199be80834bbccf9ea986125ceebd21118f4721c705",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-release.png",
+      "sourceSha256": "5409a5cb250425a6aa4c54a3263069932e1148e3c0b072ef80af0f11ae350c63"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-release/habitat-cage-release__d0__f3.png",
+      "sha256": "62c0aa00724c67b1cf23cfe380935f7a7344743bcad02535876717aaae00e648",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-release.png",
+      "sourceSha256": "5409a5cb250425a6aa4c54a3263069932e1148e3c0b072ef80af0f11ae350c63"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-cage-release/habitat-cage-release__d0__f4.png",
+      "sha256": "6468505453e36da01e06a6d7502cf712b6ff954db580d718524268a32c8d32d1",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-cage-release.png",
+      "sourceSha256": "5409a5cb250425a6aa4c54a3263069932e1148e3c0b072ef80af0f11ae350c63"
+    }
+  ]
+}

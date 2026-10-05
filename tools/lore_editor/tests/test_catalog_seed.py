@@ -9,10 +9,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from fastapi.testclient import TestClient
-
 from tools.lore_editor import catalog_seed
-from tools.lore_editor.catalog import read_current_targets
+from tools.lore_editor.catalog import activate_catalog_targets, read_catalog_manifest, read_current_targets
 from tools.lore_editor.catalog_seed import (
 	CATALOG_SEED_SCHEMA_VERSION,
 	CatalogBootstrapResult,
@@ -26,8 +24,11 @@ from tools.lore_editor.generate import generate_dm
 from tools.lore_editor.records import CONTENT_ROOT, atomic_write_record, record_path
 from tools.lore_editor.source import load_corpus
 from webapp.api import create_app
+from webapp.git_adapter import GameSourceRevision, repository_revision
 from webapp.json_storage import canonical_json_bytes
 from webapp.manifest_base import sha256_bytes
+from webapp.store.metadata import active_projection
+from webapp.tests.http_client import TestClient
 
 RADIO_TARGET = {
 	"type_path": "/obj/item/radio",
@@ -53,6 +54,9 @@ class _InterruptedResponse:
 
 class CatalogSeedTests(unittest.TestCase):
 	def setUp(self) -> None:
+		model = patch("webapp.store.embeddings._load_model", return_value=None)
+		model.start()
+		self.addCleanup(model.stop)
 		self.temporary_directory = tempfile.TemporaryDirectory()
 		self.addCleanup(self.temporary_directory.cleanup)
 		self.root = Path(self.temporary_directory.name)
@@ -86,6 +90,75 @@ class CatalogSeedTests(unittest.TestCase):
 		opener.assert_not_called()
 		self.assertEqual(result.source, "cached-seed")
 		self.assertEqual(read_current_targets(self.repo_root), [RADIO_TARGET])
+		catalog = read_catalog_manifest(self.repo_root)
+		self.assertEqual(catalog.game_repo_revision, self.manifest.source_game_commit)
+		self.assertEqual(catalog.source_provenance, "release-seed")
+
+	def cache_release(self) -> None:
+		self.cache_root.mkdir(exist_ok=True)
+		(self.cache_root / f"{self.manifest.sha256}.json").write_bytes(self.seed_bytes)
+
+	def test_reload_replaces_an_unverified_catalog_and_preserves_authored_records(self) -> None:
+		group_path = record_path(self.repo_root, "group", "items")
+		atomic_write_record(group_path, {"id": "items", "label": "Items", "color": "#fff", "keywords": [], "type_path_prefixes": []})
+		original_record = group_path.read_bytes()
+		activate_catalog_targets(self.repo_root, [{**RADIO_TARGET, "label": "Local authoring copy"}], source_game_revision="old-game")
+		self.cache_release()
+		with patch.object(catalog_seed, "download_seed") as download, patch.object(catalog_seed, "refresh_catalog") as refresh:
+			result = catalog_seed.reload_catalog_seed(self.repo_root, manifest_path=self.manifest_path, cache_root=self.cache_root)
+		download.assert_not_called()
+		refresh.assert_not_called()
+		self.assertEqual(result.source, "cached-seed")
+		self.assertEqual(read_current_targets(self.repo_root), [RADIO_TARGET])
+		self.assertEqual(read_catalog_manifest(self.repo_root).source_provenance, "release-seed")
+		self.assertEqual(group_path.read_bytes(), original_record)
+
+	def test_failed_reload_preserves_the_catalog_and_never_falls_back_to_a_probe(self) -> None:
+		activate_catalog_targets(self.repo_root, [RADIO_TARGET], source_game_revision="old-game")
+		previous = active_projection(self.repo_root)
+		with (
+			patch.object(catalog_seed, "download_seed", side_effect=OSError("offline")),
+			patch.object(catalog_seed, "refresh_catalog") as refresh,
+			self.assertRaisesRegex(OSError, "offline"),
+		):
+			catalog_seed.reload_catalog_seed(self.repo_root, manifest_path=self.manifest_path, cache_root=self.cache_root)
+		refresh.assert_not_called()
+		self.assertEqual(active_projection(self.repo_root), previous)
+		self.assertEqual(read_current_targets(self.repo_root), [RADIO_TARGET])
+
+	def test_reload_rejects_a_different_selected_game_revision_before_download(self) -> None:
+		game_root = self.root / "game"
+		with (
+			patch.object(catalog_seed, "validate_game_repository", create=True),
+			patch.object(catalog_seed, "observe_game_source", return_value=GameSourceRevision("game", "different-head", False, "same"), create=True),
+			patch.object(catalog_seed, "download_seed") as download,
+			self.assertRaisesRegex(ValueError, "selected game revision"),
+		):
+			catalog_seed.reload_catalog_seed(self.repo_root, manifest_path=self.manifest_path, cache_root=self.cache_root, game_repo_root=game_root)
+		download.assert_not_called()
+		self.assertEqual(read_current_targets(self.repo_root), [])
+
+	def test_game_checkout_drift_during_reload_does_not_publish_the_seed(self) -> None:
+		activate_catalog_targets(self.repo_root, [{**RADIO_TARGET, "label": "Existing"}], source_game_revision="old-game")
+		previous = active_projection(self.repo_root)
+		self.cache_release()
+		selected = GameSourceRevision("game", self.manifest.source_game_commit, False, "same")
+		changed = GameSourceRevision("game", "changed-head", False, "changed")
+		with (
+			patch.object(catalog_seed, "validate_game_repository", create=True),
+			patch.object(catalog_seed, "observe_game_source", side_effect=[selected, selected, changed], create=True),
+			self.assertRaisesRegex(ValueError, "changed during"),
+		):
+			catalog_seed.reload_catalog_seed(self.repo_root, manifest_path=self.manifest_path, cache_root=self.cache_root, game_repo_root=self.root / "game")
+		self.assertEqual(active_projection(self.repo_root), previous)
+		self.assertEqual(read_current_targets(self.repo_root)[0]["label"], "Existing")
+
+	def test_bootstrap_keeps_an_existing_catalog_without_attempting_reload(self) -> None:
+		activate_catalog_targets(self.repo_root, [RADIO_TARGET], source_game_revision="local")
+		with patch.object(catalog_seed, "download_seed") as download:
+			result = bootstrap_catalog(self.repo_root, manifest_path=self.root / "missing.json")
+		download.assert_not_called()
+		self.assertEqual(result.source, "existing")
 
 	def test_release_packaging_writes_canonical_seed_and_versioned_manifest(self) -> None:
 		cached_seed = self.cache_root / f"{self.manifest.sha256}.json"
@@ -99,12 +172,64 @@ class CatalogSeedTests(unittest.TestCase):
 			self.repo_root,
 			seed_path=seed_output,
 			manifest_path=manifest_output,
-			source_game_commit="release-game-sha",
+			source_game_commit=self.manifest.source_game_commit,
 			download_url="https://example.invalid/releases/catalog-targets.json",
 		)
 
 		self.assertEqual(seed_output.read_bytes(), self.seed_bytes)
 		self.assertEqual(CatalogSeedManifest.from_dict(json.loads(manifest_output.read_text(encoding="utf-8"))), manifest)
+
+	def test_release_packaging_rejects_relabelled_or_unverified_source(self) -> None:
+		seed_output = self.root / "release/catalog-targets.json"
+		manifest_output = self.root / "release/catalog-seed.json"
+		for provenance, revision in (("release-seed", "different-game-sha"), ("unverified", "game-sha")):
+			with self.subTest(provenance=provenance, revision=revision):
+				activate_catalog_targets(self.repo_root, [RADIO_TARGET], source_game_revision="game-sha", source_provenance=provenance)
+				with self.assertRaisesRegex(ValueError, "catalog.*source|source.*catalog"):
+					package_catalog_seed(self.repo_root, seed_path=seed_output, manifest_path=manifest_output, source_game_commit=revision, download_url="https://example.invalid/seed.json")
+				self.assertFalse(seed_output.exists())
+				self.assertFalse(manifest_output.exists())
+
+	def test_release_packaging_rejects_catalog_bytes_that_do_not_match_the_manifest(self) -> None:
+		from tools.lore_editor.tests.store_helpers import seed_targets
+
+		activate_catalog_targets(self.repo_root, [RADIO_TARGET], source_game_revision="game-sha", source_provenance="release-seed")
+		seed_targets(self.repo_root, [{**RADIO_TARGET, "label": "Changed after publication"}])
+		with self.assertRaisesRegex(ValueError, "hash"):
+			package_catalog_seed(self.repo_root, seed_path=self.root / "seed.json", manifest_path=self.root / "manifest.json", source_game_commit="game-sha", download_url="https://example.invalid/seed.json")
+		self.assertFalse((self.root / "seed.json").exists())
+
+	def test_release_packaging_does_not_leave_a_new_seed_without_its_manifest(self) -> None:
+		cached_seed = self.cache_root / f"{self.manifest.sha256}.json"
+		cached_seed.parent.mkdir(parents=True)
+		cached_seed.write_bytes(self.seed_bytes)
+		bootstrap_catalog(self.repo_root, manifest_path=self.manifest_path, cache_root=self.cache_root)
+		seed_output = self.root / "release/catalog-targets.json"
+		manifest_output = self.root / "release/catalog-seed.json"
+		seed_output.parent.mkdir(parents=True)
+		seed_output.write_bytes(b"old seed")
+		manifest_output.write_bytes(b"old manifest")
+
+		import tools.lore_editor.catalog_seed as catalog_seed_module
+
+		real_atomic_write = catalog_seed_module.atomic_write
+
+		def fail_manifest(path: Path, content: bytes) -> None:
+			if path.resolve() == manifest_output.resolve():
+				raise OSError("manifest write interrupted")
+			real_atomic_write(path, content)
+
+		with patch.object(catalog_seed_module, "atomic_write", side_effect=fail_manifest), self.assertRaisesRegex(OSError, "manifest write interrupted"):
+			package_catalog_seed(
+				self.repo_root,
+				seed_path=seed_output,
+				manifest_path=manifest_output,
+				source_game_commit=self.manifest.source_game_commit,
+				download_url="https://example.invalid/releases/catalog-targets.json",
+			)
+
+		self.assertEqual(seed_output.read_bytes(), b"old seed")
+		self.assertEqual(manifest_output.read_bytes(), b"old manifest")
 
 	def test_download_hash_mismatch_leaves_no_cached_seed(self) -> None:
 		corrupt = self.root / "corrupt.json"
@@ -228,7 +353,6 @@ class CatalogSeedTests(unittest.TestCase):
 		cached_seed = self.cache_root / f"{self.manifest.sha256}.json"
 		cached_seed.parent.mkdir(parents=True)
 		cached_seed.write_bytes(self.seed_bytes)
-		bootstrap_catalog(author_root, manifest_path=self.manifest_path, cache_root=self.cache_root)
 		subprocess.run(["git", "-C", str(author_root), "add", override_path.relative_to(author_root).as_posix()], check=True)
 		subprocess.run(["git", "-C", str(author_root), "commit", "-m", "Author radio"], check=True, capture_output=True)
 
@@ -238,6 +362,10 @@ class CatalogSeedTests(unittest.TestCase):
 		artifact.write_text("old\n", encoding="utf-8")
 		subprocess.run(["git", "-C", str(game_root), "add", "--all"], check=True)
 		subprocess.run(["git", "-C", str(game_root), "commit", "-m", "Game source"], check=True, capture_output=True)
+		manifest_payload = self.manifest.to_dict()
+		manifest_payload["source_game_commit"] = repository_revision(game_root)
+		self.manifest_path.write_text(json.dumps(manifest_payload), encoding="utf-8")
+		bootstrap_catalog(author_root, manifest_path=self.manifest_path, cache_root=self.cache_root)
 
 		prepared = prepare_export(author_root, game_root, self.root / "stages")
 		fresh_root = self.root / "fresh"

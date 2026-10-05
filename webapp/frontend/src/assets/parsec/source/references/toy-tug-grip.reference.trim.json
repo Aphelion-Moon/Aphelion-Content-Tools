@@ -1,0 +1,34 @@
+{
+  "crop": [
+    22,
+    240,
+    2026,
+    530
+  ],
+  "destination": "webapp/frontend/src/assets/parsec/source/references/toy-tug-grip.reference.png",
+  "minimumMargin": 16,
+  "occupiedBounds": [
+    38,
+    256,
+    2010,
+    514
+  ],
+  "outputSha256": "d5aea794cfdd576b9793371628c3fb42e1f460fc1048ad24cc1338afa7d11508",
+  "outputSize": [
+    2004,
+    290
+  ],
+  "retainedMargin": [
+    16,
+    16,
+    16,
+    16
+  ],
+  "source": "webapp/frontend/src/assets/parsec/source/generated/toy-tug-grip.imagegen.png",
+  "sourceSha256": "277690161562c498e37ad88e79ded0d6b6083b4fb145ec992bd1742505957b3e",
+  "sourceSize": [
+    2048,
+    768
+  ],
+  "tool": "manual-reference-trim-v1"
+}

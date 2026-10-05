@@ -1,9 +1,80 @@
-.filters {
+.workspaceHeader {
 	display: flex;
-	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 0.75rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--bg-1);
+}
+
+.workspaceHeader h2,
+.workspaceHeader p {
+	margin: 0;
+}
+
+.reviewerField {
+	display: flex;
+	flex: 0 1 16rem;
+	flex-direction: column;
+	gap: 0.2rem;
+	font-size: 0.78rem;
+	color: var(--muted);
+}
+
+.workspace {
+	display: grid;
+	grid-template-columns: minmax(18rem, 0.34fr) minmax(0, 1fr);
+	gap: 0.75rem;
+	align-items: start;
+}
+
+.workspaceCard,
+.queuePane,
+.authoringPane,
+.authoringScroll {
+	min-width: 0;
+	min-height: 0;
+}
+
+.queuePane,
+.authoringPane {
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+	height: calc(100vh - 16rem);
+	min-height: 32rem;
+}
+
+.authoringScroll {
+	max-height: calc(100vh - 14rem);
+	overflow-y: auto;
+	padding-right: 0.25rem;
+}
+
+.filters {
+	display: grid;
 	gap: 0.5rem;
-	align-items: flex-end;
-	margin-bottom: 0.7rem;
+	margin-bottom: 0.2rem;
+}
+
+.filterDisclosure {
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--bg-0);
+}
+
+.filterDisclosure summary {
+	cursor: pointer;
+	padding: 0.4rem 0.55rem;
+	font-size: 0.78rem;
+	color: var(--muted);
+}
+
+.filterDisclosure[open] summary {
+	border-bottom: 1px solid var(--border);
 }
 
 .field {
@@ -12,13 +83,13 @@
 	gap: 0.2rem;
 	font-size: 0.78rem;
 	color: var(--muted);
-	min-width: 9rem;
-	flex: 1 1 9rem;
+	min-width: 0;
 }
 
 .filterChecks {
-	min-width: 10rem;
-	max-width: 16rem;
+	border: 0;
+	min-width: 0;
+	max-width: none;
 	padding: 0.4rem 0.55rem;
 	font-size: 0.75rem;
 }
@@ -60,6 +131,7 @@
 .clearFilters {
 	width: auto;
 	flex: none;
+	justify-self: start;
 }
 
 .toggles {
@@ -90,12 +162,13 @@
 /* The virtualiser positions rows absolutely inside this fixed-height scroll container. Both the height
    and `overflow-y` are required for it to measure a viewport at all. */
 .scroller {
-	height: 60vh;
-	min-height: 20rem;
+	flex: 1 1 16rem;
+	height: auto;
+	min-height: 12rem;
 	overflow-y: auto;
 	border: 1px solid var(--border);
-	border-radius: 0.5rem;
-	background: rgba(13, 3, 27, 0.5);
+	border-radius: var(--radius);
+	background: var(--bg-0);
 }
 
 .rows {
@@ -114,7 +187,7 @@
 	gap: 0.1rem;
 	padding: 0.35rem 0.6rem;
 	border: none;
-	border-bottom: 1px solid rgba(108, 39, 141, 0.35);
+	border-bottom: 1px solid var(--line);
 	cursor: pointer;
 	overflow: hidden;
 	background: transparent;
@@ -124,7 +197,7 @@
 }
 
 .row:hover {
-	background: rgba(102, 0, 148, 0.35);
+	background: var(--bg-2);
 }
 
 .row:focus-visible {
@@ -133,7 +206,7 @@
 }
 
 .rowSelected {
-	background: rgba(150, 20, 208, 0.4);
+	background: var(--bg-2);
 }
 
 .rowTitle {
@@ -155,7 +228,7 @@
 	display: inline-block;
 	padding: 0 0.35rem;
 	margin-right: 0.35rem;
-	border-radius: 0.25rem;
+	border-radius: var(--radius);
 	font-size: 0.65rem;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
@@ -214,6 +287,13 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
+}
+
+.tabs button,
+.actions button,
+.editorHeading button,
+.groupCard button {
+	width: auto;
 }
 
 .tabs button[aria-selected='true'] {
@@ -301,7 +381,7 @@
 .operationStatus {
 	padding: 0.5rem 0.65rem;
 	border-left: 3px solid var(--plasma);
-	background: rgba(102, 0, 148, 0.18);
+	background: var(--bg-2);
 }
 
 .previewGrid,
@@ -319,8 +399,8 @@
 	min-width: 0;
 	padding: 0.75rem;
 	border: 1px solid var(--border);
-	border-radius: 0.5rem;
-	background: rgba(13, 3, 27, 0.38);
+	border-radius: var(--radius);
+	background: var(--bg-0);
 }
 
 .iconPreview {
@@ -330,7 +410,7 @@
 	margin-top: 0.5rem;
 	object-fit: contain;
 	image-rendering: pixelated;
-	background: repeating-conic-gradient(#2b1c38 0 25%, #160d22 0 50%) 50% / 16px 16px;
+	background: repeating-conic-gradient(var(--bg-3) 0 25%, var(--bg-void) 0 50%) 50% / 16px 16px;
 }
 
 .checkbox,
@@ -339,6 +419,12 @@
 	align-items: center;
 	gap: 0.45rem;
 	margin: 0.3rem 0;
+}
+
+.compactCheckbox,
+.checkbox input {
+	flex: none;
+	width: auto;
 }
 
 .assignmentList {
@@ -367,7 +453,7 @@
 	margin-top: 1rem;
 	padding: 1rem;
 	border: 1px solid var(--border);
-	border-radius: 0.6rem;
+	border-radius: var(--radius);
 }
 
 .secondary {
@@ -383,7 +469,7 @@
 .conflictPanel {
 	padding: 0.75rem;
 	border: 1px solid var(--danger);
-	border-radius: 0.55rem;
+	border-radius: var(--radius);
 	background: rgba(125, 20, 54, 0.2);
 }
 
@@ -392,7 +478,7 @@
 	inset: clamp(1rem, 5vw, 4rem);
 	z-index: 1100;
 	overflow: auto;
-	background: #160d22;
+	background: var(--bg-void);
 	box-shadow: 0 1rem 4rem rgba(0, 0, 0, 0.65);
 }
 
@@ -409,6 +495,22 @@
 }
 
 @media (max-width: 900px) {
+	.workspace {
+		grid-template-columns: 1fr;
+	}
+
+	.queuePane,
+	.authoringPane {
+		height: auto;
+		min-height: 0;
+	}
+
+	.scroller,
+	.authoringScroll {
+		height: auto;
+		max-height: 65vh;
+	}
+
 	.previewGrid,
 	.iconGrid,
 	.conflictGrid {

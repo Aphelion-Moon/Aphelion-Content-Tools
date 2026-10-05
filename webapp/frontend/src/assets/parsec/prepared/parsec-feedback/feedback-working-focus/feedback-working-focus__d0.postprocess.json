@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "feedback-working-focus",
+  "clipScale": 0.7226890756302521,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-working-focus/feedback-working-focus__d0__f0.png",
+      "sha256": "79cd473e966abb3194f008dde6fb4609a1e30f0e4e5f1431a7245b5b3cbb43ba"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-working-focus/feedback-working-focus__d0__f1.png",
+      "sha256": "c0b0cba7b9faf176a980cebe1cf2a2c6b4eabbf23324ced782507a7a18f32294"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-working-focus/feedback-working-focus__d0__f2.png",
+      "sha256": "11f8553b9709ad008202392f2fbcce73c77501ffc9cfe6a374aebd2ce08f0177"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-working-focus/feedback-working-focus__d0__f3.png",
+      "sha256": "d6e4b3c60b6c1bc5f88c461e70272d793301668468f8680e821a8956bd0590b1"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    86,
+    86
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-working-focus.png",
+  "sourceSha256": "1a23fd6424337805a4ac7f0147130dfdd51dda659c6bcea553967d2281d73dfa",
+  "tool": "generated-strip-v4"
+}

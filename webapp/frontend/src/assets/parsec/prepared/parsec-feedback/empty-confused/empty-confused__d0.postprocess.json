@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "empty-confused",
+  "clipScale": 0.7058823529411765,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/empty-confused/empty-confused__d0__f0.png",
+      "sha256": "ac57fec34bd935222649b40678513be283fb5b5ee10f864e1ea3f87598b1fe1f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/empty-confused/empty-confused__d0__f1.png",
+      "sha256": "7a443e9028e30582f64e7d17f58442ac990f10017931939638df5683b8bf9625"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/empty-confused/empty-confused__d0__f2.png",
+      "sha256": "cabec3e1879bc9bdea6046758aa8eb64c3bc263c4e6b64fdc2bf4de237eaba8c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/empty-confused/empty-confused__d0__f3.png",
+      "sha256": "784982cd046d51db786efaeb65fcfb5d63132319bc3a9a44faf340634f0327ae"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/empty-confused.png",
+  "sourceSha256": "a739ddcd748feeb9691d8a2d08030185e27fcffec6653359172c5594c15e657a",
+  "tool": "generated-strip-v4"
+}

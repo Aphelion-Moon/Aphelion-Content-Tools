@@ -1,0 +1,61 @@
+.layer {
+	position: fixed;
+	inset: 0;
+	z-index: 40;
+	overflow: hidden;
+}
+
+.habitatLayer {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+}
+
+.furniture {
+	position: absolute;
+	transform: translate(-50%, -50%);
+	width: 96px;
+	height: 96px;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: var(--radius);
+	background: transparent;
+	color: inherit;
+	cursor: grab;
+	touch-action: none;
+}
+
+.furniture:active {
+	cursor: grabbing;
+}
+
+.furniture:focus-visible {
+	outline: 2px solid var(--ok);
+	outline-offset: 2px;
+}
+
+.artViewport {
+	display: grid;
+	width: 96px;
+	height: 96px;
+	overflow: hidden;
+	place-items: center;
+	pointer-events: none;
+}
+
+.fallbackArt {
+	min-width: 3.6rem;
+	padding: 0.5rem 0.35rem;
+	border: 2px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--bg-0);
+	color: var(--muted);
+	font: 700 0.65rem/1 monospace;
+	text-align: center;
+}
+
+.objectArt {
+	display: block;
+	background-repeat: no-repeat;
+	image-rendering: pixelated;
+}

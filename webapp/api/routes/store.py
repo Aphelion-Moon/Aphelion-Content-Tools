@@ -6,11 +6,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from tools.lore_editor.reconcile import reconcile_projection
+from webapp.application_search import search_application
+from webapp.git_adapter import workspace_revision
 from webapp.store.health import store_health
-from webapp.store.search import SearchContext, SearchReport, search
+from webapp.store.search import SearchContext, SearchReport
 
 from ..deps import AppContext, context
-from ..models import SearchRequest, SearchResponse, SelectedSearchContext, StoreHealth
+from ..models import SearchRequest, SearchResponse, SelectedSearchContext, StoreHealth, WorkspaceRevisionResponse
+from .definitions import Service
 
 router = APIRouter(prefix="/api", tags=["store"])
 
@@ -19,7 +22,15 @@ Ctx = Annotated[AppContext, Depends(context)]
 
 @router.get("/store/health", response_model=StoreHealth)
 def read_store_health(ctx: Ctx) -> object:
-	return store_health(ctx.repo_root)
+	return store_health(ctx.repo_root, ctx.game_repo_root)
+
+
+@router.get("/workspace/revision", response_model=WorkspaceRevisionResponse | None)
+def read_workspace_revision(ctx: Ctx) -> object:
+	try:
+		return asdict(workspace_revision(ctx.repo_root, ctx.game_repo_root))
+	except (OSError, ValueError):
+		return None
 
 
 @router.post("/store/reconcile")
@@ -35,6 +46,7 @@ def reconcile_store(ctx: Ctx) -> object:
 @router.get("/search", response_model=SearchResponse)
 def hybrid_search(
 	ctx: Ctx,
+	editor: Service,
 	q: Annotated[str, Query(description="Query text.")] = "",
 	tables: Annotated[str, Query(description="Comma-separated table names. Empty searches every table.")] = "",
 	limit: Annotated[int, Query(ge=1, le=100)] = 20,
@@ -69,16 +81,17 @@ def hybrid_search(
 		context_group,
 		context_module,
 	)) else None
-	return _search_response(search(ctx.repo_root, q, tables=requested, limit=limit, context=_context(context_value)))
+	return _search_response(search_application(ctx.repo_root, editor.catalogs, q, tables=requested, limit=limit, context=_context(context_value)))
 
 
 @router.post("/search", response_model=SearchResponse)
-def contextual_search(payload: SearchRequest, ctx: Ctx) -> object:
+def contextual_search(payload: SearchRequest, ctx: Ctx, editor: Service) -> object:
 	"""Typed contextual search used by the SPA; scope filters are always explicit."""
 	tables = payload.scope.tables or None if payload.scope is not None else None
 	return _search_response(
-		search(
+		search_application(
 			ctx.repo_root,
+			editor.catalogs,
 			payload.query,
 			tables=tables,
 			limit=payload.limit,

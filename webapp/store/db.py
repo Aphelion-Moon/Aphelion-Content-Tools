@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections.abc import Mapping
+import weakref
+from collections import OrderedDict
+from collections.abc import Callable, Mapping
 from datetime import timedelta
 from pathlib import Path
 from threading import Lock
@@ -13,7 +15,8 @@ import pyarrow as pa
 from lancedb.index import FTS
 
 from .embeddings import EMBEDDING_DIM, EMBEDDING_MODEL_NAME, embed_texts
-from .metadata import active_projection_path
+from .lifecycle import acquire_projection, read_projection, selected_projection
+from .metadata import PROJECTION_MARKER_FILE, table_directory
 
 STORE_RELATIVE_PATH = Path("webapp/store/data")
 
@@ -24,7 +27,8 @@ STORE_RELATIVE_PATH = Path("webapp/store/data")
 SYNC_CHUNK_SIZE = 500
 KEYWORD_ONLY_EMBEDDING_MODEL_ID = "keyword-only-v1"
 
-_connections: dict[str, object] = {}
+MAX_CACHED_CONNECTIONS = 8
+_connections: OrderedDict[str, object] = OrderedDict()
 _connections_lock = Lock()
 
 _generation = 0
@@ -35,8 +39,8 @@ def current_generation() -> int:
 	"""A process-wide counter bumped by every store write.
 
 	Callers combine this cheap same-process signal with the active projection generation stored on disk.
-	The durable generation catches atomic projection activation by the separate job worker; this counter
-	catches in-place writes performed by the API process itself."""
+	The durable generation catches atomic projection activation, including the separate job worker's
+	writes. This counter also invalidates legacy fixture caches during direct table setup."""
 	with _generation_lock:
 		return _generation
 
@@ -54,20 +58,95 @@ EMBEDDING_HASH_FIELD = pa.field("embedding_hash", pa.string())
 KEY_FIELD_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
+class ReadTable:
+	"""Expose only reads; native version checkout alone still allows merge writes."""
+
+	def __init__(self, table):
+		self._table = table
+
+	@property
+	def schema(self):
+		return self._table.schema
+
+	def search(self, *args, **kwargs):
+		return self._table.search(*args, **kwargs)
+
+	def count_rows(self, *args, **kwargs):
+		return self._table.count_rows(*args, **kwargs)
+
+	def __getattr__(self, name: str):
+		raise AttributeError(f"Read-only projection table does not expose '{name}'.")
+
+
+class _StagedMerge:
+	def __init__(self, builder, require_active: Callable[[], None]):
+		self._builder = builder
+		self._require_active = require_active
+
+	def when_matched_update_all(self, *args, **kwargs):
+		self._require_active()
+		self._builder.when_matched_update_all(*args, **kwargs)
+		return self
+
+	def when_not_matched_insert_all(self, *args, **kwargs):
+		self._require_active()
+		self._builder.when_not_matched_insert_all(*args, **kwargs)
+		return self
+
+	def execute(self, *args, **kwargs):
+		self._require_active()
+		return self._builder.execute(*args, **kwargs)
+
+
+class WritableTable(ReadTable):
+	def __init__(self, table, require_active: Callable[[], None]):
+		super().__init__(table)
+		self._require_active = require_active
+
+	def merge_insert(self, *args, **kwargs):
+		self._require_active()
+		return _StagedMerge(self._table.merge_insert(*args, **kwargs), self._require_active)
+
+	def add(self, *args, **kwargs):
+		self._require_active()
+		return self._table.add(*args, **kwargs)
+
+	def delete(self, *args, **kwargs):
+		self._require_active()
+		return self._table.delete(*args, **kwargs)
+
+	def optimize(self, *args, **kwargs):
+		self._require_active()
+		return self._table.optimize(*args, **kwargs)
+
+
 def store_path(repo_root: Path) -> Path:
-	return active_projection_path(repo_root)
+	return selected_projection(repo_root).path
 
 
 def connect(repo_root: Path, *, store_dir: Path | None = None):
-	path = store_dir.resolve() if store_dir is not None else store_path(repo_root)
+	lease = acquire_projection(repo_root, store_dir=store_dir, include_owners=False)
+	path = lease.projection.path.resolve()
 	key = str(path)
-	with _connections_lock:
-		connection = _connections.get(key)
-		if connection is None:
-			path.mkdir(parents=True, exist_ok=True)
-			connection = lancedb.connect(str(path), read_consistency_interval=timedelta(0))
-			_connections[key] = connection
-		return connection
+	try:
+		with _connections_lock:
+			connection = _connections.get(key)
+			if connection is None:
+				path.mkdir(parents=True, exist_ok=True)
+				connection = lancedb.connect(str(path), read_consistency_interval=timedelta(0))
+				if lease.handle is not None:
+					# LanceTable retains its connection and queries retain their table.
+					# Evict cache ownership only: a live query must keep its lease.
+					weakref.finalize(connection, lease.close)
+					lease = None
+				_connections[key] = connection
+			_connections.move_to_end(key)
+			while len(_connections) > MAX_CACHED_CONNECTIONS:
+				_connections.popitem(last=False)
+			return connection
+	finally:
+		if lease is not None:
+			lease.close()
 
 
 def discard_connection(store_dir: Path) -> None:
@@ -77,6 +156,9 @@ def discard_connection(store_dir: Path) -> None:
 
 def get_or_create_table(repo_root: Path, name: str, schema: pa.Schema, *, store_dir: Path | None = None):
 	"""Open a table, creating it (with an FTS index on its `text` column) if it doesn't exist yet."""
+	path = store_dir if store_dir is not None else store_path(repo_root)
+	if (path / PROJECTION_MARKER_FILE).exists():
+		raise ValueError("Published projection tables require a new write stage.")
 	connection = connect(repo_root, store_dir=store_dir)
 	if name in connection.list_tables().tables:
 		table = connection.open_table(name)
@@ -87,6 +169,16 @@ def get_or_create_table(repo_root: Path, name: str, schema: pa.Schema, *, store_
 	table = connection.create_table(name, schema=schema)
 	table.create_index("text", config=FTS())
 	return table
+
+
+def read_table(repo_root: Path, name: str, *, store_dir: Path | None = None):
+	with read_projection(repo_root, store_dir=store_dir) as projection:
+		path = table_directory(repo_root, name, projection)
+		if path is None:
+			return None
+		opened = connect(repo_root, store_dir=path.parent).open_table(name)
+		opened.checkout(opened.version)
+		return ReadTable(opened)
 
 
 def with_embedding(row: dict[str, object]) -> dict[str, object]:
@@ -258,14 +350,21 @@ def optimize_all_tables(repo_root: Path, *, on_progress=None) -> list[str]:
 	concurrently in flight, which isn't worth the marginal extra disk space for a local desktop store.
 
 	Returns the list of table names optimized, in order, for the caller to report."""
-	from .schema import TABLE_SCHEMAS
-	from .schema import table as open_table
+	from tools.lore_editor.reconcile import reconcile_projection, scan_canonical_records
+	from tools.lore_editor.write_coordinator import repository_write_lock
+
+	from .generations import staged_projection
+	from .schema import TABLE_SCHEMAS, writable_table
 
 	names = list(TABLE_SCHEMAS)
-	for index, name in enumerate(names):
-		open_table(repo_root, name).optimize()
-		if on_progress is not None:
-			on_progress(name, index + 1, len(names))
+	with repository_write_lock(repo_root):
+		reconcile_projection(repo_root)
+		content_revision = scan_canonical_records(repo_root).content_revision
+		with staged_projection(repo_root, content_revision=content_revision, changed_tables=names) as staged:
+			for index, name in enumerate(names):
+				writable_table(repo_root, name, store_dir=staged.path).optimize()
+				if on_progress is not None:
+					on_progress(name, index + 1, len(names))
 	return names
 
 
@@ -291,6 +390,8 @@ def get_row_by_key(table, key_field: str, key: str) -> dict[str, object] | None:
 
 
 def all_rows(table, *, where: str | None = None) -> list[dict[str, object]]:
+	if table is None:
+		return []
 	query = table.search()
 	if where is not None:
 		query = query.where(where)
@@ -298,5 +399,7 @@ def all_rows(table, *, where: str | None = None) -> list[dict[str, object]]:
 
 
 def get_row(table, where: str) -> dict[str, object] | None:
+	if table is None:
+		return None
 	rows = table.search().where(where).limit(1).to_list()
 	return rows[0] if rows else None

@@ -2,20 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
 from webapp.store import db
-from webapp.store.metadata import (
-	ProjectionRevision,
-	activate_projection,
-	new_projection_metadata,
-	projection_path,
-	projection_status,
-	write_projection_marker,
-)
-from webapp.store.schema import decode, encode, table
+from webapp.store.generations import staged_projection
+from webapp.store.metadata import ProjectionRevision, projection_status
+from webapp.store.schema import decode, encode, table, writable_table
 
 from .records import CONTENT_ROOT, RECORD_DIRECTORIES, RecordKind, atomic_write_record, record_path
 from .source import make_lore_entry
@@ -224,26 +217,13 @@ def reconcile_projection(repo_root: Path, *, rebuild: bool = False, on_progress=
 				projection_revision=status.active.revision,
 			)
 
-		metadata = new_projection_metadata(snapshot.content_revision)
-		destination = projection_path(resolved_root, metadata.generation_id)
-		source = db.store_path(resolved_root)
-		if source.is_dir():
-			shutil.copytree(source, destination)
-		else:
-			destination.mkdir(parents=True, exist_ok=False)
-		try:
+		with staged_projection(resolved_root, content_revision=snapshot.content_revision, changed_tables=active_rows) as staged:
 			for index, (name, rows) in enumerate(active_rows.items(), start=1):
-				db.sync_snapshot(table(resolved_root, name, store_dir=destination), "id", rows)
+				db.sync_snapshot(writable_table(resolved_root, name, store_dir=staged.path), "id", rows)
 				if on_progress is not None:
 					on_progress(name, index, len(active_rows))
-			write_projection_marker(resolved_root, metadata)
-			activate_projection(resolved_root, metadata)
-		except Exception:
-			db.discard_connection(destination)
-			shutil.rmtree(destination, ignore_errors=True)
-			raise
 		return ReconcileResult(
 			counts={name: len(rows) for name, rows in active_rows.items()},
 			content_revision=snapshot.content_revision,
-			projection_revision=metadata.revision,
+			projection_revision=staged.metadata.revision,
 		)

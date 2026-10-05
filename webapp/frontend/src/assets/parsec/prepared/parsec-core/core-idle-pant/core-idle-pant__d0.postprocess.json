@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "core-idle-pant",
+  "clipScale": 0.711864406779661,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-pant/core-idle-pant__d0__f0.png",
+      "sha256": "c012b80ee953eead86d5cd35752616e9290ca724d8f37e837acb277231b2f91a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-pant/core-idle-pant__d0__f1.png",
+      "sha256": "7f5df088807a9306d4539126a668fc6bec941d0cdc70e31de7e4d98e5f3105b8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-pant/core-idle-pant__d0__f2.png",
+      "sha256": "279198837b6a951019956c00f8bbf6a525532af413cc3ae4a653a02f2c5a773d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-pant/core-idle-pant__d0__f3.png",
+      "sha256": "9ca7c258ac67fde26a174a290f53df4f967e83871c7017b1b3f575c3ae6a7dbc"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-pant.png",
+  "sourceSha256": "c8b478cf9d14f5e9cbc075d736c5205073762990834f273f39561ab322e33a49",
+  "tool": "generated-strip-v4"
+}

@@ -7,9 +7,9 @@
 .summary {
 	width: 100%;
 	text-align: left;
-	background: rgba(23, 7, 46, 0.68);
+	background: var(--bg-0);
 	border: 1px solid var(--border);
-	border-radius: 0.4rem;
+	border-radius: var(--radius);
 	padding: 0.45rem 0.55rem;
 	font-size: 0.82rem;
 	color: inherit;
@@ -17,13 +17,13 @@
 
 .summary:hover {
 	border-color: var(--magenta);
-	background: rgba(23, 7, 46, 0.9);
+	background: var(--bg-0);
 }
 
 .pill {
 	width: 100%;
 	text-align: left;
-	border-radius: 0.4rem;
+	border-radius: var(--radius);
 	padding: 0.35rem 0.55rem;
 	font-size: 0.78rem;
 	background: transparent;

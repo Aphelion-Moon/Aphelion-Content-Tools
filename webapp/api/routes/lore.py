@@ -120,39 +120,43 @@ def read_groups(ctx: Ctx) -> object:
 
 @router.post("/groups", response_model=GroupWriteResponse, responses=RECORD_CONFLICT_RESPONSES)
 def post_group(payload: CreateGroupRequest, ctx: MutationCtx) -> object:
-	return save_group_response(ctx.repo_root, payload.model_dump(exclude_none=True), require_new=True)
+	with ctx.authoring():
+		return save_group_response(ctx.repo_root, payload.model_dump(exclude_none=True), require_new=True)
 
 
 @router.put("/groups/{group_id}", response_model=GroupWriteResponse, responses=RECORD_CONFLICT_RESPONSES)
 def put_group(group_id: str, payload: UpdateGroupRequest, ctx: MutationCtx) -> object:
-	group_payload = payload.model_dump(exclude={"expected_record_hash"}, exclude_none=True)
-	return save_group_response(
-		ctx.repo_root,
-		{**group_payload, "id": group_id},
-		expected_record_hash=payload.expected_record_hash,
-		enforce_record_hash=True,
-	)
+	with ctx.authoring():
+		group_payload = payload.model_dump(exclude={"expected_record_hash"}, exclude_none=True)
+		return save_group_response(
+			ctx.repo_root,
+			{**group_payload, "id": group_id},
+			expected_record_hash=payload.expected_record_hash,
+			enforce_record_hash=True,
+		)
 
 
 @router.delete("/groups/{group_id}", response_model=DeleteGroupResponse, responses=RECORD_CONFLICT_RESPONSES)
 def remove_group(group_id: str, payload: DeleteGroupRequest, ctx: MutationCtx) -> object:
-	return delete_group_response(
-		ctx.repo_root,
-		group_id,
-		expected_record_hash=payload.expected_record_hash,
-	)
+	with ctx.authoring():
+		return delete_group_response(
+			ctx.repo_root,
+			group_id,
+			expected_record_hash=payload.expected_record_hash,
+		)
 
 
 @router.put("/reviews/{type_path:path}", response_model=ReviewWriteResponse, responses=RECORD_CONFLICT_RESPONSES)
 def put_review(type_path: str, payload: ReviewWriteRequest, ctx: MutationCtx) -> object:
-	review_payload = payload.model_dump(exclude={"expected_record_hash"})
-	return save_review_response(
-		ctx.repo_root,
-		type_path,
-		review_payload,
-		expected_record_hash=payload.expected_record_hash,
-		enforce_record_hash=True,
-	)
+	with ctx.authoring():
+		review_payload = payload.model_dump(exclude={"expected_record_hash"})
+		return save_review_response(
+			ctx.repo_root,
+			type_path,
+			review_payload,
+			expected_record_hash=payload.expected_record_hash,
+			enforce_record_hash=True,
+		)
 
 
 @router.put(
@@ -161,12 +165,13 @@ def put_review(type_path: str, payload: ReviewWriteRequest, ctx: MutationCtx) ->
 	responses=RECORD_CONFLICT_RESPONSES,
 )
 def put_group_assignment(type_path: str, payload: AssignmentWriteRequest, ctx: MutationCtx) -> object:
-	return save_group_assignment_response(
-		ctx.repo_root,
-		type_path,
-		tuple(payload.group_ids),
-		expected_record_hash=payload.expected_record_hash,
-	)
+	with ctx.authoring():
+		return save_group_assignment_response(
+			ctx.repo_root,
+			type_path,
+			tuple(payload.group_ids),
+			expected_record_hash=payload.expected_record_hash,
+		)
 
 
 @router.get("/entity-files", response_model=EntityFilesResponse)
@@ -185,55 +190,59 @@ def read_definition(ctx: Ctx, type_path: Annotated[str, Query(min_length=1)]) ->
 
 @router.post("/entries", response_model=SaveEntryResponse, responses=RECORD_CONFLICT_RESPONSES)
 def post_entry(payload: CreateEntryRequest, ctx: MutationCtx) -> object:
-	created = create_entry(
-		ctx.repo_root,
-		source_file=payload.source_file,
-		entry=payload.entry,
-		asset_root=ctx.game_repo_root,
-	)
-	projection = created.pop("_projection")
-	return {
-		"saved": True,
-		"created": True,
-		"entry": created,
-		"record_hash": canonical_record_hash(payload.entry),
-		"issues": [],
-		"projection": projection,
-	}
+	with ctx.authoring():
+		created = create_entry(
+			ctx.repo_root,
+			source_file=payload.source_file,
+			entry=payload.entry,
+			asset_root=ctx.game_repo_root,
+		)
+		projection = created.pop("_projection")
+		return {
+			"saved": True,
+			"created": True,
+			"entry": created,
+			"record_hash": canonical_record_hash(payload.entry),
+			"issues": [],
+			"projection": projection,
+		}
 
 
 @router.put("/entries/{entry_id}", response_model=SaveEntryResponse, responses=RECORD_CONFLICT_RESPONSES)
 def put_entry(entry_id: str, payload: SaveEntryRequest, ctx: MutationCtx) -> object:
-	if "/" in entry_id:
-		raise BadRequest("A single lore entry id is required.")
-	saved = save_entry(
-		ctx.repo_root,
-		entry_id=entry_id,
-		source_file=payload.source_file,
-		entry=payload.entry,
-		asset_root=ctx.game_repo_root,
-		expected_record_hash=payload.expected_record_hash,
-	)
-	projection = saved.pop("_projection")
-	return {
-		"saved": True,
-		"entry": saved,
-		"record_hash": canonical_record_hash(payload.entry),
-		"issues": [],
-		"projection": projection,
-	}
+	with ctx.authoring():
+		if "/" in entry_id:
+			raise BadRequest("A single lore entry id is required.")
+		saved = save_entry(
+			ctx.repo_root,
+			entry_id=entry_id,
+			source_file=payload.source_file,
+			entry=payload.entry,
+			asset_root=ctx.game_repo_root,
+			expected_record_hash=payload.expected_record_hash,
+		)
+		projection = saved.pop("_projection")
+		return {
+			"saved": True,
+			"entry": saved,
+			"record_hash": canonical_record_hash(payload.entry),
+			"issues": [],
+			"projection": projection,
+		}
 
 
 @router.delete("/entries/{entry_id}", response_model=DeleteEntryResponse, responses=RECORD_CONFLICT_RESPONSES)
 def remove_entry(entry_id: str, payload: DeleteEntryRequest, ctx: MutationCtx) -> object:
-	if "/" in entry_id:
-		raise BadRequest("A single lore entry id is required.")
-	return delete_entry(
-		ctx.repo_root,
-		entry_id=entry_id,
-		source_file=payload.source_file,
-		expected_record_hash=payload.expected_record_hash,
-	)
+	with ctx.authoring():
+		if "/" in entry_id:
+			raise BadRequest("A single lore entry id is required.")
+		return delete_entry(
+			ctx.repo_root,
+			entry_id=entry_id,
+			source_file=payload.source_file,
+			asset_root=ctx.game_repo_root,
+			expected_record_hash=payload.expected_record_hash,
+		)
 
 
 @router.post("/validate", response_model=ValidationResponse)
@@ -257,8 +266,9 @@ def post_validate(payload: ValidateRequest, ctx: Ctx) -> object:
 
 @router.post("/generate")
 def post_generate(ctx: MutationCtx) -> object:
-	"""Build and validate the runtime DM artifact. Never touches the game checkout, so always safe to run."""
-	return generate_output(ctx.repo_root)
+	"""Build and validate the runtime DM artifact inside the tool checkout."""
+	with ctx.authoring():
+		return generate_output(ctx.repo_root, asset_root=ctx.game_repo_root)
 
 
 # ---- Icons ----------------------------------------------------------------------------------------

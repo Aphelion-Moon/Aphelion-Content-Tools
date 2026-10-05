@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "toy-ball-ready",
+  "clipScale": 0.7241379310344828,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-ready/toy-ball-ready__d0__f0.png",
+      "sha256": "91215437ca445e86d29441cc6dc8aa517e7316d0027077f403b2ec52104df596"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-ready/toy-ball-ready__d0__f1.png",
+      "sha256": "ed279ad8776cfd7c8719649ce9e2f1f34977ce1d0c1912f0bf3b4b0dd5308a10"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-ready/toy-ball-ready__d0__f2.png",
+      "sha256": "3bf7b92d72ff3d81aa2d52029fd18a5d61d4f95eeb50f67cbbfae6fdbfe1e648"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-ready/toy-ball-ready__d0__f3.png",
+      "sha256": "0ecfbef494cb4a1c831c944d45db200fa983e2d39ac86c397f8abb98a7c2cd7c"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-ready.png",
+  "sourceSha256": "f6e0a6cede960ae77b60d7809debaa4c96d2de6749d263de7fc8a6d394979591",
+  "tool": "generated-strip-v4"
+}

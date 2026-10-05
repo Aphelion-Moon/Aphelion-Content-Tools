@@ -1,8 +1,8 @@
-import { For, Show, createResource, createSignal } from 'solid-js';
+import { For, Show, createEffect, createMemo, createResource, createSignal, onCleanup } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { api } from '~/lib/api';
 import type { components } from '~/lib/api-schema';
-import { announceError, announceSuccess } from '~/lib/notify';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import ConflictPanel, { recordConflictFrom, type RecordConflictDetails } from './ConflictPanel';
 import styles from './LoreEditor.module.css';
 
@@ -23,7 +23,7 @@ function emptyDraft() {
 	return {
 		id: '',
 		label: '',
-		color: '#9614d0',
+		color: '#56d4dc',
 		keywords: '',
 		typePathPrefixes: '',
 		keywordScope: ['name', 'description', 'label'] as string[],
@@ -31,29 +31,38 @@ function emptyDraft() {
 	};
 }
 
-export default function GroupManager() {
+export default function GroupManager(props: { readonly onDirtyChange: (dirty: boolean) => void }) {
 	const [groups, { refetch }] = createResource(() => api.get<GroupsResponse>('/api/groups'));
 	const [draft, setDraft] = createStore(emptyDraft());
 	const [editing, setEditing] = createSignal(false);
 	const [saving, setSaving] = createSignal(false);
 	const [message, setMessage] = createSignal('');
 	const [conflict, setConflict] = createSignal<RecordConflictDetails | null>(null);
+	const [baseline, setBaseline] = createSignal(JSON.stringify(emptyDraft()));
+	const dirty = createMemo(() => editing() && JSON.stringify(draft) !== baseline());
+	createEffect(() => props.onDirtyChange(dirty()));
+	onCleanup(() => props.onDirtyChange(false));
+	const mayDiscard = () => !saving() && (!dirty() || window.confirm('Discard the unsaved group changes?'));
 
 	function startNew(): void {
+		if (!mayDiscard()) return;
 		setDraft(emptyDraft());
+		setBaseline(JSON.stringify(draft));
 		setEditing(true);
 	}
 
 	function edit(group: Group): void {
+		if (!mayDiscard()) return;
 		setDraft({
 			id: group.id,
 			label: group.label,
-			color: group.color ?? '#9614d0',
+			color: group.color ?? '#56d4dc',
 			keywords: (group.keywords ?? []).join(', '),
 			typePathPrefixes: (group.type_path_prefixes ?? []).join(', '),
 			keywordScope: [...(group.keyword_scope ?? [])],
 			recordHash: group.record_hash ?? null,
 		});
+		setBaseline(JSON.stringify(draft));
 		setEditing(true);
 	}
 
@@ -63,6 +72,7 @@ export default function GroupManager() {
 
 	async function save(event: SubmitEvent): Promise<void> {
 		event.preventDefault();
+		if (saving()) return;
 		setSaving(true);
 		try {
 			const payload = {
@@ -82,10 +92,10 @@ export default function GroupManager() {
 			} else {
 				await api.post<GroupWriteResponse>('/api/groups', payload);
 			}
-			await refetch();
 			setEditing(false);
+			await refetch();
 			setMessage('Group configuration saved.');
-			announceSuccess('Group configuration saved.', 'lore-editor');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'lore-editor', summary: 'Group configuration saved.' });
 		} catch (error) {
 			const details = recordConflictFrom(error);
 			if (details) setConflict({ ...details, base: details.base ?? {
@@ -97,8 +107,9 @@ export default function GroupManager() {
 				keyword_scope: draft.keywordScope,
 			} });
 			else {
-				setMessage(error instanceof Error ? error.message : String(error));
-				announceError(error, 'lore-editor');
+				const message = error instanceof Error ? error.message : String(error);
+				setMessage(message);
+				reportParsec({ type: 'mutation', phase: 'failed', tool: 'lore-editor', summary: 'Could not save the group configuration.', technicalDetail: message });
 			}
 		} finally {
 			setSaving(false);
@@ -106,7 +117,7 @@ export default function GroupManager() {
 	}
 
 	async function remove(): Promise<void> {
-		if (!draft.recordHash || !window.confirm(`Delete the group "${draft.label}"? Manual assignments to it will also be removed.`)) return;
+		if (saving() || !draft.recordHash || !window.confirm(`Delete the group "${draft.label}"? Manual assignments to it will also be removed.`)) return;
 		setSaving(true);
 		try {
 			const response = await api.delete<DeleteGroupResponse>(`/api/groups/${encodeURIComponent(draft.id)}`, {
@@ -115,7 +126,7 @@ export default function GroupManager() {
 			await refetch();
 			setEditing(false);
 			setMessage(`Group deleted; ${response.updated_assignments} manual assignment record(s) updated.`);
-			announceSuccess('Group deleted.', 'lore-editor');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'lore-editor', summary: 'Group deleted.' });
 		} catch (error) {
 			const details = recordConflictFrom(error);
 			if (details) setConflict({ ...details, base: details.base ?? {
@@ -126,7 +137,10 @@ export default function GroupManager() {
 				type_path_prefixes: commaSeparated(draft.typePathPrefixes),
 				keyword_scope: draft.keywordScope,
 			} });
-			else announceError(error, 'lore-editor');
+			else {
+				const message = error instanceof Error ? error.message : String(error);
+				reportParsec({ type: 'mutation', phase: 'failed', tool: 'lore-editor', summary: 'Could not delete the group.', technicalDetail: message });
+			}
 		} finally {
 			setSaving(false);
 		}
@@ -142,7 +156,7 @@ export default function GroupManager() {
 				<For each={groups()?.groups ?? []}>
 					{(group) => (
 						<article class={styles.groupCard}>
-							<div><span class={styles.groupSwatch} style={{ background: group.color ?? '#9614d0' }} /><strong>{group.label}</strong></div>
+							<div><span class={styles.groupSwatch} style={{ background: group.color ?? '#56d4dc' }} /><strong>{group.label}</strong></div>
 							<p class={styles.help}>{group.id} · {group.count.toLocaleString()} matches</p>
 							<p>Keywords: {(group.keywords ?? []).join(', ') || 'none'}</p>
 							<p>Type paths: {(group.type_path_prefixes ?? []).join(', ') || 'none'}</p>
@@ -161,7 +175,7 @@ export default function GroupManager() {
 					<label class={styles.field}><span>Keywords, comma-separated</span><input value={draft.keywords} onInput={(event) => setDraft('keywords', event.currentTarget.value)} /></label>
 					<fieldset><legend>Keyword search scope</legend><For each={SCOPE_FIELDS}>{(scope) => <label class={styles.checkbox}><input type="checkbox" checked={draft.keywordScope.includes(scope[0])} onChange={(event) => setDraft('keywordScope', (current) => event.currentTarget.checked ? [...current, scope[0]] : current.filter((field) => field !== scope[0]))} /> {scope[1]}</label>}</For></fieldset>
 					<label class={styles.field}><span>Type-path prefixes, comma-separated</span><input value={draft.typePathPrefixes} onInput={(event) => setDraft('typePathPrefixes', event.currentTarget.value)} /></label>
-					<div class={styles.actions}><button type="submit" disabled={saving()}>{saving() ? 'Saving…' : 'Save group'}</button><Show when={draft.recordHash}><button type="button" class={styles.danger} disabled={saving()} onClick={() => void remove()}>Delete group</button></Show><button type="button" class={styles.secondary} onClick={() => setEditing(false)}>Cancel</button></div>
+					<div class={styles.actions}><button type="submit" disabled={saving()}>{saving() ? 'Saving…' : 'Save group'}</button><Show when={draft.recordHash}><button type="button" class={styles.danger} disabled={saving()} onClick={() => void remove()}>Delete group</button></Show><button type="button" class={styles.secondary} disabled={saving()} onClick={() => { if (mayDiscard()) setEditing(false); }}>Cancel</button></div>
 				</form>
 			</Show>
 			<Show when={message()}>{(text) => <p class={styles.operationStatus} role="status">{text()}</p>}</Show>

@@ -1,0 +1,47 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "toy-whistle-recall",
+  "clipScale": 0.7522123893805309,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f0.png",
+      "sha256": "8e69cc7b2fe74cc281856c1fe357cfadfec08afe01143bfa9f2af8f969e5219b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f1.png",
+      "sha256": "0ba1ac27a8d42f809938803e279c7b97250a33098272f45c80241dc9b0af850a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f2.png",
+      "sha256": "f8924e5f9a0711d2900bf3a5aa80370df8edd58e774958ceb6225e1623ca7352"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f3.png",
+      "sha256": "ca0a27adb6591fb10141aa3dc9df28da55ce5581cc314c4925fb301aeb9802c4"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f4.png",
+      "sha256": "c90dddf09310b3d016a3c678f2d8200079eb41042eecb0f0423d5eecc729c07c"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    85,
+    85
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-whistle-recall.png",
+  "sourceSha256": "4c4a7834325ae7f44686b8f3a8e5d269b4eb6b773481874723fa3208c7c493c8",
+  "tool": "generated-strip-v4"
+}

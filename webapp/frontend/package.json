@@ -18,14 +18,17 @@
     "@solidjs/router": "^0.15.3",
     "d3-force": "^3.0.0",
     "graphology": "^0.26.0",
+    "howler": "^2.2.4",
     "sigma": "^3.0.3",
     "solid-js": "^1.9.4"
   },
   "devDependencies": {
     "@tanstack/solid-virtual": "^3.11.2",
     "@types/d3-force": "^3.0.10",
+    "@types/howler": "^2.2.13",
     "@types/node": "^22.20.1",
     "axe-core": "^4.13.0",
+    "fake-indexeddb": "^6.2.5",
     "jsdom": "^26.0.0",
     "openapi-typescript": "^7.6.1",
     "typescript": "^5.7.3",

@@ -42,7 +42,7 @@ backend change runs at least:
 ```powershell
 python -m ruff check .
 python -m pyright
-python -m unittest discover
+./tools/testing/run-python-suites.ps1
 npm --prefix webapp/frontend run gen:api
 npm --prefix webapp/frontend run typecheck
 ```
@@ -50,3 +50,31 @@ npm --prefix webapp/frontend run typecheck
 Add focused tests for domain behavior, route status/code/payload, temporary-workspace isolation, and
 generated schema consumption. Error messages should be actionable but stable program behavior belongs
 in codes and typed fields, not prose matching.
+
+## Shared request and write boundaries
+
+`LocalSessionMiddleware` validates exact loopback Host/Origin and requires a per-launch HttpOnly,
+SameSite session for API reads, all mutations, and live sockets. The SPA bootstraps `/api/session`
+before mounting resources. Vite forwards only its own origin to the configured loopback backend.
+Integration tests use `webapp.tests.http_client.TestClient` to establish a real session; boundary tests
+use an unauthenticated client explicitly. Request and incoming socket sizes are bounded centrally.
+
+`repository_write_lock` is reentrant within a thread and excludes other processes using an OS file
+lock. Keep canonical multi-file operations within that lock and use `rollback_files` for exception
+rollback. Publish derived multi-table updates through `staged_projection`: build a complete inactive
+generation, then activate one pointer. Resolve one generation for each multi-table read.
+
+Game-file tools use the workspace's `GameChangeSetService`. A tool supplies its explicit path allowlist,
+expected bytes, and proposed bytes. Prepare returns a diff and opaque stage identifier; apply rechecks
+compatibility, cleanliness, revision, containment, and hashes under the write lock. Successful apply
+returns a receipt, and failed writes restore all touched files. Stages are bounded, expire after fifteen
+minutes, and do not survive restart. Routes never accept replacement stage contents from the browser.
+
+Worker pipe credentials and pipe identities rotate on each launch and respawn. Credentials travel in
+the private child environment, never URLs, command arguments, files, or logs. Shutdown joins the delayed
+optimizer before stopping the worker so a late callback cannot recreate it.
+
+Authoring routes enter `AppContext.authoring()` inside the synchronous route operation. It holds the
+write lock from the currentness check through the domain write; a dependency-only check leaves a race.
+Do not hold thread-owned locks across yielding FastAPI dependencies, whose enter/exit may run on
+different worker threads. Git adapter operations share the same reentrant repository coordinator.

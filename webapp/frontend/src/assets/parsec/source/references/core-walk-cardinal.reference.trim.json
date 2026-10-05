@@ -1,0 +1,34 @@
+{
+  "crop": [
+    117,
+    50,
+    1132,
+    1182
+  ],
+  "destination": "webapp/frontend/src/assets/parsec/source/references/core-walk-cardinal.reference.png",
+  "minimumMargin": 16,
+  "occupiedBounds": [
+    133,
+    66,
+    1116,
+    1166
+  ],
+  "outputSha256": "0bfdb38b343844a38699679cc719c3994d0e0de647c13c88a87a54b131835c14",
+  "outputSize": [
+    1015,
+    1132
+  ],
+  "retainedMargin": [
+    16,
+    16,
+    16,
+    16
+  ],
+  "source": "webapp/frontend/src/assets/parsec/source/generated/core-walk-cardinal.imagegen.png",
+  "sourceSha256": "5f2b15f133b2487b893103c24bf4c4c0d8033e20b45ced7929090a5a4087a1cc",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "tool": "manual-reference-trim-v1"
+}

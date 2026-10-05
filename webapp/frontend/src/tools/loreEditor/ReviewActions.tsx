@@ -1,7 +1,7 @@
 import { For, Show, createEffect, createMemo, createResource, createSignal, onCleanup } from 'solid-js';
 import { api } from '~/lib/api';
 import type { components } from '~/lib/api-schema';
-import { announceError, announceSuccess } from '~/lib/notify';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import ConflictPanel, { recordConflictFrom, type RecordConflictDetails } from './ConflictPanel';
 import type { ReviewEntry } from './reviewFeed';
 import styles from './LoreEditor.module.css';
@@ -12,18 +12,17 @@ type AssignmentWriteResponse = components['schemas']['AssignmentWriteResponse'];
 
 export default function ReviewActions(props: {
 	readonly entry: ReviewEntry;
+	readonly reviewerName: string;
 	readonly onDirtyChange: (dirty: boolean) => void;
 	readonly onReload: (typePath: string) => void;
 }) {
 	const [groups, { refetch }] = createResource(() => api.get<GroupsResponse>('/api/groups'));
-	const [reviewer, setReviewer] = createSignal(props.entry.review?.reviewed_by ?? '');
 	const [notes, setNotes] = createSignal(props.entry.review?.notes ?? '');
 	const [saving, setSaving] = createSignal(false);
 	const [message, setMessage] = createSignal('');
 	const [conflict, setConflict] = createSignal<RecordConflictDetails | null>(null);
-	const baselineReviewer = props.entry.review?.reviewed_by ?? '';
 	const baselineNotes = props.entry.review?.notes ?? '';
-	const dirty = createMemo(() => reviewer() !== baselineReviewer || notes() !== baselineNotes);
+	const dirty = createMemo(() => notes() !== baselineNotes);
 
 	createEffect(() => props.onDirtyChange(dirty()));
 	onCleanup(() => props.onDirtyChange(false));
@@ -31,7 +30,7 @@ export default function ReviewActions(props: {
 	const manuallyAssigned = () => new Set(groups()?.assignments[props.entry.type_path] ?? []);
 
 	async function saveReview(status: 'reviewed' | 'needs-attention' | null): Promise<void> {
-		if (status && !reviewer().trim()) {
+		if (status && !props.reviewerName.trim()) {
 			setMessage('Enter a reviewer name before saving a review decision.');
 			return;
 		}
@@ -39,20 +38,21 @@ export default function ReviewActions(props: {
 		try {
 			await api.put<ReviewWriteResponse>(`/api/reviews/${encodeURIComponent(props.entry.type_path)}`, {
 				status,
-				reviewed_by: reviewer().trim(),
+				reviewed_by: props.reviewerName.trim(),
 				notes: notes().trim(),
 				expected_record_hash: props.entry.review?.record_hash ?? null,
 			});
 			setMessage(status ? 'Review decision saved.' : 'Review decision cleared.');
-			announceSuccess(status ? 'Review decision saved.' : 'Review decision cleared.', 'lore-editor');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'lore-editor', summary: status ? 'Review decision saved.' : 'Review decision cleared.' });
 			props.onDirtyChange(false);
 			props.onReload(props.entry.type_path);
 		} catch (error) {
 			const details = recordConflictFrom(error);
 			if (details) setConflict({ ...details, base: details.base ?? props.entry.review });
 			else {
-				setMessage(error instanceof Error ? error.message : String(error));
-				announceError(error, 'lore-editor');
+				const message = error instanceof Error ? error.message : String(error);
+				setMessage(message);
+				reportParsec({ type: 'mutation', phase: 'failed', tool: 'lore-editor', summary: 'Could not save the review decision.', technicalDetail: message });
 			}
 		} finally {
 			setSaving(false);
@@ -76,7 +76,7 @@ export default function ReviewActions(props: {
 			);
 			await refetch();
 			setMessage('Manual group assignment saved.');
-			announceSuccess('Manual group assignment saved.', 'lore-editor');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'lore-editor', summary: 'Manual group assignment saved.' });
 			props.onReload(props.entry.type_path);
 		} catch (error) {
 			const details = recordConflictFrom(error);
@@ -90,8 +90,9 @@ export default function ReviewActions(props: {
 				});
 			}
 			else {
-				setMessage(error instanceof Error ? error.message : String(error));
-				announceError(error, 'lore-editor');
+				const message = error instanceof Error ? error.message : String(error);
+				setMessage(message);
+				reportParsec({ type: 'mutation', phase: 'failed', tool: 'lore-editor', summary: 'Could not save the manual group assignment.', technicalDetail: message });
 			}
 		} finally {
 			setSaving(false);
@@ -101,11 +102,10 @@ export default function ReviewActions(props: {
 	return (
 		<section class={styles.reviewActions} aria-labelledby="review-actions-heading">
 			<h3 id="review-actions-heading">Review and grouping</h3>
-			<div class={styles.formGrid}>
-				<label class={styles.field}>
-					<span>Reviewer</span>
-					<input value={reviewer()} onInput={(event) => setReviewer(event.currentTarget.value)} />
-				</label>
+			<Show when={props.entry.review?.reviewed_by}>
+				{(reviewedBy) => <p class={styles.help}>Current decision recorded by {reviewedBy()}.</p>}
+			</Show>
+			<div>
 				<label class={styles.field}>
 					<span>Review notes</span>
 					<textarea rows={3} value={notes()} onInput={(event) => setNotes(event.currentTarget.value)} />
@@ -124,6 +124,7 @@ export default function ReviewActions(props: {
 					{(group) => (
 						<label>
 							<input
+								class={styles.compactCheckbox}
 								type="checkbox"
 								checked={manuallyAssigned().has(group.id)}
 								onChange={(event) => void toggleAssignment(group.id, event.currentTarget.checked)}

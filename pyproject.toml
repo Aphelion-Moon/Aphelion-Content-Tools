@@ -20,6 +20,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pyright==1.1.406",
+	"pytest==8.4.2",
     "ruff==0.14.2",
     # Starlette's TestClient drives the app in-process for webapp/tests/test_api.py.
 	"httpx2==2.12.0",
@@ -31,9 +32,11 @@ aphelion-serve = "webapp.serve_api:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["webapp*", "tools*"]
+exclude = ["webapp.store.dm*", "webapp.store.definition-editor*"]
 
 [tool.setuptools.package-data]
 webapp = ["frontend/dist/**/*"]
+"tools.definition_editor" = ["runtime/*"]
 
 [tool.ruff]
 line-length = 120
@@ -53,15 +56,26 @@ ignore = ["E501"]
 
 [tool.pyright]
 include = [
+	"tools/definition_editor",
+	"webapp/application_search.py",
+	"webapp/capabilities.py",
+	"webapp/api/routes/definitions.py",
 	"webapp/api/app.py",
 	"webapp/api/deps.py",
 	"webapp/api/errors.py",
 	"webapp/api/models.py",
+	"webapp/api/local_security.py",
+	"webapp/game_changes.py",
+	"webapp/store/generations.py",
+	"webapp/store/lifecycle.py",
+	"tools/lore_editor/write_coordinator.py",
+	"webapp/api/routes/collaboration.py",
 	"webapp/api/routes/export.py",
 	"webapp/api/routes/git.py",
 	"webapp/api/routes/graph.py",
 	"webapp/api/routes/store.py",
 	"webapp/git_adapter.py",
+	"webapp/process_tree.py",
 	"webapp/store/health.py",
 	"webapp/store/metadata.py",
 	"webapp/store/search.py",

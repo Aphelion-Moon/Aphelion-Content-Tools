@@ -1,0 +1,40 @@
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.settingsGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	gap: 0.8rem 1rem;
+	margin-top: 0.5rem;
+}
+
+.settingsGrid label:not(.toggle) {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.settingsGrid select,
+.settingsGrid input[type='range'] {
+	width: 100%;
+}
+
+.toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+}
+
+.fileButton {
+	display: inline-flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.fileButton input {
+	max-width: 14rem;
+	margin-left: 0.5rem;
+}

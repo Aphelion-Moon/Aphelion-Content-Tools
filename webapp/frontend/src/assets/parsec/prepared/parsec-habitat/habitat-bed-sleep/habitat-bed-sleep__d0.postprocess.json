@@ -1,0 +1,47 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "habitat-bed-sleep",
+  "clipScale": 0.6829268292682927,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f0.png",
+      "sha256": "f82f2860b12d7b3706c4e34b1aceaa79f1936dec2308533eee298f6771b49010"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f1.png",
+      "sha256": "0813a8062ee8acf33fd2c6b419afb056c62b2eb5ba378ee050ebbdfd59a7e821"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f2.png",
+      "sha256": "22635628b7587a29e137ee9a3508e950c4bc3d2fb1cf38f6221ac678373c7615"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f3.png",
+      "sha256": "41b939b6c3be604f2ca9ad1a9e32528a9b3bfdaaf8cdb4716ad32dcff6d52b4a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-sleep/habitat-bed-sleep__d0__f4.png",
+      "sha256": "896a2e63b694f18e8ceada89f7612b12147abbb1bcf5b9e7b363fbede9cfb698"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-sleep.png",
+  "sourceSha256": "1a11ae0b34b9a115dadbb214d06ff26d943db463f10c4ca48fa55cde22d60fc9",
+  "tool": "generated-strip-v4"
+}

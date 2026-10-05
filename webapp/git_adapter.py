@@ -7,12 +7,15 @@ import re
 import shutil
 import subprocess
 import uuid
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from pathlib import Path
-from threading import Lock
+from urllib.parse import quote
 
 from tools.lore_editor.reconcile import scan_canonical_records
-from webapp.store.metadata import ProjectionRevision, active_projection_metadata
+from tools.lore_editor.write_coordinator import repository_write_lock
+from webapp.store.lifecycle import selected_projection
+from webapp.store.metadata import ProjectionRevision
 
 
 class GitAdapterError(ValueError):
@@ -36,12 +39,24 @@ class RepositoryStatus:
 
 
 @dataclass(frozen=True)
+class GameSourceRevision:
+	worktree_id: str
+	head: str
+	dirty: bool | None = None
+	graph_observation: str | None = None
+
+
+@dataclass(frozen=True)
 class WorkspaceRevision:
 	worktree_id: str
 	branch: str
 	head: str
 	content_revision: str
 	projection_revision: ProjectionRevision | None
+	projection_generation_id: str | None = None
+	game_source: GameSourceRevision | None = None
+	definition_revision: str | None = None
+	definition_catalog_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -53,6 +68,8 @@ class OwnedChange:
 
 
 TOOL_CANONICAL_ROOTS = {
+	"tools/job_editor/content/": "job_draft",
+	"tools/outfit_editor/content/": "outfit_draft",
 	"tools/lore_editor/content/overrides/": "override",
 	"tools/lore_editor/content/groups/": "group",
 	"tools/lore_editor/content/reviews/": "review",
@@ -71,23 +88,9 @@ MAX_GIT_OUTPUT_CHARACTERS = 8_000
 MAX_CHANGED_FILES = 2_000
 GIT_TIMEOUT_SECONDS = 60
 
-_REPO_LOCKS: dict[Path, Lock] = {}
-_REPO_LOCKS_REGISTRY_LOCK = Lock()
-
-
-def _repo_lock(repo_root: Path) -> Lock:
-	"""Return a lock shared by every caller operating on this repository path.
-
-	Two concurrent multi-step operations (e.g. stage_and_commit's add+commit) against the
-	same repository could otherwise interleave their Git index changes.
-	"""
-	resolved_root = repo_root.resolve()
-	with _REPO_LOCKS_REGISTRY_LOCK:
-		lock = _REPO_LOCKS.get(resolved_root)
-		if lock is None:
-			lock = Lock()
-			_REPO_LOCKS[resolved_root] = lock
-		return lock
+def _repo_lock(repo_root: Path) -> AbstractContextManager[None]:
+	"""Coordinate Git and content mutations across threads and worker processes."""
+	return repository_write_lock(repo_root)
 
 
 def _truncate_output(text: str, *, limit: int = MAX_GIT_OUTPUT_CHARACTERS) -> str:
@@ -206,23 +209,52 @@ def repository_revision(repo_root: Path) -> str:
 		return _run_git(repo_root, ["rev-parse", "HEAD"]).stdout.strip()
 
 
-def workspace_revision(repo_root: Path) -> WorkspaceRevision:
-	resolved_root = repo_root.resolve()
-	with _repo_lock(resolved_root):
-		head = _run_git(resolved_root, ["rev-parse", "HEAD"]).stdout.strip()
-		branch_result = _run_git(resolved_root, ["symbolic-ref", "--quiet", "--short", "HEAD"], allow_nonzero=True)
-		branch = branch_result.stdout.strip() if branch_result.returncode == 0 else "(detached HEAD)"
-		git_directory = _run_git(resolved_root, ["rev-parse", "--absolute-git-dir"]).stdout.strip()
-	worktree_id = hashlib.sha256(str(Path(git_directory).resolve()).casefold().encode("utf-8")).hexdigest()[:16]
-	content_revision = scan_canonical_records(resolved_root).content_revision
-	projection = active_projection_metadata(resolved_root)
-	return WorkspaceRevision(
-		worktree_id=worktree_id,
-		branch=branch,
-		head=head,
-		content_revision=content_revision,
-		projection_revision=projection.revision if projection is not None else None,
-	)
+def _worktree_id(git_directory: str) -> str:
+	return hashlib.sha256(str(Path(git_directory).resolve()).casefold().encode("utf-8")).hexdigest()[:16]
+
+
+def observe_game_source(game_repo_root: Path) -> GameSourceRevision | None:
+	# Lazy import keeps graph scanning dependent on Git primitives, without an import cycle.
+	from tools.content_graph.inputs import observe_graph_inputs
+
+	try:
+		with _repo_lock(game_repo_root):
+			game_head = _run_git(game_repo_root, ["rev-parse", "HEAD"]).stdout.strip()
+			game_git_directory = _run_git(game_repo_root, ["rev-parse", "--absolute-git-dir"]).stdout.strip()
+			status = repository_status(game_repo_root)
+			graph_observation = observe_graph_inputs(game_repo_root).observation
+			return GameSourceRevision(_worktree_id(game_git_directory), game_head, status.dirty, graph_observation)
+	except (OSError, ValueError):
+		return None
+
+
+def workspace_revision(repo_root: Path, game_repo_root: Path | None = None) -> WorkspaceRevision:
+	from tools.definition_editor.storage import DraftStore
+	from webapp.store.snapshot_registry import active_snapshot_metadata
+	game_source = observe_game_source(game_repo_root) if game_repo_root is not None else None
+	with repository_write_lock(repo_root):
+		resolved_root = repo_root.resolve()
+		with _repo_lock(resolved_root):
+			head = _run_git(resolved_root, ["rev-parse", "HEAD"]).stdout.strip()
+			branch_result = _run_git(resolved_root, ["symbolic-ref", "--quiet", "--short", "HEAD"], allow_nonzero=True)
+			branch = branch_result.stdout.strip() if branch_result.returncode == 0 else "(detached HEAD)"
+			git_directory = _run_git(resolved_root, ["rev-parse", "--absolute-git-dir"]).stdout.strip()
+		worktree_id = _worktree_id(git_directory)
+		content_revision = scan_canonical_records(resolved_root).content_revision
+		projection = selected_projection(resolved_root).metadata
+		snapshot = active_snapshot_metadata(resolved_root)
+		definition_catalog = next((item.build_id for item in snapshot.datasets if item.kind == 'job-outfit-definitions'), None) if snapshot else None
+		return WorkspaceRevision(
+			worktree_id=worktree_id,
+			branch=branch,
+			head=head,
+			content_revision=content_revision,
+			projection_revision=projection.revision if projection is not None else None,
+			projection_generation_id=projection.generation_id if projection is not None else None,
+			game_source=game_source,
+			definition_revision=DraftStore(resolved_root).revision(),
+			definition_catalog_id=definition_catalog,
+		)
 
 
 def repository_remote_url(repo_root: Path, remote_name: str = "origin") -> str | None:
@@ -348,7 +380,7 @@ def classify_owned_change(repo_root: Path, repository: str, relative_path: str) 
 			except (OSError, json.JSONDecodeError):
 				payload = None
 			if isinstance(payload, dict):
-				payload_id = payload.get("id") if kind in ("override", "group") else payload.get("type_path")
+				payload_id = payload.get("id") if kind in ("override", "group", "job_draft", "outfit_draft") else payload.get("type_path")
 				if isinstance(payload_id, str):
 					record_id = payload_id
 				summary_value = payload.get("label") or payload.get("name") or payload.get("status") or payload.get("notes")
@@ -513,10 +545,10 @@ def github_blob_url(repo_root: Path, relative_path: str) -> str | None:
 		return None
 	owner, repo = parsed
 	revision = repository_revision(repo_root)
-	posix_path = Path(relative_path).as_posix()
-	resolved_path = (repo_root.resolve() / Path(relative_path))
+	resolved_path = _resolve_tracked_path(repo_root, relative_path)
+	posix_path = resolved_path.relative_to(repo_root.resolve()).as_posix()
 	segment = "tree" if resolved_path.is_dir() else "blob"
-	return f"https://github.com/{owner}/{repo}/{segment}/{revision}/{posix_path}"
+	return f"https://github.com/{quote(owner, safe='')}/{quote(repo, safe='')}/{segment}/{revision}/{quote(posix_path, safe='/')}"
 
 
 _PR_SUBJECT_PATTERN = re.compile(r"\(#(\d+)\)\s*$")
@@ -533,7 +565,7 @@ def line_history(repo_root: Path, relative_path: str, line_number: int, *, max_c
 	"""
 	if line_number < 1:
 		raise ValueError("line_number must be a positive integer.")
-	posix_path = Path(relative_path).as_posix()
+	posix_path = _resolve_tracked_path(repo_root, relative_path).relative_to(repo_root.resolve()).as_posix()
 	with _repo_lock(repo_root):
 		result = _run_git(
 			repo_root,

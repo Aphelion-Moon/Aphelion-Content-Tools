@@ -1,0 +1,356 @@
+{
+  "parsec-toys/toy-ball-chase/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 0
+  },
+  "parsec-toys/toy-ball-chase/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 0
+  },
+  "parsec-toys/toy-ball-chase/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 0
+  },
+  "parsec-toys/toy-ball-chase/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 0
+  },
+  "parsec-toys/toy-ball-chase/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 0
+  },
+  "parsec-toys/toy-ball-chase/d0/f5": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 0
+  },
+  "parsec-toys/toy-ball-ready/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 0
+  },
+  "parsec-toys/toy-ball-ready/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 0
+  },
+  "parsec-toys/toy-ball-ready/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 96
+  },
+  "parsec-toys/toy-ball-ready/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 96
+  },
+  "parsec-toys/toy-ball-refuse/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 96
+  },
+  "parsec-toys/toy-ball-refuse/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 96
+  },
+  "parsec-toys/toy-ball-refuse/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 96
+  },
+  "parsec-toys/toy-ball-refuse/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 96
+  },
+  "parsec-toys/toy-ball-retrieve/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 96
+  },
+  "parsec-toys/toy-ball-retrieve/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 96
+  },
+  "parsec-toys/toy-ball-retrieve/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 192
+  },
+  "parsec-toys/toy-ball-retrieve/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 192
+  },
+  "parsec-toys/toy-ball-retrieve/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 192
+  },
+  "parsec-toys/toy-ball-retrieve/d0/f5": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 192
+  },
+  "parsec-toys/toy-brush-content/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 192
+  },
+  "parsec-toys/toy-brush-content/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 192
+  },
+  "parsec-toys/toy-brush-content/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 192
+  },
+  "parsec-toys/toy-brush-content/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 192
+  },
+  "parsec-toys/toy-brush-content/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 288
+  },
+  "parsec-toys/toy-brush-impatient/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 288
+  },
+  "parsec-toys/toy-brush-impatient/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 288
+  },
+  "parsec-toys/toy-brush-impatient/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 288
+  },
+  "parsec-toys/toy-brush-impatient/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 288
+  },
+  "parsec-toys/toy-treat-accept/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 288
+  },
+  "parsec-toys/toy-treat-accept/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 288
+  },
+  "parsec-toys/toy-treat-accept/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 288
+  },
+  "parsec-toys/toy-treat-accept/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 384
+  },
+  "parsec-toys/toy-treat-accept/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 384
+  },
+  "parsec-toys/toy-tug-grip/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 384
+  },
+  "parsec-toys/toy-tug-grip/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 384
+  },
+  "parsec-toys/toy-tug-grip/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 384
+  },
+  "parsec-toys/toy-tug-grip/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 384
+  },
+  "parsec-toys/toy-tug-pull/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 384
+  },
+  "parsec-toys/toy-tug-pull/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 384
+  },
+  "parsec-toys/toy-tug-pull/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 480
+  },
+  "parsec-toys/toy-tug-pull/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 480
+  },
+  "parsec-toys/toy-tug-pull/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 480
+  },
+  "parsec-toys/toy-tug-pull/d0/f5": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 480
+  },
+  "parsec-toys/toy-tug-tumble/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 480
+  },
+  "parsec-toys/toy-tug-tumble/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 480
+  },
+  "parsec-toys/toy-tug-tumble/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 480
+  },
+  "parsec-toys/toy-tug-tumble/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 480
+  },
+  "parsec-toys/toy-tug-tumble/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 576
+  },
+  "parsec-toys/toy-tug-win/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 576
+  },
+  "parsec-toys/toy-tug-win/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 576
+  },
+  "parsec-toys/toy-tug-win/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 576
+  },
+  "parsec-toys/toy-tug-win/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 576
+  },
+  "parsec-toys/toy-tug-win/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 576
+  },
+  "parsec-toys/toy-whistle-recall/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 576
+  },
+  "parsec-toys/toy-whistle-recall/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 576
+  },
+  "parsec-toys/toy-whistle-recall/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 672
+  },
+  "parsec-toys/toy-whistle-recall/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 672
+  },
+  "parsec-toys/toy-whistle-recall/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 672
+  }
+}

@@ -1,4 +1,4 @@
-import { Route, Router } from '@solidjs/router';
+import { Route, Router, useNavigate } from '@solidjs/router';
 import axe from 'axe-core';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -51,6 +51,22 @@ afterEach(() => {
 });
 
 describe('Content Graph page', () => {
+	it('follows a different node link without reloading the graph snapshot', async () => {
+		vi.spyOn(api, 'get').mockImplementation((path) => Promise.resolve(path === '/api/graph'
+			? graphResponse : { scanned: true, modules: [], unresolved_markers: [] }));
+		const host = document.createElement('div');
+		document.body.append(host);
+		const dispose = render(() => <Router><Route path="*" component={() => {
+			const navigate = useNavigate();
+			return <><button onClick={() => navigate('/graph?selected=file%3Anotes.md', { scroll: false })}>Follow file link</button><ContentGraphPage /></>;
+		}} /></Router>, host);
+		await settle(); await settle();
+		[...host.querySelectorAll('button')].find((button) => button.textContent === 'Follow file link')!.click();
+		await settle(); await settle();
+		expect(appState.selectedContext?.record_id).toBe('file:notes.md');
+		expect(host.textContent).toContain('3 of 4 nodes in scope');
+		dispose();
+	});
 	it('loads the typed graph and starts in the curated semantic scope', async () => {
 		vi.spyOn(api, 'get').mockImplementation((path: string) => {
 			if (path === '/api/graph') return Promise.resolve(graphResponse);
@@ -67,6 +83,9 @@ describe('Content Graph page', () => {
 		expect(host.textContent).toContain('4 nodes · 2 edges · revision 0123456789ab');
 		expect(host.textContent).toContain('2 of 4 nodes in scope');
 		expect(host.querySelector('[data-testid="content-graph-canvas"]')).not.toBeNull();
+		const visibilityFilters = [...host.querySelectorAll('details')].find((details) =>
+			details.querySelector('summary')?.textContent === 'Visibility filters');
+		expect(visibilityFilters?.open).toBe(false);
 		expect(host.textContent).toContain('Accessible node list (2 visible)');
 		const accessibility = await axe.run(host, { rules: { 'color-contrast': { enabled: false } } });
 		expect(accessibility.violations).toEqual([]);
@@ -90,6 +109,37 @@ describe('Content Graph page', () => {
 		await settle();
 		expect(host.textContent).toContain('4 of 4 nodes in scope');
 		expect(host.textContent).toContain('4 visible');
+		dispose();
+	});
+
+	it('reinitializes scope when refresh loads a different graph snapshot', async () => {
+		const replacement = {
+			...graphResponse,
+			manifest: { ...graphResponse.manifest, snapshot_sha256: 'b'.repeat(64), node_count: 1, edge_count: 0 },
+			graph: {
+				...graphResponse.graph,
+				nodes: [graphResponse.graph.nodes[2]],
+				edges: [],
+			},
+		};
+		let graphReads = 0;
+		vi.spyOn(api, 'get').mockImplementation((path: string) => {
+			if (path === '/api/graph') return Promise.resolve(graphReads++ ? replacement : graphResponse);
+			if (path.startsWith('/api/graph/modules')) return Promise.resolve({ scanned: true, modules: [] });
+			if (path === '/api/graph/unresolved') return Promise.resolve({ scanned: true, unresolved_markers: [] });
+			return Promise.reject(new Error(`Unexpected GET ${path}`));
+		});
+		const host = document.createElement('div');
+		document.body.append(host);
+		const dispose = render(() => <Router><Route path="*" component={ContentGraphPage} /></Router>, host);
+		await settle();
+		await settle();
+
+		[...host.querySelectorAll('button')].find((button) => button.textContent === 'Refresh from cache')!.click();
+		await settle();
+		await settle();
+
+		expect(host.textContent).toContain('1 of 1 nodes in scope');
 		dispose();
 	});
 

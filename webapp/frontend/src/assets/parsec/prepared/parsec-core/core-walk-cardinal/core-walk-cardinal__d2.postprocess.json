@@ -1,0 +1,39 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "core-walk-cardinal",
+  "clipScale": 0.7,
+  "direction": 2,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d2/core-walk-cardinal__d2__f0.png",
+      "sha256": "fce10d49ae2d547d62139e871461a361db546cf7d4c3085dc0598e4b7e1b1c5d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d2/core-walk-cardinal__d2__f1.png",
+      "sha256": "c3ea84f72fcbe0a947e79a192642e2ae1e26cd7a68aed5de4a2876b1a9650adc"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d2/core-walk-cardinal__d2__f2.png",
+      "sha256": "21d7ed2b687c50f0848947c1b086ee17119ccc0e7a6d193d3240c761e87951f5"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d2.png",
+  "sourceSha256": "20ca1128d3dedf9294e64ed38ebe6d9f7248c9b54373dffc306053e5d9ec4d87",
+  "tool": "generated-strip-v4"
+}

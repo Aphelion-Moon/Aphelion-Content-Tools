@@ -1,0 +1,109 @@
+.log {
+	margin-top: 0.35rem;
+	overflow: hidden;
+	background: var(--bg-void);
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius);
+	color: var(--text);
+	font-family: var(--font-mono);
+	font-size: 0.68rem;
+	line-height: 1.32;
+}
+
+.log[data-expanded='true'] {
+	border-color: color-mix(in srgb, var(--danger) 72%, var(--border));
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.22rem 0.4rem;
+	background: var(--bg-2);
+	border-bottom: 1px solid var(--line);
+	font-size: 0.61rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.channel {
+	color: var(--accent);
+}
+
+.signal {
+	color: var(--ok);
+	font-size: 0.48rem;
+}
+
+.title {
+	overflow: hidden;
+	color: var(--text-dim);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.lines {
+	display: grid;
+	max-height: 8.5rem;
+	margin: 0;
+	padding: 0;
+	overflow-y: auto;
+	list-style: none;
+}
+
+.log[data-mode='expanded'] .lines,
+.log[data-expanded='true'] .lines {
+	max-height: 14rem;
+}
+
+.lines li {
+	padding: 0.28rem 0.4rem;
+	border-bottom: 1px solid var(--line-soft);
+	overflow-wrap: anywhere;
+}
+
+.lines li:last-child {
+	border-bottom: 0;
+}
+
+.message {
+	display: grid;
+	grid-template-columns: auto auto minmax(0, 1fr);
+	gap: 0.3rem;
+}
+
+.message time {
+	color: var(--text-faint);
+}
+
+.speaker {
+	color: var(--accent);
+	font-weight: 700;
+}
+
+.success .speaker {
+	color: var(--ok);
+}
+
+.warning .speaker {
+	color: var(--warn);
+}
+
+.error .speaker {
+	color: var(--danger);
+}
+
+.detailsLink,
+.collapsed {
+	display: block;
+	width: fit-content;
+	margin-top: 0.2rem;
+	color: var(--accent);
+	font-size: 0.61rem;
+}
+
+.collapsed,
+.quiet {
+	margin: 0;
+	padding: 0.35rem 0.4rem;
+}

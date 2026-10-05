@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "core-idle-seated",
+  "clipScale": 0.711864406779661,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-seated/core-idle-seated__d0__f0.png",
+      "sha256": "a0f1e32249ad6ce50ffc97402c1110cda926b013c8650af2f39ec4a24e6f8ced"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-seated/core-idle-seated__d0__f1.png",
+      "sha256": "298161804a1ea56904d164435bbd3083e5ea1043dcd7aa4851ac463a98a233ea"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-seated/core-idle-seated__d0__f2.png",
+      "sha256": "519cba14fecd219debbc0c84433940322673c484d618fc0e8bb8861cf88b70c6"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-seated/core-idle-seated__d0__f3.png",
+      "sha256": "0cdd04a7e5a4e04be32aa378c97b5299c8a1f00f49e5be501dd8f00b9ae0ba8b"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-seated.png",
+  "sourceSha256": "94acf7e92f54fd7b446380d9c058ad2298505777d9ba98342d0da942b216544a",
+  "tool": "generated-strip-v4"
+}

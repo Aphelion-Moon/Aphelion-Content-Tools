@@ -285,7 +285,7 @@ class ServerApiTests(unittest.TestCase):
 		self.assertEqual(status, 200)
 		self.assertEqual(
 			{tool["id"] for tool in payload["tools"]},
-			{"catalog-refresh", "validate", "generate", "refresh-validate", "scan-content", "rebuild-search-embeddings", "optimize-store"},
+			{"catalog-reload", "catalog-refresh", "validate", "generate", "refresh-validate", "scan-content", "rebuild-search-embeddings", "optimize-store"},
 		)
 		bad_status, _bad_type, _bad_payload = self.request("/api/tools/arbitrary-command", method="POST")
 		self.assertEqual(bad_status, 400)

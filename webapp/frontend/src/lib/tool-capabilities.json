@@ -1,0 +1,118 @@
+[
+  {
+    "id": "home",
+    "route": "/",
+    "datasets": [],
+    "operations": [],
+    "search": [],
+    "mutations": [],
+    "integrations": []
+  },
+  {
+    "id": "file-management",
+    "route": "/file-management",
+    "datasets": [],
+    "operations": [],
+    "search": [],
+    "mutations": [
+      "local-git",
+      "staged-lore-export"
+    ],
+    "integrations": []
+  },
+  {
+    "id": "parsec",
+    "route": "/parsec",
+    "datasets": [],
+    "operations": [],
+    "search": [],
+    "mutations": [],
+    "integrations": []
+  },
+  {
+    "id": "lore-editor",
+    "route": "/lore-editor",
+    "datasets": [
+      "lore"
+    ],
+    "operations": [],
+    "search": [
+      "exact",
+      "full-text",
+      "semantic"
+    ],
+    "mutations": [
+      "canonical-draft"
+    ],
+    "integrations": []
+  },
+  {
+    "id": "outfit-editor",
+    "route": "/outfit-editor",
+    "datasets": [
+      "job-outfit-definitions"
+    ],
+    "operations": [
+      "catalog",
+      "analyze",
+      "validate",
+      "render",
+      "interactive"
+    ],
+    "search": [
+      "exact",
+      "structural",
+      "substring"
+    ],
+    "mutations": [
+      "canonical-draft",
+      "staged-game-apply"
+    ],
+    "integrations": [
+      "meridian-analyzer",
+      "byond"
+    ]
+  },
+  {
+    "id": "job-editor",
+    "route": "/job-editor",
+    "datasets": [
+      "job-outfit-definitions"
+    ],
+    "operations": [
+      "catalog",
+      "analyze",
+      "validate",
+      "render",
+      "interactive"
+    ],
+    "search": [
+      "exact",
+      "structural",
+      "substring"
+    ],
+    "mutations": [
+      "canonical-draft",
+      "staged-game-apply"
+    ],
+    "integrations": [
+      "meridian-analyzer",
+      "byond"
+    ]
+  },
+  {
+    "id": "graph",
+    "route": "/graph",
+    "datasets": [
+      "content-graph"
+    ],
+    "operations": [],
+    "search": [
+      "structural"
+    ],
+    "mutations": [
+      "staged-marker-edit"
+    ],
+    "integrations": []
+  }
+]

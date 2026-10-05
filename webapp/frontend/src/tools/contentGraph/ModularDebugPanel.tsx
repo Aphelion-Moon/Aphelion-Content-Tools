@@ -2,7 +2,7 @@ import { For, Show, createResource, createSignal } from 'solid-js';
 import OpenFileActions from '~/components/OpenFileActions';
 import { api } from '~/lib/api';
 import type { components } from '~/lib/api-schema';
-import { announceError, announceSuccess } from '~/lib/notify';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import styles from './ContentGraph.module.css';
 
 type GraphEdit = components['schemas']['GraphEditModel'];
@@ -47,8 +47,9 @@ export default function ModularDebugPanel(props: {
 			setEdits(response.edits ?? []);
 			setLookupMessage(response.scanned ? '' : 'No content graph has been scanned yet.');
 		} catch (error) {
-			setLookupMessage(error instanceof Error ? error.message : String(error));
-			announceError(error, 'content-graph');
+			const message = error instanceof Error ? error.message : String(error);
+			setLookupMessage(message);
+			reportParsec({ type: 'fetch', phase: 'failed', tool: 'content-graph', summary: 'Could not inspect modular edits.', technicalDetail: message });
 		} finally {
 			setLookupBusy(false);
 		}
@@ -63,8 +64,8 @@ export default function ModularDebugPanel(props: {
 		<details class={styles.debugPanel}>
 			<summary>Modular Debug</summary>
 			<p class={styles.metadata}>
-				Inspect edit-marker attribution, missing module documentation, and unresolved labels. Marker writes
-				use a stale-line check and never silently replace changed source.
+				Inspect edit-marker attribution, missing module documentation, and unresolved labels.
+				Preview marker changes before applying them to a clean game checkout.
 			</p>
 			<div class={styles.buttonRow}>
 				<button type="button" disabled={!props.scanned} onClick={() => void refreshDebug()}>Refresh diagnostics</button>
@@ -152,6 +153,7 @@ function MarkerRow(props: { readonly marker: Marker; readonly onSaved: () => Pro
 	const [label, setLabel] = createSignal(props.marker.raw_label);
 	const [busy, setBusy] = createSignal(false);
 	const [message, setMessage] = createSignal('');
+	const [stage, setStage] = createSignal<components['schemas']['MarkerEditResponse'] | null>(null);
 
 	async function toggleHistory(): Promise<void> {
 		const opening = !historyOpen();
@@ -167,23 +169,40 @@ function MarkerRow(props: { readonly marker: Marker; readonly onSaved: () => Pro
 	}
 
 	async function save(): Promise<void> {
+		if (busy()) return;
 		setBusy(true);
+		setMessage('');
 		try {
-			await api.post('/api/graph/markers/edit', {
+			const prepared = await api.post<components['schemas']['MarkerEditResponse']>('/api/graph/markers/edit', {
 				core_file: props.marker.core_file,
 				line_number: props.marker.line_number,
 				expected_line: props.marker.line_text,
 				new_label: label(),
 			});
-			setMessage('Saved. Rescanning to refresh attribution…');
-			announceSuccess('Marker label saved.', 'content-graph');
-			await props.onSaved();
+			setStage(prepared);
 		} catch (error) {
-			setMessage(error instanceof Error ? error.message : String(error));
-			announceError(error, 'content-graph');
+			const message = error instanceof Error ? error.message : String(error);
+			setMessage(message);
+			reportParsec({ type: 'mutation', phase: 'failed', tool: 'content-graph', summary: 'Could not save the marker label.', technicalDetail: message });
 		} finally {
 			setBusy(false);
 		}
+	}
+
+	async function apply(): Promise<void> {
+		const prepared = stage();
+		if (!prepared || busy()) return;
+		setBusy(true);
+		try {
+			await api.post('/api/graph/markers/apply', { stage_id: prepared.stage_id });
+			setStage(null); setEditing(false);
+			setMessage('Applied. Rescanning to refresh attribution…');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'content-graph', summary: 'Marker label saved.' });
+			await props.onSaved();
+		} catch (error) {
+			setStage(null);
+			setMessage(error instanceof Error ? error.message : String(error));
+		} finally { setBusy(false); }
 	}
 
 	return (
@@ -194,7 +213,7 @@ function MarkerRow(props: { readonly marker: Marker; readonly onSaved: () => Pro
 			<OpenFileActions label="Source" repository="game" path={props.marker.core_file} line={props.marker.line_number} />
 			<div class={styles.buttonRow}>
 				<button type="button" onClick={() => void toggleHistory()}>{historyOpen() ? 'Hide history' : 'View history'}</button>
-				<button type="button" onClick={() => setEditing((value) => !value)}>{editing() ? 'Cancel edit' : 'Edit label'}</button>
+				<button type="button" disabled={busy()} onClick={() => { setStage(null); setEditing((value) => !value); }}>{editing() ? 'Cancel edit' : 'Edit label'}</button>
 			</div>
 			<Show when={historyOpen()}>
 				<div class={styles.history}>
@@ -214,9 +233,13 @@ function MarkerRow(props: { readonly marker: Marker; readonly onSaved: () => Pro
 			</Show>
 			<Show when={editing()}>
 				<div class={styles.inlineControls}>
-					<input type="text" value={label()} onInput={(event) => setLabel(event.currentTarget.value)} />
-					<button type="button" disabled={busy()} onClick={() => void save()}>Save</button>
+					<input type="text" aria-label="Marker label" disabled={busy()} value={label()} onInput={(event) => { setStage(null); setLabel(event.currentTarget.value); }} />
+					<button type="button" disabled={busy()} onClick={() => void save()}>Preview change</button>
 				</div>
+				<Show when={stage()}>{(prepared) => <div>
+					<pre aria-label="Marker change preview">{prepared().preview || 'No changes.'}</pre>
+					<button type="button" disabled={busy() || !prepared().preview} onClick={() => void apply()}>Apply change</button>
+				</div>}</Show>
 			</Show>
 			<Show when={message()}>{(text) => <p class={styles.metadata} role="status">{text()}</p>}</Show>
 		</article>

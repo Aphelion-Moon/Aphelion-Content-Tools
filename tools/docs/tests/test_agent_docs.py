@@ -42,6 +42,17 @@ class AgentDocumentTests(unittest.TestCase):
 				errors,
 			)
 
+	def test_ci_rejects_unbounded_python_discovery(self) -> None:
+		with tempfile.TemporaryDirectory() as temporary_directory:
+			root = Path(temporary_directory)
+			(root / ".github" / "workflows").mkdir(parents=True)
+			(root / ".github" / "workflows" / "ci.yml").write_text(
+				"steps:\n  - run: python -m unittest discover\n",
+				encoding="utf-8",
+			)
+			errors = check_repository(root)
+			self.assertIn("CI must not run monolithic Python unittest discovery", errors)
+
 	def test_checked_in_repository_is_consistent(self) -> None:
 		root = Path(__file__).resolve().parents[3]
 		self.assertEqual(check_repository(root), [])

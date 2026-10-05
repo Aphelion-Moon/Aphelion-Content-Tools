@@ -1,0 +1,206 @@
+- generic [ref=e1]:
+  - navigation "Main navigation" [ref=e2]:
+    - link "Home" [ref=e3] [cursor=pointer]:
+      - /url: /
+    - link "Free pixel art assets" [ref=e4] [cursor=pointer]:
+      - /url: /free-pixel-art-assets
+    - link "Contact" [ref=e5] [cursor=pointer]:
+      - /url: /contact
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - link "Pixel Rabbit home" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - img "Pixel Rabbit — Pixel art converter and editor" [ref=e9]
+      - paragraph [ref=e10]: Only on portalrabbit.com
+    - generic [ref=e11]:
+      - heading "Image & GIF to pixel art" [level=1] [ref=e12]
+      - paragraph [ref=e13]: Free online converter and pixel editor.
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - complementary [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: Source
+          - button "Choose image, GIF, or video" [ref=e19] [cursor=pointer]
+          - button "Paste image" [ref=e20] [cursor=pointer]
+          - status [ref=e21]: "Paste: ⌘V / Ctrl+V"
+        - generic [ref=e22]:
+          - generic [ref=e23]: Mode
+          - generic [ref=e24]:
+            - button [ref=e25] [cursor=pointer]:
+              - strong [ref=e26]: Recommended pixelation
+            - button [ref=e27] [cursor=pointer]:
+              - strong [ref=e28]: Grid Artist
+            - button [ref=e29] [cursor=pointer]:
+              - strong [ref=e30]: Faithful pixelation
+            - button [ref=e31] [cursor=pointer]:
+              - strong [ref=e32]: Artist · no outlines
+          - generic [ref=e33]:
+            - generic "Simplify dominant colors into large, clean shapes" [ref=e34]:
+              - checkbox "Contrast shapes" [ref=e35]
+              - text: Contrast shapes
+            - status [ref=e36]: Upload an image to choose settings.
+            - button "Adjust in Grid Artist" [disabled] [ref=e37] [cursor=pointer]
+      - generic [ref=e38]:
+        - paragraph [ref=e39]: Upload or paste an image.
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - text: Zoom
+            - combobox "Zoom" [ref=e42]:
+              - option "Fit" [selected]
+              - option "1×"
+              - option "2×"
+              - option "4×"
+              - option "8×"
+              - option "16×"
+          - button "Fit image" [ref=e43] [cursor=pointer]
+          - button "Edit pixels · layers & frames" [disabled] [ref=e44] [cursor=pointer]
+          - button "Open project" [ref=e45] [cursor=pointer]
+          - button "Clean noise" [disabled] [ref=e46]
+        - generic [ref=e49]:
+          - generic [ref=e50]: ▦
+          - strong [ref=e51]: Drop an image, GIF, or video
+          - text: ⌘V / Ctrl+V to paste
+        - generic [ref=e52]:
+          - button "Reset" [ref=e53] [cursor=pointer]
+          - button "Animate landscape ✷" [disabled] [ref=e54] [cursor=pointer]
+          - button "Sprite sheet → GIF" [disabled] [ref=e55] [cursor=pointer]
+          - button "Download PNG ↓" [disabled] [ref=e56] [cursor=pointer]
+    - complementary "Advertisement" [ref=e57]:
+      - paragraph [ref=e58]: Advertisement
+      - insertion [ref=e59]
+    - region [ref=e61]:
+      - heading "Check out our free pixel art assets" [level=2] [ref=e62]
+      - generic [ref=e63]:
+        - 'link "Browse free pixel art assets: Daisy rabbit" [ref=e64] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Daisy rabbit" [ref=e66]
+          - generic [ref=e67]: Daisy rabbit
+        - 'link "Browse free pixel art assets: Clover rabbit" [ref=e68] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Clover rabbit" [ref=e70]
+          - generic [ref=e71]: Clover rabbit
+        - 'link "Browse free pixel art assets: Peach rabbit" [ref=e72] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Peach rabbit" [ref=e74]
+          - generic [ref=e75]: Peach rabbit
+        - 'link "Browse free pixel art assets: Bluebell rabbit" [ref=e76] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Bluebell rabbit" [ref=e78]
+          - generic [ref=e79]: Bluebell rabbit
+    - region [ref=e80]:
+      - heading "Made with Pixel Rabbit" [level=2] [ref=e81]
+      - generic [ref=e82]:
+        - figure "Drag to compare" [ref=e83]:
+          - generic [ref=e84]:
+            - img "Abstract faces — pixel art" [ref=e85]
+            - img "Abstract faces — original" [ref=e86]
+            - generic: Before
+            - generic: After
+            - generic: ↔
+            - slider "Compare abstract faces before and after" [ref=e87]: "50"
+        - figure "Drag to compare" [ref=e89]:
+          - generic [ref=e90]:
+            - img "Top hat — pixel art" [ref=e91]
+            - img "Top hat — original" [ref=e92]
+            - generic: Before
+            - generic: After
+            - generic: ↔
+            - slider "Compare top hat before and after" [ref=e93]: "50"
+      - generic "Latest pixel art examples" [ref=e95]:
+        - figure [ref=e96]:
+          - 'button "Enlarge: Yellow duck resting on a capybara" [ref=e97]':
+            - img "Yellow duck resting on a capybara" [ref=e98]
+        - figure [ref=e99]:
+          - 'button "Enlarge: Gray rabbit with tall ears" [ref=e100]':
+            - img "Gray rabbit with tall ears" [ref=e101]
+      - generic "Pixel art examples" [ref=e102]:
+        - figure [ref=e103]:
+          - 'button "Enlarge: Character with a turquoise mechanical arm" [ref=e104]':
+            - img "Character with a turquoise mechanical arm" [ref=e105]
+        - figure [ref=e106]:
+          - 'button "Enlarge: Portrait in coral, cream and violet" [ref=e107]':
+            - img "Portrait in coral, cream and violet" [ref=e108]
+        - figure [ref=e109]:
+          - 'button "Enlarge: Knight with a thorn-crowned helmet" [ref=e110]':
+            - img "Knight with a thorn-crowned helmet" [ref=e111]
+        - figure [ref=e112]:
+          - 'button "Enlarge: Portrait with a bouquet of roses" [ref=e113]':
+            - img "Portrait with a bouquet of roses" [ref=e114]
+        - figure [ref=e115]:
+          - 'button "Enlarge: Close-up portrait in sage and mauve" [ref=e116]':
+            - img "Close-up portrait in sage and mauve" [ref=e117]
+        - figure [ref=e118]:
+          - 'button "Enlarge: Mountain stream beneath a blue sky" [ref=e119]':
+            - img "Mountain stream beneath a blue sky" [ref=e120]
+        - figure [ref=e121]:
+          - 'button "Enlarge: Dark-haired character against a violet background" [ref=e122]':
+            - img "Dark-haired character against a violet background" [ref=e123]
+        - figure [ref=e124]:
+          - 'button "Enlarge: Portrait framed by warm orange flowers" [ref=e125]':
+            - img "Portrait framed by warm orange flowers" [ref=e126]
+        - figure [ref=e127]:
+          - 'button "Enlarge: Astronaut with blue hair" [ref=e128]':
+            - img "Astronaut with blue hair" [ref=e129]
+        - figure [ref=e130]:
+          - 'button "Enlarge: Masked character in a muted palette" [ref=e131]':
+            - img "Masked character in a muted palette" [ref=e132]
+        - figure [ref=e133]:
+          - 'button "Enlarge: Blue elf against an orange background" [ref=e134]':
+            - img "Blue elf against an orange background" [ref=e135]
+        - figure [ref=e136]:
+          - 'button "Enlarge: High-contrast pink and black portrait" [ref=e137]':
+            - img "High-contrast pink and black portrait" [ref=e138]
+        - figure [ref=e139]:
+          - 'button "Enlarge: Ivory and red katana" [ref=e140]':
+            - img "Ivory and red katana" [ref=e141]
+        - figure [ref=e142]:
+          - 'button "Enlarge: Golden-haired character in a blue cloak" [ref=e143]':
+            - img "Golden-haired character in a blue cloak" [ref=e144]
+        - figure [ref=e145]:
+          - 'button "Enlarge: Expressive monochrome character" [ref=e146]':
+            - img "Expressive monochrome character" [ref=e147]
+        - figure [ref=e148]:
+          - 'button "Enlarge: Portrait in orange and midnight blue" [ref=e149]':
+            - img "Portrait in orange and midnight blue" [ref=e150]
+      - region [ref=e151]:
+        - generic [ref=e152]:
+          - heading "In motion" [level=3] [ref=e153]
+          - button "Pause animations" [ref=e154] [cursor=pointer]
+        - generic [ref=e155]:
+          - figure [ref=e156]:
+            - generic "The Blue Lantern pixel art animation" [ref=e157]
+          - figure [ref=e158]:
+            - generic "Little Lagoon pixel art animation" [ref=e159]
+          - figure [ref=e160]:
+            - generic "Gilded Arena pixel art animation" [ref=e161]
+  - contentinfo [ref=e162]:
+    - generic [ref=e163]: Pixel Rabbit
+    - navigation "Privacy" [ref=e164]:
+      - link "Privacy" [ref=e165] [cursor=pointer]:
+        - /url: /privacy.html
+      - link "Privacy & cookie settings" [ref=e166] [cursor=pointer]:
+        - /url: /privacy.html
+  - dialog "Pixel Rabbit asks for your consent to use your personal data for the following purposes:" [active] [ref=e170]:
+    - generic [ref=e172]:
+      - generic [ref=e173]:
+        - paragraph [ref=e175]: Welcome to Pixel Rabbit
+        - heading "Pixel Rabbit asks for your consent to use your personal data for the following purposes:" [level=1] [ref=e176]
+      - list [ref=e178]:
+        - listitem [ref=e179]:
+          - generic [ref=e184]: Personalised advertising and content, advertising and content measurement, audience research and services development
+        - listitem [ref=e185]:
+          - generic [ref=e190]: Store and/or access information on a device
+      - button "Learn more" [ref=e191] [cursor=pointer]
+      - generic [ref=e197]:
+        - paragraph [ref=e198]:
+          - text: Your personal data will be processed and information from your device (cookies, unique identifiers, and other device data) may be stored by, accessed by and shared with 210 partners, or used specifically by this site. We and our partners may use precise geolocation data.
+          - button "List of partners." [ref=e199] [cursor=pointer]
+        - paragraph [ref=e200]: Some vendors may process your personal data on the basis of legitimate interest, which you can object to by managing your options below. Look for a link at the bottom of this page or in the site menu to manage or withdraw consent in privacy and cookie settings.
+    - generic [ref=e201]:
+      - generic [ref=e203]:
+        - button "Consent" [ref=e204] [cursor=pointer]:
+          - paragraph [ref=e206]: Consent
+        - button "Do not consent" [ref=e207] [cursor=pointer]:
+          - paragraph [ref=e209]: Do not consent
+      - button "Manage options" [ref=e210] [cursor=pointer]:
+        - paragraph [ref=e211]: Manage options

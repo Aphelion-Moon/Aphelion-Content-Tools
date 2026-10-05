@@ -1,0 +1,51 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "toy-ball-chase",
+  "clipScale": 0.65625,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f0.png",
+      "sha256": "5ff337f3c36d7d3f69ebaaccc92a42eafff79a874441e782c272e2493e37d72e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f1.png",
+      "sha256": "cb7fffc0531cc48f231e83d144dc782d03b12f94d2432e0f02fdb2bd357c2fdb"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f2.png",
+      "sha256": "dd6885f3a947c9b54f77ccc5d4a601955b7b78e1d94731edb0d49c64de716365"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f3.png",
+      "sha256": "60fd12271c895c629bc3c8b44ed600da4cdfd469cea386d96a30311729e6d7a9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f4.png",
+      "sha256": "f5e89356eadf277e2ed31e43f4ab66b9e4f48152f6bc96826fe75e96d5ee562a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f5.png",
+      "sha256": "c447af0df0c6421deab1f7336c8175ffaf0a937c63f96d1c552b134ce0f2b58d"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-chase.png",
+  "sourceSha256": "8d530701d3ea2bb4565a518285917785ede39c43fa89db03a6a0261c602eb51e",
+  "tool": "generated-strip-v4"
+}

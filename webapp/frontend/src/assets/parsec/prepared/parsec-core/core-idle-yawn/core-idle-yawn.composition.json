@@ -1,0 +1,35 @@
+{
+  "tool": "portalrabbit-composition-v1",
+  "frames": [
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-yawn/core-idle-yawn__d0__f0.png",
+      "sourceSha256": "365bc7713ab63ffe1c06607cb6beeda3a438738ea7486119d678275e6c5bb8e1",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f0.png",
+      "sha256": "2a58b613341dd4fa54feb24c86915939c3f0051520c9348957e37698f59aa7e3"
+    },
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-yawn/core-idle-yawn__d0__f1.png",
+      "sourceSha256": "147bd1ffdc6425ee5923e5c210e5b9a2e6fde93901604dce4cc77284625fc016",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f1.png",
+      "sha256": "2ad2b175ed533a8ee8f3ec7ca48a03a067f1c1a20020a896baaae4fe2322a5d8"
+    },
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-yawn/core-idle-yawn__d0__f2.png",
+      "sourceSha256": "046f3e7a4a5bcf583e02bc155c8a1b5fb80084c4eea3a4904db252afb3768e62",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f2.png",
+      "sha256": "5e0ee7cd7ec0b5948a030c796fdbb2fc18585b03c94c5b9f2a55d2c041206f6c"
+    },
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-yawn/core-idle-yawn__d0__f3.png",
+      "sourceSha256": "d09fe173d5e8b982f8f2776a43c077125e1b0ab8cf273a438c00167e54277887",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f3.png",
+      "sha256": "fa4aa38fe46d5eb3bbab2f55564ca67281767455687cb93f6d11a5e4531b99c1"
+    },
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-yawn/core-idle-yawn__d0__f4.png",
+      "sourceSha256": "1234a7c3fa3cc3ee34c245043aa52baf09b4a1f2da6f2d5d2e8d6e444fd919ab",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f4.png",
+      "sha256": "7cbf5cfca0e89011090936687ba95ac56bb0f2ce90d78dd1eebcf3586aa365b4"
+    }
+  ]
+}

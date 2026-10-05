@@ -1,0 +1,171 @@
+{
+  "tool": "generated-strip-v4",
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f0.png",
+      "sha256": "6cf66f0d4dd7fbc5ff13c1378796d5e8a613a92b11d8d0580d3602eae5820bca",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-pounce.png",
+      "sourceSha256": "31344af36dab1b3382bd11ee33d95a8d65f058cb99c0a1a068a51c880bb5f888"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f1.png",
+      "sha256": "5fe0439045f813b62bec64edfea51e45f43a9e7f842601ef2af6a1fc7a3b7ef5",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-pounce.png",
+      "sourceSha256": "31344af36dab1b3382bd11ee33d95a8d65f058cb99c0a1a068a51c880bb5f888"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f2.png",
+      "sha256": "c584beb25497d5ffd7f3e33f856a679421b4854840d8b7027c5ef65306878c2c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-pounce.png",
+      "sourceSha256": "31344af36dab1b3382bd11ee33d95a8d65f058cb99c0a1a068a51c880bb5f888"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f3.png",
+      "sha256": "232e9f08f40aee66d5cab8ca564a0b5399e0e40f7143a2f1dafaf6dbbba686f3",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-pounce.png",
+      "sourceSha256": "31344af36dab1b3382bd11ee33d95a8d65f058cb99c0a1a068a51c880bb5f888"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f4.png",
+      "sha256": "1cce8cdb5cfbb0d3f92309ef30b0c8282177314c492b199f41ef294d30a71047",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-pounce.png",
+      "sourceSha256": "31344af36dab1b3382bd11ee33d95a8d65f058cb99c0a1a068a51c880bb5f888"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f5.png",
+      "sha256": "dcf83d45d89ae25390c3a7220162e7c41d694438159467b61a14ecd016872ca9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-pounce.png",
+      "sourceSha256": "31344af36dab1b3382bd11ee33d95a8d65f058cb99c0a1a068a51c880bb5f888"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-stalk/intrusive-cursor-stalk__d0__f0.png",
+      "sha256": "b1069d7f07e67f65947c19507b9da1cc9927a016578dabb18500aeb4a458d923",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-stalk.png",
+      "sourceSha256": "13615fde58bed899e816651ce6f078c4ff9c53bcc0a0b2fd9b8e30de9d24cc87"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-stalk/intrusive-cursor-stalk__d0__f1.png",
+      "sha256": "864fd40af2aa042d4d2faade403c9bdba6f7e614cd1027341417d3b2087a5fb9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-stalk.png",
+      "sourceSha256": "13615fde58bed899e816651ce6f078c4ff9c53bcc0a0b2fd9b8e30de9d24cc87"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-stalk/intrusive-cursor-stalk__d0__f2.png",
+      "sha256": "8d17d5e2e75a2bd4c0e4a53f97ae673980113c7951c30f5544c979a06b792277",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-stalk.png",
+      "sourceSha256": "13615fde58bed899e816651ce6f078c4ff9c53bcc0a0b2fd9b8e30de9d24cc87"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-stalk/intrusive-cursor-stalk__d0__f3.png",
+      "sha256": "6bb275dcf8799ca1dd921071f8cd387a54efe4a2c99bbbdd6e1699b6520d1597",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-stalk.png",
+      "sourceSha256": "13615fde58bed899e816651ce6f078c4ff9c53bcc0a0b2fd9b8e30de9d24cc87"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-stalk/intrusive-cursor-stalk__d0__f4.png",
+      "sha256": "3cf3cc1ac605f5a4c2b7bc83a844bcb86aa1bf0d2ae7597dbb3793a8a159e38f",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-stalk.png",
+      "sourceSha256": "13615fde58bed899e816651ce6f078c4ff9c53bcc0a0b2fd9b8e30de9d24cc87"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-demand-attention/intrusive-demand-attention__d0__f0.png",
+      "sha256": "00b9bbc2655a4828435d155e1f9e0c1f0b26998e76acbf4afee98018505a7946",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-demand-attention.png",
+      "sourceSha256": "c7cd2d25db03c0fb02efc6ea535db917750fa38d650f2a57ed3e45bb32ba1102"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-demand-attention/intrusive-demand-attention__d0__f1.png",
+      "sha256": "d7f25cafccc216b953e32eecaca02abca42b7513452550b73276c8376826bbbf",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-demand-attention.png",
+      "sourceSha256": "c7cd2d25db03c0fb02efc6ea535db917750fa38d650f2a57ed3e45bb32ba1102"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-demand-attention/intrusive-demand-attention__d0__f2.png",
+      "sha256": "d09bbb608df1dd99ae895ee249d00cd7ad3fa143fff9aabaf5719af8eb81fb3f",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-demand-attention.png",
+      "sourceSha256": "c7cd2d25db03c0fb02efc6ea535db917750fa38d650f2a57ed3e45bb32ba1102"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-demand-attention/intrusive-demand-attention__d0__f3.png",
+      "sha256": "bd97fc0c288faf2a061b2da443e577ed097415814b322911cb82e94827457b8a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-demand-attention.png",
+      "sourceSha256": "c7cd2d25db03c0fb02efc6ea535db917750fa38d650f2a57ed3e45bb32ba1102"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-demand-attention/intrusive-demand-attention__d0__f4.png",
+      "sha256": "08f73cd8859e1ce3e75f2cef525db386c46774b2567732805b092046ef1a6f5b",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-demand-attention.png",
+      "sourceSha256": "c7cd2d25db03c0fb02efc6ea535db917750fa38d650f2a57ed3e45bb32ba1102"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-loiter/intrusive-loiter__d0__f0.png",
+      "sha256": "19ff199b996f2b4b2979b88db8d19194f896728a338e887c4a07abbf7e0928f8",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-loiter.png",
+      "sourceSha256": "aef92d738f1a72326cf9a4b9eadbc3926b748e6c481c4f284da3d0b8d32508ce"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-loiter/intrusive-loiter__d0__f1.png",
+      "sha256": "422e139fd1304921e6f0e08e9034f4c5fe37d9621282f6821f952e145a6b8370",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-loiter.png",
+      "sourceSha256": "aef92d738f1a72326cf9a4b9eadbc3926b748e6c481c4f284da3d0b8d32508ce"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-loiter/intrusive-loiter__d0__f2.png",
+      "sha256": "697ce75176ee53b16c95ceec51d7a774c0ad4dcd99b4dfc667ff227bfcebdb44",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-loiter.png",
+      "sourceSha256": "aef92d738f1a72326cf9a4b9eadbc3926b748e6c481c4f284da3d0b8d32508ce"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-loiter/intrusive-loiter__d0__f3.png",
+      "sha256": "6502fa21d4db9ecddf334f9d692607e5ce56102984088afa01faa7e68de4bc78",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-loiter.png",
+      "sourceSha256": "aef92d738f1a72326cf9a4b9eadbc3926b748e6c481c4f284da3d0b8d32508ce"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f0.png",
+      "sha256": "73c9e5946abf8d89ed83e3bb93b465c5f56944665f662edb1f2be5d6416fa922",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-zoomies.png",
+      "sourceSha256": "5924c113a074b1a2b937743d319de9733e09cdfc69c89a7e13d81ea1ef9b007e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f1.png",
+      "sha256": "5ea8de12a1d29cd9560f7c7251a37bace59a1cd0618be7eb633b2e39e7458b60",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-zoomies.png",
+      "sourceSha256": "5924c113a074b1a2b937743d319de9733e09cdfc69c89a7e13d81ea1ef9b007e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f2.png",
+      "sha256": "8805586a98803d82e3c66ec99816945ad5139043be434c4479d98ac7aab59d15",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-zoomies.png",
+      "sourceSha256": "5924c113a074b1a2b937743d319de9733e09cdfc69c89a7e13d81ea1ef9b007e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f3.png",
+      "sha256": "bd2bff519f906b80aa80588eef439b79fcc5ad564262a9b917c686b95f9c4b1b",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-zoomies.png",
+      "sourceSha256": "5924c113a074b1a2b937743d319de9733e09cdfc69c89a7e13d81ea1ef9b007e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f4.png",
+      "sha256": "139645b0c554449262334ab5a2f10cf01a84f9e9d7daf2d4f68d27cf24b28cb8",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-zoomies.png",
+      "sourceSha256": "5924c113a074b1a2b937743d319de9733e09cdfc69c89a7e13d81ea1ef9b007e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f5.png",
+      "sha256": "9c707b08a67dcb47940c1394fc437c2a18f3f34ba34bfb33cbae359df725db7f",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-zoomies.png",
+      "sourceSha256": "5924c113a074b1a2b937743d319de9733e09cdfc69c89a7e13d81ea1ef9b007e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f6.png",
+      "sha256": "cdfb85fe26205db7def56d196648a4c61c1cbd6691eace731d90271a9dcc43dc",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-zoomies.png",
+      "sourceSha256": "5924c113a074b1a2b937743d319de9733e09cdfc69c89a7e13d81ea1ef9b007e"
+    }
+  ]
+}

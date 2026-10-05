@@ -1,0 +1,346 @@
+- generic [active] [ref=e1]:
+  - navigation "Main navigation" [ref=e2]:
+    - link "Home" [ref=e3] [cursor=pointer]:
+      - /url: /
+    - link "Free pixel art assets" [ref=e4] [cursor=pointer]:
+      - /url: /free-pixel-art-assets
+    - link "Contact" [ref=e5] [cursor=pointer]:
+      - /url: /contact
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - link "Pixel Rabbit home" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - img "Pixel Rabbit — Pixel art converter and editor" [ref=e9]
+      - paragraph [ref=e10]: Only on portalrabbit.com
+    - generic [ref=e11]:
+      - heading "Image & GIF to pixel art" [level=1] [ref=e12]
+      - paragraph [ref=e13]: Free online converter and pixel editor.
+  - main [ref=e14]:
+    - generic [ref=e254]:
+      - generic [ref=e255]:
+        - heading "Pixel editor" [level=2] [ref=e256]
+        - generic [ref=e257]: 96 × 96 px
+        - button "Save project" [ref=e258] [cursor=pointer]
+        - button "Back to conversion" [ref=e259] [cursor=pointer]
+      - generic [ref=e260]:
+        - generic [ref=e261]:
+          - generic [ref=e40]:
+            - generic [ref=e41]:
+              - text: Zoom
+              - combobox "Zoom" [ref=e42]:
+                - option "Fit" [selected]
+                - option "1×"
+                - option "2×"
+                - option "4×"
+                - option "8×"
+                - option "16×"
+            - button "Fit image" [ref=e43] [cursor=pointer]
+          - generic [ref=e263]:
+            - heading "Layers" [level=3] [ref=e264]
+            - generic "Layers" [ref=e265]:
+              - generic [ref=e266]:
+                - button "Hide layer Artwork" [ref=e267] [cursor=pointer]: ◉
+                - button "Artwork" [pressed] [ref=e268] [cursor=pointer]
+                - button "Lock Artwork" [ref=e269] [cursor=pointer]: Lock
+            - generic [ref=e270]:
+              - button "+ Layer" [ref=e271] [cursor=pointer]
+              - button "↑" [disabled] [ref=e272]
+              - button "↓" [disabled] [ref=e273]
+              - button "Rename" [ref=e274] [cursor=pointer]
+              - button "Delete layer" [disabled] [ref=e275]
+        - complementary "Editing tools and animation controls" [ref=e276]:
+          - group [ref=e277]:
+            - generic "Tools" [ref=e278] [cursor=pointer]
+            - toolbar "Pixel editing tools" [ref=e279]:
+              - button "Brush · B" [pressed] [ref=e280] [cursor=pointer]
+              - button "Clean noise brush · N" [ref=e281] [cursor=pointer]
+              - button "Eraser · E" [ref=e282] [cursor=pointer]
+              - button "Fill · G" [ref=e283] [cursor=pointer]
+              - button "Outline · O" [ref=e284] [cursor=pointer]
+              - button "Replace colors · C" [ref=e285] [cursor=pointer]
+              - button "Eyedropper · I" [ref=e286] [cursor=pointer]
+              - button "Line · L" [ref=e287] [cursor=pointer]
+              - button "Select · S" [ref=e288] [cursor=pointer]
+              - button "Move · V" [ref=e289] [cursor=pointer]
+              - button "Pivot · P" [ref=e290] [cursor=pointer]
+              - button "Pose · R" [ref=e291] [cursor=pointer]
+            - group "Selection shape" [ref=e292]:
+              - button "Lasso · Q" [ref=e293] [cursor=pointer]
+              - button "Polygon selection · W" [ref=e294] [cursor=pointer]
+              - button "Close polygon" [disabled] [ref=e295]
+              - button "Cancel selection" [disabled] [ref=e296]
+            - generic [ref=e297]:
+              - generic [ref=e298]:
+                - generic [ref=e299]: Color
+                - textbox "Color" [ref=e300]: "#3568ff"
+              - generic [ref=e301]:
+                - text: Brush size
+                - combobox "Brush size" [ref=e302]:
+                  - option "1 px" [selected]
+                  - option "2 px"
+                  - option "3 px"
+                  - option "4 px"
+                  - option "6 px"
+                  - option "8 px"
+                  - option "12 px"
+                  - option "16 px"
+              - generic "Pixel boundaries are visible at 4× zoom and above" [ref=e303]:
+                - checkbox "Show grid" [ref=e304]
+                - text: Show grid
+              - button "Undo" [disabled] [ref=e305]
+              - button "Redo" [disabled] [ref=e306]
+              - button "Select all" [ref=e307] [cursor=pointer]
+              - button "Deselect" [ref=e308] [cursor=pointer]
+              - button "Copy" [ref=e309] [cursor=pointer]
+              - button "Paste" [disabled] [ref=e310]
+              - button "Clear selected pixels" [ref=e311] [cursor=pointer]
+          - generic [ref=e312]:
+            - heading "Frames · 1 / 256" [level=3] [ref=e313]
+            - generic "Animation frames" [ref=e314]:
+              - button "Frame 1, 120 milliseconds" [ref=e315] [cursor=pointer]: "1"
+            - generic [ref=e317]:
+              - generic [ref=e318]:
+                - text: Frame
+                - spinbutton "Frame" [ref=e319]: "1"
+              - slider "Scrub animation" [ref=e320]: "0"
+              - button "Previous 24 frames" [disabled] [ref=e321]: ‹
+              - generic [ref=e322]: 1–1
+              - button "Next 24 frames" [disabled] [ref=e323]: ›
+              - generic [ref=e324]:
+                - text: Length
+                - spinbutton "Length" [ref=e325]: "96"
+              - button "Extend timeline" [ref=e326] [cursor=pointer]
+              - button "Append project" [ref=e327] [cursor=pointer]
+            - generic [ref=e328]:
+              - button "Play" [disabled] [ref=e329]
+              - button "+ Blank frame" [ref=e330] [cursor=pointer]
+              - button "Duplicate frame" [ref=e331] [cursor=pointer]
+              - button "Delete frame" [disabled] [ref=e332]
+              - button "←" [disabled] [ref=e333]
+              - button "→" [disabled] [ref=e334]
+            - generic [ref=e335]:
+              - generic [ref=e336]:
+                - text: Duration
+                - spinbutton "Duration ms" [ref=e337]: "120"
+                - text: ms
+              - generic [ref=e338]:
+                - checkbox "Onion skin" [ref=e339]
+                - text: Onion skin
+          - generic [ref=e340]:
+            - group [ref=e341]:
+              - generic "Parts & motion" [ref=e342] [cursor=pointer]
+              - generic [ref=e343]:
+                - button "Selection → part" [disabled] [ref=e344]
+                - button "Make layer a part" [ref=e345] [cursor=pointer]
+                - generic [ref=e346]:
+                  - checkbox "Show parts & joints" [checked] [ref=e347]
+                  - text: Show parts & joints
+                - generic [ref=e348]:
+                  - checkbox "Paint hidden areas" [ref=e349]
+                  - text: Paint hidden areas
+              - paragraph [ref=e350]: Select pixels to separate a part, or use a whole layer.
+            - group [ref=e351]:
+              - generic "Shared frame edits" [ref=e352] [cursor=pointer]
+              - option "Current frame" [selected]
+              - option "Frame range"
+              - option "All frames"
+            - group [ref=e353]:
+              - generic "Animation checks" [ref=e354] [cursor=pointer]
+              - option "1 pixel"
+              - option "Up to 3 pixels" [selected]
+              - option "Up to 6 pixels"
+          - group [ref=e355]:
+            - generic "Noise cleanup" [ref=e356] [cursor=pointer]
+            - option "Gentle"
+            - option "Balanced" [selected]
+            - option "Strong"
+            - option "Up to 1 pixel"
+            - option "Up to 2 pixels"
+            - option "Up to 3 pixels" [selected]
+            - option "Up to 4 pixels"
+            - option "Up to 6 pixels"
+            - option "Up to 8 pixels"
+            - option "Up to 12 pixels"
+            - option "All frames" [selected]
+            - option "Current frame"
+          - group [ref=e357]:
+            - generic "Outline cleanup · 1 px" [ref=e358] [cursor=pointer]
+            - option "Off"
+            - option "1 px" [selected]
+            - option "Up to 2 px"
+            - option "Up to 3 px"
+            - option "Up to 2 px"
+            - option "Up to 3 px"
+            - option "Up to 4 px" [selected]
+            - option "Up to 6 px"
+            - option "Up to 8 px"
+            - option "Dark lines" [selected]
+            - option "Picked color"
+            - option "1 px"
+            - option "2 px"
+            - option "4 px"
+            - option "8 px" [selected]
+            - option "12 px"
+            - option "16 px"
+            - option "24 px"
+            - option "32 px"
+            - option "48 px"
+            - option "64 px"
+          - generic [ref=e359]:
+            - generic [ref=e360]:
+              - text: PNG size
+              - combobox "PNG size" [ref=e361]:
+                - option "96 × 96 px · 1× · native"
+                - option "192 × 192 px · 2×"
+                - option "288 × 288 px · 3×"
+                - option "384 × 384 px · 4×"
+                - option "480 × 480 px · 5×"
+                - option "576 × 576 px · 6×"
+                - option "672 × 672 px · 7×"
+                - option "768 × 768 px · 8×" [selected]
+                - option "864 × 864 px · 9×"
+                - option "960 × 960 px · 10×"
+                - option "1056 × 1056 px · 11×"
+                - option "1152 × 1152 px · 12×"
+                - option "1248 × 1248 px · 13×"
+                - option "1344 × 1344 px · 14×"
+                - option "1440 × 1440 px · 15×"
+                - option "1536 × 1536 px · 16×"
+                - option "1632 × 1632 px · 17×"
+                - option "1728 × 1728 px · 18×"
+                - option "1824 × 1824 px · 19×"
+                - option "1920 × 1920 px · 20×"
+                - option "2016 × 2016 px · 21×"
+                - option "2112 × 2112 px · 22×"
+                - option "2208 × 2208 px · 23×"
+                - option "2304 × 2304 px · 24×"
+                - option "2400 × 2400 px · 25×"
+                - option "2496 × 2496 px · 26×"
+                - option "2592 × 2592 px · 27×"
+                - option "2688 × 2688 px · 28×"
+                - option "2784 × 2784 px · 29×"
+                - option "2880 × 2880 px · 30×"
+                - option "2976 × 2976 px · 31×"
+                - option "3072 × 3072 px · 32×"
+                - option "3168 × 3168 px · 33×"
+                - option "3264 × 3264 px · 34×"
+                - option "3360 × 3360 px · 35×"
+                - option "3456 × 3456 px · 36×"
+                - option "3552 × 3552 px · 37×"
+                - option "3648 × 3648 px · 38×"
+                - option "3744 × 3744 px · 39×"
+                - option "3840 × 3840 px · 40×"
+            - button "Download PNG" [ref=e362] [cursor=pointer]
+            - button "Download animation GIF" [disabled] [ref=e363]
+    - region [ref=e61]:
+      - heading "Check out our free pixel art assets" [level=2] [ref=e62]
+      - generic [ref=e63]:
+        - 'link "Browse free pixel art assets: Daisy rabbit" [ref=e64] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Daisy rabbit" [ref=e66]
+          - generic [ref=e67]: Daisy rabbit
+        - 'link "Browse free pixel art assets: Clover rabbit" [ref=e68] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Clover rabbit" [ref=e70]
+          - generic [ref=e71]: Clover rabbit
+        - 'link "Browse free pixel art assets: Peach rabbit" [ref=e72] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Peach rabbit" [ref=e74]
+          - generic [ref=e75]: Peach rabbit
+        - 'link "Browse free pixel art assets: Bluebell rabbit" [ref=e76] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Bluebell rabbit" [ref=e78]
+          - generic [ref=e79]: Bluebell rabbit
+    - region [ref=e80]:
+      - heading "Made with Pixel Rabbit" [level=2] [ref=e81]
+      - generic [ref=e82]:
+        - figure "Drag to compare" [ref=e83]:
+          - generic [ref=e84]:
+            - img "Abstract faces — pixel art" [ref=e85]
+            - img "Abstract faces — original" [ref=e86]
+            - generic: Before
+            - generic: After
+            - generic: ↔
+            - slider "Compare abstract faces before and after" [ref=e87]: "50"
+        - figure "Drag to compare" [ref=e89]:
+          - generic [ref=e90]:
+            - img "Top hat — pixel art" [ref=e91]
+            - img "Top hat — original" [ref=e92]
+            - generic: Before
+            - generic: After
+            - generic: ↔
+            - slider "Compare top hat before and after" [ref=e93]: "50"
+      - generic "Latest pixel art examples" [ref=e95]:
+        - figure [ref=e96]:
+          - 'button "Enlarge: Yellow duck resting on a capybara" [ref=e97]':
+            - img "Yellow duck resting on a capybara" [ref=e98]
+        - figure [ref=e99]:
+          - 'button "Enlarge: Gray rabbit with tall ears" [ref=e100]':
+            - img "Gray rabbit with tall ears" [ref=e101]
+      - generic "Pixel art examples" [ref=e102]:
+        - figure [ref=e103]:
+          - 'button "Enlarge: Character with a turquoise mechanical arm" [ref=e104]':
+            - img "Character with a turquoise mechanical arm" [ref=e105]
+        - figure [ref=e106]:
+          - 'button "Enlarge: Portrait in coral, cream and violet" [ref=e107]':
+            - img "Portrait in coral, cream and violet" [ref=e108]
+        - figure [ref=e109]:
+          - 'button "Enlarge: Knight with a thorn-crowned helmet" [ref=e110]':
+            - img "Knight with a thorn-crowned helmet" [ref=e111]
+        - figure [ref=e112]:
+          - 'button "Enlarge: Portrait with a bouquet of roses" [ref=e113]':
+            - img "Portrait with a bouquet of roses" [ref=e114]
+        - figure [ref=e115]:
+          - 'button "Enlarge: Close-up portrait in sage and mauve" [ref=e116]':
+            - img "Close-up portrait in sage and mauve" [ref=e117]
+        - figure [ref=e118]:
+          - 'button "Enlarge: Mountain stream beneath a blue sky" [ref=e119]':
+            - img "Mountain stream beneath a blue sky" [ref=e120]
+        - figure [ref=e121]:
+          - 'button "Enlarge: Dark-haired character against a violet background" [ref=e122]':
+            - img "Dark-haired character against a violet background" [ref=e123]
+        - figure [ref=e124]:
+          - 'button "Enlarge: Portrait framed by warm orange flowers" [ref=e125]':
+            - img "Portrait framed by warm orange flowers" [ref=e126]
+        - figure [ref=e127]:
+          - 'button "Enlarge: Astronaut with blue hair" [ref=e128]':
+            - img "Astronaut with blue hair" [ref=e129]
+        - figure [ref=e130]:
+          - 'button "Enlarge: Masked character in a muted palette" [ref=e131]':
+            - img "Masked character in a muted palette" [ref=e132]
+        - figure [ref=e133]:
+          - 'button "Enlarge: Blue elf against an orange background" [ref=e134]':
+            - img "Blue elf against an orange background" [ref=e135]
+        - figure [ref=e136]:
+          - 'button "Enlarge: High-contrast pink and black portrait" [ref=e137]':
+            - img "High-contrast pink and black portrait" [ref=e138]
+        - figure [ref=e139]:
+          - 'button "Enlarge: Ivory and red katana" [ref=e140]':
+            - img "Ivory and red katana" [ref=e141]
+        - figure [ref=e142]:
+          - 'button "Enlarge: Golden-haired character in a blue cloak" [ref=e143]':
+            - img "Golden-haired character in a blue cloak" [ref=e144]
+        - figure [ref=e145]:
+          - 'button "Enlarge: Expressive monochrome character" [ref=e146]':
+            - img "Expressive monochrome character" [ref=e147]
+        - figure [ref=e148]:
+          - 'button "Enlarge: Portrait in orange and midnight blue" [ref=e149]':
+            - img "Portrait in orange and midnight blue" [ref=e150]
+      - region [ref=e151]:
+        - generic [ref=e152]:
+          - heading "In motion" [level=3] [ref=e153]
+          - button "Pause animations" [ref=e154] [cursor=pointer]
+        - generic [ref=e155]:
+          - figure [ref=e156]:
+            - generic "The Blue Lantern pixel art animation" [ref=e157]
+          - figure [ref=e158]:
+            - generic "Little Lagoon pixel art animation" [ref=e159]
+          - figure [ref=e160]:
+            - generic "Gilded Arena pixel art animation" [ref=e161]
+  - contentinfo [ref=e162]:
+    - generic [ref=e163]: Pixel Rabbit
+    - navigation "Privacy" [ref=e164]:
+      - link "Privacy" [ref=e165] [cursor=pointer]:
+        - /url: /privacy.html
+      - link "Privacy & cookie settings" [ref=e166] [cursor=pointer]:
+        - /url: /privacy.html

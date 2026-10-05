@@ -1,16 +1,18 @@
 .card {
-	background: rgba(49, 0, 71, 0.92);
+	background: var(--bg-1);
 	border: 1px solid var(--border);
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	padding: 1rem;
-	box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.28);
+	box-shadow: var(--shadow-panel);
+	border-top: 2px solid var(--accent);
 }
 
 .eyebrow {
 	color: var(--plasma);
 	text-transform: uppercase;
 	letter-spacing: 0.12em;
-	font-size: 0.75rem;
+	font-size: 0.6875rem;
+	font-family: var(--font-mono);
 	margin: 0 0 0.25rem;
 }
 

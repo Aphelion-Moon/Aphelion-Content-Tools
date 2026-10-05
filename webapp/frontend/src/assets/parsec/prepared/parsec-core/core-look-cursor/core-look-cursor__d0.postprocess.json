@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "core-look-cursor",
+  "clipScale": 0.7058823529411765,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-look-cursor/core-look-cursor__d0__f0.png",
+      "sha256": "d504042fe2fee8c65143f350aa80e3555864e92e5a21a33e7cd9435599106792"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-look-cursor/core-look-cursor__d0__f1.png",
+      "sha256": "ef24aa99e4fa96d44689ae52755c75b527d404631eaf553ae9631acedf6b316e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-look-cursor/core-look-cursor__d0__f2.png",
+      "sha256": "2280ddd9cf0fc6ca1e4c75980eda5b9287a901b32422f50766ee6d553a5e3add"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-look-cursor/core-look-cursor__d0__f3.png",
+      "sha256": "f3451f6a1ab6b3eda334c467d6552e1fdb50103b2bece585c236123b0150fbf2"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-look-cursor.png",
+  "sourceSha256": "86e8763dadba354f5bc4c7b63c8bb28109f1d1e225e1d32d8c9431b31995b36f",
+  "tool": "generated-strip-v4"
+}

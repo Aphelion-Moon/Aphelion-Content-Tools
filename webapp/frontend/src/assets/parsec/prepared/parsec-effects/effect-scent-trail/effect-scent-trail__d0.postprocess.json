@@ -1,0 +1,38 @@
+{
+  "tool": "portalrabbit-effect-envelope-v1",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/effect-scent-trail.png",
+  "sourceSha256": "70aa737dd443220aa609195be373593df1a5522d7832534bbf15bfdf8a2dac51",
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "envelope": [
+    6,
+    85,
+    15,
+    89
+  ],
+  "clipScale": 0.05128205128205128,
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-scent-trail/effect-scent-trail__d0__f0.png",
+      "sha256": "d4db61e0a42704ae86c4a3787b86766299208909063b052de5b9099eba7db29f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-scent-trail/effect-scent-trail__d0__f1.png",
+      "sha256": "32e6945d8189a0abbe573a55ad54681be3ee6bc22b6c95762312806568ad38fa"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-scent-trail/effect-scent-trail__d0__f2.png",
+      "sha256": "aedfbeab5725740a91f43f71a1fd914b83d2da86958c7c3ee1ee0cf1ac5ceb56"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-scent-trail/effect-scent-trail__d0__f3.png",
+      "sha256": "b11d10bf6176e16425d73b4259ddf95d0a3337867675a6bb3b18c15ec0e50153"
+    }
+  ]
+}

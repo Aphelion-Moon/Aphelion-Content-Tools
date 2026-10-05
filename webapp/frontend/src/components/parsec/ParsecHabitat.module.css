@@ -1,0 +1,49 @@
+.habitat {
+	position: relative;
+	z-index: 20;
+}
+
+.surface {
+	position: relative;
+	border-radius: var(--radius);
+	box-shadow: 0 0 0 1px var(--line);
+}
+
+.expanded {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: min(30rem, calc(100vw - 3rem));
+	max-height: min(42rem, calc(100vh - 3rem));
+	overflow: auto;
+	background: var(--void);
+	box-shadow: 0 1rem 2.8rem rgba(0, 0, 0, 0.58), 0 0 0 1px var(--magenta);
+}
+
+.habitat[data-expanded='false'] :global([data-space='habitat']) {
+	display: none;
+}
+
+.habitat[data-expanded='true'] :global([data-parsec-stage]) {
+	min-height: 18rem;
+}
+
+.expandControl {
+	position: absolute;
+	top: 0.35rem;
+	right: 0.35rem;
+	z-index: 3;
+	padding: 0.28rem 0.42rem;
+	font-size: 0.68rem;
+	background: var(--bg-1);
+}
+
+@media (max-width: 900px) {
+	.expanded {
+		position: fixed;
+		top: 1rem;
+		left: 1rem;
+		width: calc(100vw - 2rem);
+		max-height: calc(100vh - 2rem);
+	}
+}

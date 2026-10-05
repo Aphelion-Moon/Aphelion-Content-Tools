@@ -4,7 +4,7 @@ import OpenFileActions from '~/components/OpenFileActions';
 import { api } from '~/lib/api';
 import type { components } from '~/lib/api-schema';
 import { addReference } from '~/lib/references';
-import { announceError, announceSuccess } from '~/lib/notify';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import ConflictPanel, { recordConflictFrom, type RecordConflictDetails } from './ConflictPanel';
 import { buildEntryPayload, draftFromEntry, type IconSlot } from './entryDraft';
 import type { ReviewEntry } from './reviewFeed';
@@ -161,15 +161,16 @@ export default function EntryEditor(props: {
 					entry: candidate.payload,
 				});
 			setMessage(response.created ? 'Override created and generated.' : 'Override saved and generated.');
-			announceSuccess(response.created ? 'Override created and generated.' : 'Override saved and generated.', 'lore-editor');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'lore-editor', summary: response.created ? 'Override created and generated.' : 'Override saved and generated.' });
 			props.onDirtyChange(false);
 			props.onReload(props.entry.type_path);
 		} catch (error) {
 			const details = recordConflictFrom(error);
 			if (details) setConflict({ ...details, base: details.base ?? props.entry.raw });
 			else {
-				setMessage(error instanceof Error ? error.message : String(error));
-				announceError(error, 'lore-editor');
+				const message = error instanceof Error ? error.message : String(error);
+				setMessage(message);
+				reportParsec({ type: 'mutation', phase: 'failed', tool: 'lore-editor', summary: 'Could not save the lore override.', technicalDetail: message });
 			}
 		} finally {
 			setSaving(false);
@@ -186,13 +187,16 @@ export default function EntryEditor(props: {
 				source_file: props.entry.source_file,
 				expected_record_hash: props.entry.record_hash,
 			});
-			announceSuccess('Override removed and generated.', 'lore-editor');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'lore-editor', summary: 'Override removed and generated.' });
 			props.onDirtyChange(false);
 			props.onReload(props.entry.type_path);
 		} catch (error) {
 			const details = recordConflictFrom(error);
 			if (details) setConflict({ ...details, base: details.base ?? props.entry.raw });
-			else announceError(error, 'lore-editor');
+			else {
+				const message = error instanceof Error ? error.message : String(error);
+				reportParsec({ type: 'mutation', phase: 'failed', tool: 'lore-editor', summary: 'Could not remove the lore override.', technicalDetail: message });
+			}
 		} finally {
 			setSaving(false);
 		}
@@ -207,10 +211,11 @@ export default function EntryEditor(props: {
 				label: props.entry.name ?? props.entry.base_name ?? props.entry.label ?? props.entry.type_path,
 			});
 			setMessage('Added to shared references.');
-			announceSuccess('Added to shared references.', 'lore-editor');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'lore-editor', summary: 'Added to shared references.' });
 		} catch (error) {
-			setMessage(error instanceof Error ? error.message : String(error));
-			announceError(error, 'lore-editor');
+			const message = error instanceof Error ? error.message : String(error);
+			setMessage(message);
+			reportParsec({ type: 'mutation', phase: 'failed', tool: 'lore-editor', summary: 'Could not add the lore entry to shared references.', technicalDetail: message });
 		}
 	}
 

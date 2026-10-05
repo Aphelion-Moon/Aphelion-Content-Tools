@@ -6,10 +6,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from fastapi.testclient import TestClient
-
 from tools.lore_editor.records import atomic_write_record, canonical_record_hash, record_path
-from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
+from tools.lore_editor.tests.store_helpers import fixture_table, seed_override, seed_targets
 from webapp.api import create_app
 from webapp.api.errors import (
 	ApiError,
@@ -20,9 +18,12 @@ from webapp.api.errors import (
 	StoreUnavailable,
 )
 from webapp.api.models import CommitInfo, GraphResponse
+from webapp.git_adapter import WorkspaceRevision
 from webapp.store import db
-from webapp.store.schema import encode, table
+from webapp.store.metadata import ProjectionRevision
+from webapp.store.schema import encode
 from webapp.store.search import SearchReport
+from webapp.tests.http_client import TestClient
 
 
 class ErrorTaxonomyTests(unittest.TestCase):
@@ -71,6 +72,16 @@ class ApiContractTests(unittest.TestCase):
 		self.assertEqual(response.status_code, HTTPStatus.OK)
 		self.assertEqual(response.json(), {"ok": True, "service": "aphelion-content-tools"})
 
+	def test_parsec_asset_register_is_served_as_markdown(self) -> None:
+		register = self.root / "references/parsec-asset-register.md"
+		register.parent.mkdir(parents=True)
+		register.write_text("# Parsec Asset Register\n", encoding="utf-8")
+		with TestClient(self.app) as client:
+			response = client.get("/references/parsec-asset-register.md")
+		self.assertEqual(response.status_code, HTTPStatus.OK)
+		self.assertTrue(response.headers["content-type"].startswith("text/markdown"))
+		self.assertEqual(response.text.splitlines(), ["# Parsec Asset Register"])
+
 	def test_openapi_schema_generates_and_documents_every_router(self) -> None:
 		schema = self.app.openapi()
 		paths = schema["paths"]
@@ -79,6 +90,7 @@ class ApiContractTests(unittest.TestCase):
 		for expected in [
 			"/api/health",
 			"/api/store/health",
+			"/api/workspace/revision",
 			"/api/search",
 			"/api/tools",
 			"/api/tools/active",
@@ -89,6 +101,27 @@ class ApiContractTests(unittest.TestCase):
 			"/api/export/stages",
 		]:
 			self.assertIn(expected, paths, f"{expected} missing from the OpenAPI schema")
+
+	def test_workspace_revision_is_read_only_and_typed(self) -> None:
+		revision = WorkspaceRevision(
+			worktree_id="worktree-one",
+			branch="writer/zoe",
+			head="abc123",
+			content_revision="content123",
+			projection_revision=ProjectionRevision(1, "content123", "model", "current"),
+		)
+		with patch("webapp.api.routes.store.workspace_revision", return_value=revision), TestClient(self.app) as client:
+			response = client.get("/api/workspace/revision")
+
+		self.assertEqual(response.status_code, HTTPStatus.OK)
+		self.assertEqual(response.json()["branch"], "writer/zoe")
+		self.assertEqual(response.json()["projection_revision"]["content_revision"], "content123")
+
+	def test_unavailable_workspace_revision_explicitly_invalidates_polling_clients(self) -> None:
+		with patch("webapp.api.routes.store.workspace_revision", side_effect=ValueError("unavailable")), TestClient(self.app) as client:
+			response = client.get("/api/workspace/revision")
+		self.assertEqual(response.status_code, HTTPStatus.OK)
+		self.assertIsNone(response.json())
 
 	def test_graph_response_omits_absent_fields_and_uses_transport_compression(self) -> None:
 		graph = {
@@ -107,9 +140,10 @@ class ApiContractTests(unittest.TestCase):
 			"directory_count": 1, "reference_count": 0,
 		}
 		with TestClient(self.app) as client:
-			db.upsert_rows(table(self.root, "manifests"), "id", [{
-				"id": "graph", "raw_json": encode({"manifest": manifest, "counts": graph["counts"], "graph": graph}), "text": "",
-			}])
+			with fixture_table(self.root, "manifests") as manifests:
+				db.upsert_rows(manifests, "id", [{
+					"id": "graph", "raw_json": encode({"manifest": manifest, "counts": graph["counts"], "graph": graph}), "text": "",
+				}])
 			response = client.get("/api/graph", headers={"Accept-Encoding": "gzip"})
 
 		self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -158,7 +192,7 @@ class ApiContractTests(unittest.TestCase):
 		)
 		with (
 			TestClient(self.app) as client,
-			patch("webapp.api.routes.store.search", return_value=report) as search_spy,
+			patch("webapp.application_search.search", return_value=report) as search_spy,
 		):
 			response = client.post("/api/search", json={
 				"query": "radio",

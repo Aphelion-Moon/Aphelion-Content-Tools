@@ -103,6 +103,24 @@ class CliTests(unittest.TestCase):
 		self.assertIn("catalog", stdout.lower())
 		self.assertEqual(stderr, "")
 
+	def test_catalog_reload_dispatches_explicit_paths_and_reports_failure(self) -> None:
+		from tools.lore_editor import cli
+		from tools.lore_editor.catalog_seed import CatalogBootstrapResult
+
+		repo_root = self.make_repo()
+		with patch.object(cli, "reload_catalog_seed", return_value=CatalogBootstrapResult("cached-seed", 1), create=True) as reload:
+			status, stdout, stderr = self.run_cli("catalog-reload", "--repo-root", str(repo_root), "--manifest", "release.json", "--cache-root", "seed-cache", "--game-repo", "game")
+		self.assertEqual(status, 0)
+		self.assertIn("verified release catalog", stdout)
+		self.assertEqual(stderr, "")
+		self.assertEqual(reload.call_args.kwargs["manifest_path"], Path("release.json"))
+		self.assertEqual(reload.call_args.kwargs["cache_root"], Path("seed-cache"))
+		self.assertEqual(reload.call_args.kwargs["game_repo_root"], Path("game"))
+		with patch.object(cli, "reload_catalog_seed", side_effect=ValueError("Release catalog is unavailable."), create=True):
+			status, _stdout, stderr = self.run_cli("catalog-reload", "--repo-root", str(repo_root))
+		self.assertEqual(status, 1)
+		self.assertIn("unavailable", stderr)
+
 	def test_catalog_refresh_reports_changed_and_stale_targets(self) -> None:
 		repo_root = self.make_repo()
 		probe_output_path = repo_root / "data/lore_overhaul_targets.json"

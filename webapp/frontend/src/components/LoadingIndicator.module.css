@@ -1,0 +1,40 @@
+.indicator {
+	display: grid;
+	gap: 0.4rem;
+	width: min(100%, 28rem);
+	color: var(--muted);
+	font-size: 0.82rem;
+}
+
+.track {
+	position: relative;
+	height: 0.3rem;
+	overflow: hidden;
+	border-radius: 999px;
+	background: var(--line);
+}
+
+.bar {
+	position: absolute;
+	inset-block: 0;
+	left: -35%;
+	width: 35%;
+	border-radius: inherit;
+	background: var(--plasma);
+	animation: loading-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+	to {
+		left: 100%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bar {
+		left: 0;
+		width: 100%;
+		animation: none;
+		opacity: 0.7;
+	}
+}

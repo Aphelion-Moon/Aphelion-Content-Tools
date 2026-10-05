@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from threading import Lock
 
 EMBEDDING_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 EMBEDDING_DIM = 384
+EMBEDDING_BATCH_SIZE = 32
 
 _model = None
 _model_lock = Lock()
@@ -25,6 +28,8 @@ class EmbeddingStatus:
 
 
 def _model_cache_dir() -> str | None:
+	if getattr(sys, "frozen", False):
+		return str(Path(sys._MEIPASS) / "models")
 	local_app_data = os.environ.get("LOCALAPPDATA")
 	if not local_app_data:
 		return None
@@ -52,12 +57,13 @@ def embeddings_available() -> bool:
 	return _load_model() is not None
 
 
-def embedding_status() -> EmbeddingStatus:
-	available = embeddings_available()
+def embedding_status(*, initialize: bool = True) -> EmbeddingStatus:
+	available = embeddings_available() if initialize else _model is not None
+	reason = _model_load_error or ("Embedding model is unavailable." if _model_load_failed else "Embedding model has not been initialized.")
 	return EmbeddingStatus(
 		available=available,
 		model_id=EMBEDDING_MODEL_NAME,
-		reason=None if available else (_model_load_error or "Embedding model is unavailable."),
+		reason=None if available else reason,
 	)
 
 
@@ -76,4 +82,4 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
 	# anything. That's real fragility for uncertain gain given the actual fix for the slow-refresh problem
 	# is content-hash diffing (see webapp/store/db.py's sync_snapshot) so full re-embeds become rare, not
 	# faster embeds on every call. Single-process default threading only.
-	return [list(vector) for vector in model.embed(list(texts))]
+	return [list(vector) for vector in model.embed(list(texts), batch_size=EMBEDDING_BATCH_SIZE)]

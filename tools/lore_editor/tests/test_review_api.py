@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,9 +13,10 @@ from tools.lore_editor.api import (
 	save_review_response,
 )
 from tools.lore_editor.records import canonical_record_hash, record_path
-from tools.lore_editor.tests.store_helpers import seed_group, seed_override, seed_review, seed_targets
+from tools.lore_editor.taxonomy import load_groups
+from tools.lore_editor.tests.store_helpers import seed_assignment, seed_group, seed_override, seed_review, seed_targets
 from webapp.store import db
-from webapp.store.metadata import activate_projection, new_projection_metadata, projection_path, write_projection_marker
+from webapp.store.generations import staged_projection
 
 
 class ReviewApiTests(unittest.TestCase):
@@ -121,6 +121,39 @@ class ReviewApiTests(unittest.TestCase):
 		response = list_review_response(self.repo_root, groups=("frontier-cults",), statuses=("overridden",))
 		self.assertEqual([entry["type_path"] for entry in response["entries"]], ["/obj/item/radio"])
 
+	def test_group_write_does_not_persist_when_assignment_validation_fails(self) -> None:
+		with self.assertRaisesRegex(ValueError, "Invalid type path"):
+			save_group_response(self.repo_root, {
+				"id": "invalid-assignment-group",
+				"label": "Invalid assignment group",
+				"color": "#f59e0b",
+				"keywords": [],
+				"type_path_prefixes": [],
+				"assignments": ["relative/type/path"],
+			})
+
+		self.assertNotIn(
+			"invalid-assignment-group",
+			{group.id for group in load_groups(self.repo_root).groups},
+		)
+
+	def test_group_assignment_adds_new_group_without_replacing_existing_groups(self) -> None:
+		seed_assignment(self.repo_root, "/obj/item/radio", ["nanotrasen"])
+
+		save_group_response(self.repo_root, {
+			"id": "frontier-cults",
+			"label": "Frontier Cults",
+			"color": "#f59e0b",
+			"keywords": [],
+			"type_path_prefixes": [],
+			"assignments": ["/obj/item/radio"],
+		})
+
+		self.assertEqual(
+			load_groups(self.repo_root).assignments["/obj/item/radio"],
+			("nanotrasen", "frontier-cults"),
+		)
+
 	def test_needs_attention_is_a_writer_action(self) -> None:
 		flagged = save_review_response(self.repo_root, "/obj/item/radio", {
 			"status": "needs-attention",
@@ -196,11 +229,8 @@ class ReviewApiTests(unittest.TestCase):
 	def test_projection_activation_invalidates_caches_without_an_in_process_generation_change(self) -> None:
 		with patch.object(db, "current_generation", return_value=0):
 			list_review_response(self.repo_root)
-			metadata = new_projection_metadata("external-worker-revision")
-			destination = projection_path(self.repo_root, metadata.generation_id)
-			shutil.copytree(db.store_path(self.repo_root), destination)
-			write_projection_marker(self.repo_root, metadata)
-			activate_projection(self.repo_root, metadata)
+			with staged_projection(self.repo_root, content_revision="external-worker-revision", changed_tables=()):
+				pass
 
 			with patch.object(api, "_build_review_entries_snapshot", wraps=api._build_review_entries_snapshot) as build_spy:
 				list_review_response(self.repo_root)

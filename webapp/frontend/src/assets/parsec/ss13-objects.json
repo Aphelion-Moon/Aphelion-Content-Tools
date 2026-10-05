@@ -1,0 +1,68 @@
+{
+  "ss13-objects/cage-closed/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 0
+  },
+  "ss13-objects/cage-locked/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 0
+  },
+  "ss13-objects/cage-occupied/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 0
+  },
+  "ss13-objects/cage-open/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 0
+  },
+  "ss13-objects/carp-plush/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 96
+  },
+  "ss13-objects/dogbed/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 96
+  },
+  "ss13-objects/hairbrush/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 96
+  },
+  "ss13-objects/tennis-ball/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 96
+  },
+  "ss13-objects/toolbox/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 192
+  },
+  "ss13-objects/toy-mouse/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 192
+  },
+  "ss13-objects/tug-rope/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 192
+  }
+}

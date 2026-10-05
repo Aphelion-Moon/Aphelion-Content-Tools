@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "touch-pat-soft",
+  "clipScale": 0.6885245901639344,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-pat-soft/touch-pat-soft__d0__f0.png",
+      "sha256": "12f03812e4d19e544e5e0022e6466d94585a5835b00994d6eecf4bf419eef044"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-pat-soft/touch-pat-soft__d0__f1.png",
+      "sha256": "743ce1a3d1e3de9366b89355b092104b47858306ad74617dadb4416ac7d07f80"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-pat-soft/touch-pat-soft__d0__f2.png",
+      "sha256": "3b661a77b3029406c32897c132fc68dd43ab2b00911e9cc4d6b2a321ac9b9964"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-pat-soft/touch-pat-soft__d0__f3.png",
+      "sha256": "fede634a01f8525dc49907d6c509780b369b8e071ae7ef60bb4f4ae8d2749326"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/touch-pat-soft.png",
+  "sourceSha256": "35e66f5d5e5a176a4071a34baf67bf1e7845e3762c4b7f09f02ae946979d3597",
+  "tool": "generated-strip-v4"
+}

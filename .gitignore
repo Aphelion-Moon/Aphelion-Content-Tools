@@ -1,5 +1,8 @@
 # Python
 __pycache__/
+.pytest_cache/
+.ruff_cache/
+/.tmp/
 *.py[cod]
 *.tmp
 *.egg-info/
@@ -11,6 +14,7 @@ dist/
 # Node / frontend build
 node_modules/
 .vite/
+.cache/
 *.tsbuildinfo
 # The OpenAPI intermediate is regenerated and ignored. The generated TypeScript contract is tracked so a
 # clean checkout can typecheck, and CI verifies that regeneration produces no diff.
@@ -26,7 +30,21 @@ webapp/store/projections/
 webapp/store/active-projection.json
 webapp/store/previous-projection.json
 webapp/store/workspace-lease.json
+webapp/store/workspace-snapshots/
+webapp/store/active-workspace.json
+webapp/store/previous-workspace.json
+webapp/store/definition-editor/
+webapp/store/dm/
 
 # NOTE: .agents/*.md is deliberately tracked. Those files carry the framing that distinguishes
 # Meridian-Rift game-checkout conventions from this repository's own, which only helps if it reaches
 # every machine and every agent that opens the repo.
+/.tmp-pytest-parsec-full
+/.tmp-parsec-inspect
+/.tmp-pytest-asset-green-2
+/.tmp-pytest-asset-green
+/.tmp-pytest-asset-recovery
+/.tmp-pytest-visual-bounds
+/.tmp-pytest-visual-tiny-green
+/.tmp-pytest-visual-tiny-red
+/.tmp-ss13-rebuild

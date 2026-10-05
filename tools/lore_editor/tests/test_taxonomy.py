@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.lore_editor.records import canonical_record_bytes, canonical_record_hash, record_path
 from tools.lore_editor.source import make_catalog_target
@@ -20,6 +21,8 @@ from tools.lore_editor.taxonomy import (
 )
 from tools.lore_editor.tests.store_helpers import seed_assignment, seed_group, seed_review
 from tools.lore_editor.write_coordinator import RecordConflict
+from webapp.store.generations import staged_projection
+from webapp.store.schema import encode
 
 
 class TaxonomyTests(unittest.TestCase):
@@ -29,6 +32,29 @@ class TaxonomyTests(unittest.TestCase):
 
 	def tearDown(self) -> None:
 		self.temp_dir.cleanup()
+
+	def test_load_groups_pins_legacy_group_and_assignment_reads(self) -> None:
+		with staged_projection(self.repo_root, content_revision="fixture") as staged:
+			pinned_store = staged.path
+		store_dirs = []
+		group_row = {"id": "items", "raw_json": encode({"id": "items", "label": "Items", "color": "#fff", "keywords": [], "type_path_prefixes": []})}
+		assignment_row = {"id": "/obj/item/radio", "raw_json": encode({"type_path": "/obj/item/radio", "group_ids": ["items"]})}
+
+		class FakeTable:
+			pass
+
+		def fake_table(_repo_root, _name, *, store_dir=None):
+			store_dirs.append(store_dir)
+			return FakeTable()
+
+		with (
+			patch("tools.lore_editor.taxonomy.table", side_effect=fake_table),
+			patch("tools.lore_editor.taxonomy.db.all_rows", side_effect=[[group_row], [assignment_row]]),
+		):
+			groups = load_groups(self.repo_root)
+
+		self.assertEqual(groups.assignments["/obj/item/radio"], ("items",))
+		self.assertEqual(store_dirs, [pinned_store, pinned_store])
 
 	def test_groups_reviews_and_assignments_round_trip_through_the_store(self) -> None:
 		seed_group(self.repo_root, {

@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "toy-brush-impatient",
+  "clipScale": 0.7,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-impatient/toy-brush-impatient__d0__f0.png",
+      "sha256": "e5ec0890a3929c529864a6878ec68aca37181d4b9c3de0af3ae7cd0960e5cdf0"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-impatient/toy-brush-impatient__d0__f1.png",
+      "sha256": "253170485bfa592f7456a4af93a0a1ff2441b0a138941f298a8f1adcbf5c576f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-impatient/toy-brush-impatient__d0__f2.png",
+      "sha256": "0cf71d09e78c5a71f9d333682d14c5a0f7f44d83e00f4d00a51b480b30d68b4a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-impatient/toy-brush-impatient__d0__f3.png",
+      "sha256": "d62da443a60eaa16ffa36afa334b012047f800f1ef7df05dd1a65f746b2aadce"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-impatient.png",
+  "sourceSha256": "a928b2921ced4cc62552d2d98ca2bc98477b96aefeec3db24435e69bb29e22b8",
+  "tool": "generated-strip-v4"
+}

@@ -9,17 +9,21 @@ from pathlib import Path
 if __package__ in (None, ""):
 	sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 	from tools.lore_editor.reconcile import reconcile_projection, scan_canonical_records
-	from webapp.store.db import SYNC_CHUNK_SIZE, optimize_all_tables, with_embeddings
+	from tools.lore_editor.write_coordinator import repository_write_lock
+	from webapp.store.db import SYNC_CHUNK_SIZE, embedding_hash_for, optimize_all_tables, with_embeddings
 	from webapp.store.embeddings import EmbeddingUnavailableError, embeddings_available
+	from webapp.store.generations import staged_projection
 	from webapp.store.metadata import backup_projection, projection_status, restore_projection
-	from webapp.store.schema import KEYWORD_ONLY_TABLES, TABLE_SCHEMAS, table
+	from webapp.store.schema import KEYWORD_ONLY_TABLES, TABLE_SCHEMAS, writable_table
 else:
 	from tools.lore_editor.reconcile import reconcile_projection, scan_canonical_records
+	from tools.lore_editor.write_coordinator import repository_write_lock
 
-	from .db import SYNC_CHUNK_SIZE, optimize_all_tables, with_embeddings
+	from .db import SYNC_CHUNK_SIZE, embedding_hash_for, optimize_all_tables, with_embeddings
 	from .embeddings import EmbeddingUnavailableError, embeddings_available
+	from .generations import staged_projection
 	from .metadata import backup_projection, projection_status, restore_projection
-	from .schema import KEYWORD_ONLY_TABLES, TABLE_SCHEMAS, table
+	from .schema import KEYWORD_ONLY_TABLES, TABLE_SCHEMAS, writable_table
 
 
 def rebuild_embeddings(repo_root: Path, *, on_progress=None) -> dict[str, int]:
@@ -33,26 +37,37 @@ def rebuild_embeddings(repo_root: Path, *, on_progress=None) -> dict[str, int]:
 		raise EmbeddingUnavailableError("Embedding model is unavailable; existing vectors were preserved.")
 
 	counts: dict[str, int] = {}
-	for name in TABLE_SCHEMAS:
-		if name in KEYWORD_ONLY_TABLES:
-			counts[name] = 0
-			continue
-		target_table = table(repo_root, name)
-		rows = target_table.search().to_list()
-		if not rows:
-			counts[name] = 0
-			continue
-		for start in range(0, len(rows), SYNC_CHUNK_SIZE):
-			chunk = rows[start:start + SYNC_CHUNK_SIZE]
-			re_embedded = with_embeddings([
-				{key: value for key, value in row.items() if key != "vector"}
-				for row in chunk
-			])
-			target_table.merge_insert("id").when_matched_update_all().when_not_matched_insert_all().execute(re_embedded)
-			if on_progress is not None:
-				on_progress(name, min(start + SYNC_CHUNK_SIZE, len(rows)), len(rows))
-		counts[name] = len(rows)
+	with repository_write_lock(repo_root):
+		reconcile_projection(repo_root)
+		content_revision = scan_canonical_records(repo_root).content_revision
+		with staged_projection(repo_root, content_revision=content_revision, changed_tables=TABLE_SCHEMAS.keys() - KEYWORD_ONLY_TABLES, embeddings_rebuilt=True) as staged:
+			for name in TABLE_SCHEMAS:
+				if name in KEYWORD_ONLY_TABLES:
+					counts[name] = 0
+					continue
+				target_table = writable_table(repo_root, name, store_dir=staged.path)
+				row_ids = [str(row["id"]) for row in target_table.search().select(["id"]).to_list()]
+				if not row_ids:
+					counts[name] = 0
+					continue
+				columns = [column for column in target_table.schema.names if column != "vector"]
+				for start in range(0, len(row_ids), SYNC_CHUNK_SIZE):
+					chunk_ids = row_ids[start:start + SYNC_CHUNK_SIZE]
+					predicate = "id IN (" + ", ".join(_sql_string_literal(row_id) for row_id in chunk_ids) + ")"
+					chunk = target_table.search().where(predicate).select(columns).to_list()
+					re_embedded = with_embeddings([
+						{**row, "embedding_hash": embedding_hash_for(str(row.get("text") or ""))}
+						for row in chunk
+					])
+					target_table.merge_insert("id").when_matched_update_all().when_not_matched_insert_all().execute(re_embedded)
+					if on_progress is not None:
+						on_progress(name, min(start + SYNC_CHUNK_SIZE, len(row_ids)), len(row_ids))
+				counts[name] = len(row_ids)
 	return counts
+
+
+def _sql_string_literal(value: str) -> str:
+	return "'" + value.replace("'", "''") + "'"
 
 
 def build_parser() -> argparse.ArgumentParser:

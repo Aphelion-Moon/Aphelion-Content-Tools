@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "touch-scruff-calm",
+  "clipScale": 0.6942148760330579,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-scruff-calm/touch-scruff-calm__d0__f0.png",
+      "sha256": "27d39b503ab2efa43a3e0672bb794fa0185db82f432d70294c4737413365a974"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-scruff-calm/touch-scruff-calm__d0__f1.png",
+      "sha256": "4ac8ef7a9face92fe71f6f2ab7d4022df75aaec01d3e92d89d84afdd3466a5d6"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-scruff-calm/touch-scruff-calm__d0__f2.png",
+      "sha256": "cd54c207debe0cc6fc5547bfbb2f53ee781795ee522480c6890f14720cce9232"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-scruff-calm/touch-scruff-calm__d0__f3.png",
+      "sha256": "9e76249c70c7f2298575fde77323af10e8f3c1c407e670b6b50b7f28529323bf"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/touch-scruff-calm.png",
+  "sourceSha256": "47f9dc554f434a41da6fdf26957637d6dc8b8041844dd953fee39ceb72925914",
+  "tool": "generated-strip-v4"
+}

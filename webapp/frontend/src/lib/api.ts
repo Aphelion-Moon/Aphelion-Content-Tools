@@ -17,10 +17,6 @@ export class ApiError extends Error {
 	}
 }
 
-interface ErrorBody {
-	error?: string;
-}
-
 /**
  * Fetch JSON from the backend, raising ApiError with the server's own message on failure.
  *
@@ -32,16 +28,28 @@ export async function requestJson<T>(path: string, options: RequestInit = {}): P
 	// Only set a JSON content type when there is actually a body -- a GET with this header set trips
 	// stricter servers and preflight paths for no benefit.
 	if (options.body !== undefined && options.body !== null) {
-		init.headers = { 'Content-Type': 'application/json', ...options.headers };
+		const headers = new Headers(options.headers);
+		if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+		init.headers = headers;
 	}
 	const response = await fetch(path, init);
 
 	const contentType = response.headers.get('content-type') ?? '';
-	const payload: unknown = contentType.includes('application/json') ? await response.json() : {};
+	let payload: unknown = {};
+	if (contentType.includes('application/json')) {
+		try { payload = await response.json(); }
+		catch (error) {
+			// A broken error response must not hide the HTTP status. Successful malformed JSON
+			// remains a decoding error rather than masquerading as an empty successful payload.
+			if (response.ok) throw error;
+		}
+	} else if (response.ok) {
+		throw new ApiError('The server returned an unexpected response format.', response.status, { code: 'invalid_response' });
+	}
 
 	if (!response.ok) {
-		const message = (payload as ErrorBody).error ?? `Request failed (${response.status}).`;
-		const details = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {};
+		const details = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload as Record<string, unknown> : {};
+		const message = typeof details['error'] === 'string' ? details['error'] : `Request failed (${response.status}).`;
 		throw new ApiError(message, response.status, details);
 	}
 	return payload as T;

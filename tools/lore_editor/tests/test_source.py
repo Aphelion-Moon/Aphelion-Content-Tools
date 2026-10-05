@@ -3,14 +3,42 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.lore_editor.source import load_corpus
 from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
+from webapp.store.schema import encode
 
 
 class LoadCorpusTests(unittest.TestCase):
 	def make_repo(self) -> tempfile.TemporaryDirectory[str]:
 		return tempfile.TemporaryDirectory()
+
+	def test_load_corpus_pins_legacy_table_reads_to_one_store(self) -> None:
+		with self.make_repo() as temp_dir:
+			repo_root = Path(temp_dir)
+			pinned_store = repo_root / "webapp" / "store" / "projections" / "pinned"
+			store_dirs = []
+			catalog_row = {"id": "/obj/item/radio", "raw_json": encode({"type_path": "/obj/item/radio", "label": "Radio"})}
+			override_row = {"id": "items.radio", "group": "items", "raw_json": encode({"id": "items.radio", "type_path": "/obj/item/radio"})}
+
+			class FakeTable:
+				pass
+
+			def fake_table(_repo_root, _name, *, store_dir=None):
+				store_dirs.append(store_dir)
+				return FakeTable()
+
+			with (
+				patch("tools.lore_editor.source.db.store_path", return_value=pinned_store),
+				patch("tools.lore_editor.source.table", side_effect=fake_table),
+				patch("tools.lore_editor.source.db.all_rows", side_effect=[[catalog_row], [override_row]]),
+			):
+				corpus = load_corpus(repo_root)
+
+			self.assertEqual(len(corpus.targets), 1)
+			self.assertEqual(len(corpus.entries), 1)
+			self.assertEqual(store_dirs, [pinned_store, pinned_store])
 
 	def test_load_corpus_orders_entries_by_relative_source_path(self) -> None:
 		with self.make_repo() as temp_dir:

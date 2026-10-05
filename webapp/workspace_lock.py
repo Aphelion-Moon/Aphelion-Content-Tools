@@ -7,11 +7,26 @@ import tempfile
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from ctypes import wintypes
 from pathlib import Path
+from typing import TypeVar
 
 LEASE_RELATIVE_PATH = Path("webapp/store/workspace-lease.json")
 DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 2.0
+_T = TypeVar('_T')
+
+
+def _sharing_retry(operation: Callable[[], _T]) -> _T:
+	"""Allow a brief Windows reader/atomic-replace overlap without losing the lease."""
+	for attempt in range(4):
+		try:
+			return operation()
+		except PermissionError:
+			if attempt == 3:
+				raise
+			time.sleep(0.01)
+	raise AssertionError('unreachable')
 
 
 class WorkspaceLeaseConflict(RuntimeError):
@@ -76,7 +91,7 @@ def _pid_exists(pid: int) -> bool:
 
 
 def _read_owner(path: Path) -> dict[str, object]:
-	payload = json.loads(path.read_text(encoding="utf-8"))
+	payload = json.loads(_sharing_retry(lambda: path.read_text(encoding="utf-8")))
 	if not isinstance(payload, dict):
 		raise ValueError("Workspace lease must contain a JSON object.")
 	return payload
@@ -91,7 +106,7 @@ def _atomic_write_owner(path: Path, owner: dict[str, object]) -> None:
 			handle.write(data)
 			handle.flush()
 			os.fsync(handle.fileno())
-		os.replace(temporary_path, path)
+		_sharing_retry(lambda: os.replace(temporary_path, path))
 	finally:
 		temporary_path.unlink(missing_ok=True)
 

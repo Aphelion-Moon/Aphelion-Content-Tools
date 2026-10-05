@@ -7,14 +7,32 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from fastapi.testclient import TestClient
-
 from tools.lore_editor.records import CONTENT_ROOT
+from webapp import workspace_lock
 from webapp.api import create_app
+from webapp.api.live import Broadcaster
+from webapp.tests.http_client import TestClient
 from webapp.workspace_lock import WorkspaceLease, WorkspaceLeaseConflict
 
 
 class WorkspaceLeaseTests(unittest.TestCase):
+	def test_owner_read_recovers_from_a_transient_windows_replace_conflict(self) -> None:
+		with patch.object(Path, 'read_text', side_effect=[PermissionError('sharing violation'), '{"session_id":"owner"}']):
+			self.assertEqual(workspace_lock._read_owner(Path('lease.json')), {'session_id': 'owner'})
+
+	def test_owner_write_recovers_when_a_reader_briefly_blocks_replacement(self) -> None:
+		path = self.workspace / 'lease.json'
+		replace = workspace_lock.os.replace
+		with patch.object(workspace_lock.os, 'replace') as mocked:
+			def attempt(source, target):
+				if mocked.call_count == 1:
+					raise PermissionError('sharing violation')
+				return replace(source, target)
+			mocked.side_effect = attempt
+			workspace_lock._atomic_write_owner(path, {'session_id': 'owner'})
+		self.assertEqual(json.loads(path.read_text(encoding='utf-8')), {'session_id': 'owner'})
+		self.assertEqual(list(self.workspace.glob('*.tmp')), [])
+
 	def setUp(self) -> None:
 		self.temp_dir = tempfile.TemporaryDirectory()
 		self.addCleanup(self.temp_dir.cleanup)
@@ -110,6 +128,50 @@ class WorkspaceLeaseTests(unittest.TestCase):
 		lease = WorkspaceLease(self.workspace)
 		lease.acquire()
 		lease.release()
+
+	def test_startup_timer_is_joined_before_worker_shutdown(self) -> None:
+		events: list[str] = []
+
+		class RecordingTimer:
+			def __init__(self, _interval: float, function, args: tuple[object, ...] = ()) -> None:
+				events.append("timer-created")
+				self.daemon = False
+				self.function = function
+				self.args = args
+
+			def start(self) -> None:
+				events.append("timer-start")
+
+			def cancel(self) -> None:
+				events.append("timer-cancel")
+
+			def join(self, timeout: float | None = None) -> None:
+				events.append("timer-join")
+				self.function(*self.args)
+
+		async def shutdown_broadcaster(_broadcaster: Broadcaster) -> None:
+			events.append("broadcaster-shutdown")
+
+		def shut_down_worker(_repo_root: Path) -> None:
+			events.append("worker-shutdown")
+
+		with (
+			tempfile.TemporaryDirectory() as temporary_directory,
+			patch("webapp.api.app.threading.Timer", RecordingTimer),
+			patch("webapp.api.app.reconcile_projection"),
+			patch("webapp.api.app.start_tool") as startup_optimize,
+			patch("webapp.api.app.shut_down_worker", side_effect=shut_down_worker),
+			patch.object(Broadcaster, "shutdown", new=shutdown_broadcaster),
+		):
+			app = create_app(Path(temporary_directory))
+			with TestClient(app):
+				pass
+
+		self.assertIn("timer-cancel", events)
+		self.assertIn("timer-join", events)
+		self.assertLess(events.index("timer-cancel"), events.index("timer-join"))
+		self.assertLess(events.index("timer-join"), events.index("worker-shutdown"))
+		startup_optimize.assert_not_called()
 
 
 if __name__ == "__main__":

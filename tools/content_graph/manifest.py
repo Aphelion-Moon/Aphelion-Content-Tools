@@ -27,6 +27,8 @@ class GraphManifest:
 	directory_count: int = 0
 	reference_count: int = 0
 	format_version: int = MANIFEST_FORMAT_VERSION
+	source_sha256: str | None = None
+	source_observation: str | None = None
 
 	def to_dict(self) -> dict[str, object]:
 		return {
@@ -42,6 +44,8 @@ class GraphManifest:
 			"file_count": self.file_count,
 			"directory_count": self.directory_count,
 			"reference_count": self.reference_count,
+			"source_sha256": self.source_sha256,
+			"source_observation": self.source_observation,
 		}
 
 	@classmethod
@@ -65,5 +69,7 @@ class GraphManifest:
 			snapshot_sha256=_required_string(payload, "snapshot_sha256"),
 			game_repo_revision=_required_string(payload, "game_repo_revision"),
 			generated_at=_required_string(payload, "generated_at"),
+			source_sha256=_required_string(payload, "source_sha256") if payload.get("source_sha256") is not None else None,
+			source_observation=_required_string(payload, "source_observation") if payload.get("source_observation") is not None else None,
 			**counts,
 		)

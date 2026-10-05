@@ -8,6 +8,7 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SERVE_PATH = REPO_ROOT / "webapp" / "serve.py"
@@ -15,12 +16,14 @@ SERVE_PATH = REPO_ROOT / "webapp" / "serve.py"
 
 class ServerStartupTests(unittest.TestCase):
 	def setUp(self) -> None:
+		self.workspace = TemporaryDirectory()
+		self.addCleanup(self.workspace.cleanup)
 		self.process = subprocess.Popen(
 			[
 				sys.executable,
 				str(SERVE_PATH),
 				"--repo-root",
-				str(REPO_ROOT),
+				self.workspace.name,
 				"--port",
 				"0",
 			],
@@ -56,7 +59,8 @@ class ServerStartupTests(unittest.TestCase):
 			with urllib.request.urlopen(self.base_url + path, timeout=5) as response:
 				return response.status, response.headers.get_content_type(), response.read().decode("utf-8")
 		except urllib.error.HTTPError as exc:
-			return exc.code, exc.headers.get_content_type(), exc.read().decode("utf-8")
+			with exc:
+				return exc.code, exc.headers.get_content_type(), exc.read().decode("utf-8")
 
 	def test_health_endpoint(self) -> None:
 		status, content_type, body = self.fetch("/api/health")

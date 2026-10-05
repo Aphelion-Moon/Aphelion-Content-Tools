@@ -48,6 +48,33 @@ class GameRepositoryValidationTests(unittest.TestCase):
 			with self.assertRaisesRegex(ValueError, "does not look like Meridian-Rift"):
 				validate_game_repository(game_root)
 
+	def test_rejects_deceptive_meridian_rift_remote_basename(self) -> None:
+		with tempfile.TemporaryDirectory() as temp_dir:
+			game_root = Path(temp_dir)
+			(game_root / "tgstation.dme").write_text("", encoding="utf-8")
+			subprocess.run(["git", "-C", str(game_root), "init", "--initial-branch=main"], check=True, capture_output=True, text=True)
+			subprocess.run(
+				["git", "-C", str(game_root), "remote", "add", "origin", "https://example.invalid/meridian-rift-malware.git"],
+				check=True, capture_output=True, text=True,
+			)
+
+			with self.assertRaisesRegex(ValueError, "does not look like Meridian-Rift"):
+				validate_game_repository(game_root)
+
+	def test_remote_validation_does_not_include_credentials_in_error(self) -> None:
+		with tempfile.TemporaryDirectory() as temp_dir:
+			game_root = Path(temp_dir)
+			(game_root / "tgstation.dme").write_text("", encoding="utf-8")
+			subprocess.run(["git", "-C", str(game_root), "init", "--initial-branch=main"], check=True, capture_output=True, text=True)
+			subprocess.run(
+				["git", "-C", str(game_root), "remote", "add", "origin", "https://writer:super-secret@example.invalid/other-repository.git"],
+				check=True, capture_output=True, text=True,
+			)
+
+			with self.assertRaises(ValueError) as raised:
+				validate_game_repository(game_root)
+			self.assertNotIn("super-secret", str(raised.exception))
+
 	def test_accepts_checkout_with_no_git_remote_configured(self) -> None:
 		with tempfile.TemporaryDirectory() as temp_dir:
 			game_root = Path(temp_dir)

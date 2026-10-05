@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "touch-landing-recover",
+  "clipScale": 0.7636363636363637,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-recover/touch-landing-recover__d0__f0.png",
+      "sha256": "81974dfac949a62967be0f1278d1619febc1885d68f795d516f46157523a8bc1"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-recover/touch-landing-recover__d0__f1.png",
+      "sha256": "9ff1af60c768e910cba85a07602e009f99f149243e2bcc717498db79f6ffdf52"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-recover/touch-landing-recover__d0__f2.png",
+      "sha256": "dfc520bb48b9ea687d6cc2a09094262e92f85ccc7c3791514e6cd6bb5483f432"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-recover/touch-landing-recover__d0__f3.png",
+      "sha256": "fec8e39fe3177e47d3e6280a6a2ff2a327496e5818b744893ca8913aa0b44060"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/touch-landing-recover.png",
+  "sourceSha256": "f86667b8b0a151c1ee066e7c01e320926660310907eb9839a74075d129043d53",
+  "tool": "generated-strip-v4"
+}

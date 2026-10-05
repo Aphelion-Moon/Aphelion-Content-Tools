@@ -1,0 +1,363 @@
+{
+  "tool": "generated-strip-v4",
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-pant/core-idle-pant__d0__f0.png",
+      "sha256": "c012b80ee953eead86d5cd35752616e9290ca724d8f37e837acb277231b2f91a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-pant.png",
+      "sourceSha256": "c8b478cf9d14f5e9cbc075d736c5205073762990834f273f39561ab322e33a49"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-pant/core-idle-pant__d0__f1.png",
+      "sha256": "7f5df088807a9306d4539126a668fc6bec941d0cdc70e31de7e4d98e5f3105b8",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-pant.png",
+      "sourceSha256": "c8b478cf9d14f5e9cbc075d736c5205073762990834f273f39561ab322e33a49"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-pant/core-idle-pant__d0__f2.png",
+      "sha256": "279198837b6a951019956c00f8bbf6a525532af413cc3ae4a653a02f2c5a773d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-pant.png",
+      "sourceSha256": "c8b478cf9d14f5e9cbc075d736c5205073762990834f273f39561ab322e33a49"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-pant/core-idle-pant__d0__f3.png",
+      "sha256": "9ca7c258ac67fde26a174a290f53df4f967e83871c7017b1b3f575c3ae6a7dbc",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-pant.png",
+      "sourceSha256": "c8b478cf9d14f5e9cbc075d736c5205073762990834f273f39561ab322e33a49"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f0.png",
+      "sha256": "5c33d687ff6b71d55f447bdc51e7e719d3a64849debac13c897a90673a145c15",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-scratch.png",
+      "sourceSha256": "0c2f71a91bf16b7b171c6f767a2965f35f28dadaa20bed9b35c65db468e90d5a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f1.png",
+      "sha256": "f127ea78f4b0f3dd2aedfb4cb6016e37e7a8eb04d7d470d1ff0e18824529e259",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-scratch.png",
+      "sourceSha256": "0c2f71a91bf16b7b171c6f767a2965f35f28dadaa20bed9b35c65db468e90d5a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f2.png",
+      "sha256": "27f7d1af97dc8fb62cac9643e217d83c9cc84e8c8baa8030743d276171c07d73",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-scratch.png",
+      "sourceSha256": "0c2f71a91bf16b7b171c6f767a2965f35f28dadaa20bed9b35c65db468e90d5a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f3.png",
+      "sha256": "1933bccad7ede55b64f975b61d80fae494afd2e99bc72a9b45f7ad91ce25fdbf",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-scratch.png",
+      "sourceSha256": "0c2f71a91bf16b7b171c6f767a2965f35f28dadaa20bed9b35c65db468e90d5a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f4.png",
+      "sha256": "cab53c7a9d64de32c3d13ac76d2bed729ad7e374388a1048a664ac6678bf5c14",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-scratch.png",
+      "sourceSha256": "0c2f71a91bf16b7b171c6f767a2965f35f28dadaa20bed9b35c65db468e90d5a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-seated/core-idle-seated__d0__f0.png",
+      "sha256": "a0f1e32249ad6ce50ffc97402c1110cda926b013c8650af2f39ec4a24e6f8ced",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-seated.png",
+      "sourceSha256": "94acf7e92f54fd7b446380d9c058ad2298505777d9ba98342d0da942b216544a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-seated/core-idle-seated__d0__f1.png",
+      "sha256": "298161804a1ea56904d164435bbd3083e5ea1043dcd7aa4851ac463a98a233ea",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-seated.png",
+      "sourceSha256": "94acf7e92f54fd7b446380d9c058ad2298505777d9ba98342d0da942b216544a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-seated/core-idle-seated__d0__f2.png",
+      "sha256": "519cba14fecd219debbc0c84433940322673c484d618fc0e8bb8861cf88b70c6",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-seated.png",
+      "sourceSha256": "94acf7e92f54fd7b446380d9c058ad2298505777d9ba98342d0da942b216544a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-seated/core-idle-seated__d0__f3.png",
+      "sha256": "0cdd04a7e5a4e04be32aa378c97b5299c8a1f00f49e5be501dd8f00b9ae0ba8b",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-seated.png",
+      "sourceSha256": "94acf7e92f54fd7b446380d9c058ad2298505777d9ba98342d0da942b216544a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-sniff/core-idle-sniff__d0__f0.png",
+      "sha256": "601a6cde74b2b2ab844982b367b44e824d854e2814c7eca3312a962bb58d13c8",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-sniff.png",
+      "sourceSha256": "6e71b6f76c7bef9302c4cbea39562cdeeab0c8748011bb0c297758efa19c0811"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-sniff/core-idle-sniff__d0__f1.png",
+      "sha256": "765f8efc26014f82cbcaf75c83ca3a46bdff8fbfb67162d3b4c8a1dc8135315b",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-sniff.png",
+      "sourceSha256": "6e71b6f76c7bef9302c4cbea39562cdeeab0c8748011bb0c297758efa19c0811"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-sniff/core-idle-sniff__d0__f2.png",
+      "sha256": "171f5c2553e7758f192c6859106126ae86bef4ca687e0c264794ebb66b558383",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-sniff.png",
+      "sourceSha256": "6e71b6f76c7bef9302c4cbea39562cdeeab0c8748011bb0c297758efa19c0811"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-sniff/core-idle-sniff__d0__f3.png",
+      "sha256": "bde12c930a70a529f5d319b0a52861aad091a699aab6bd51e0fcbf1b857adb16",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-sniff.png",
+      "sourceSha256": "6e71b6f76c7bef9302c4cbea39562cdeeab0c8748011bb0c297758efa19c0811"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-standing/core-idle-standing__d0__f0.png",
+      "sha256": "f4f2da89ec3b9b92eca6c96e0eb0d15294e2ec436624963cab51852f88c4c684",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-standing.png",
+      "sourceSha256": "0b31ea2f7d279c14fb4a25e879f1b9af2cc72cee2e4ab2f72bdf9b2313e8ec9c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-standing/core-idle-standing__d0__f1.png",
+      "sha256": "7f389f37cdfd9108e1972bcfda2caf8a57a0a5b1c890ac5e0066b6b9f23092d3",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-standing.png",
+      "sourceSha256": "0b31ea2f7d279c14fb4a25e879f1b9af2cc72cee2e4ab2f72bdf9b2313e8ec9c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-standing/core-idle-standing__d0__f2.png",
+      "sha256": "f0a6c12c70153b94ec860dd6dc8a6ca7989ad9ab9f6530b50803eb46285d179a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-standing.png",
+      "sourceSha256": "0b31ea2f7d279c14fb4a25e879f1b9af2cc72cee2e4ab2f72bdf9b2313e8ec9c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-standing/core-idle-standing__d0__f3.png",
+      "sha256": "c0865cf029d4b9d928d7991a52475ac65982d72c20b2cd95b1260a7e839f1218",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-standing.png",
+      "sourceSha256": "0b31ea2f7d279c14fb4a25e879f1b9af2cc72cee2e4ab2f72bdf9b2313e8ec9c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f0.png",
+      "sha256": "2a58b613341dd4fa54feb24c86915939c3f0051520c9348957e37698f59aa7e3",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-yawn.png",
+      "sourceSha256": "bca84145aac2c02840684fa88352e70c04f372b17e7d0e709b036731c61fba27"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f1.png",
+      "sha256": "2ad2b175ed533a8ee8f3ec7ca48a03a067f1c1a20020a896baaae4fe2322a5d8",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-yawn.png",
+      "sourceSha256": "bca84145aac2c02840684fa88352e70c04f372b17e7d0e709b036731c61fba27"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f2.png",
+      "sha256": "5e0ee7cd7ec0b5948a030c796fdbb2fc18585b03c94c5b9f2a55d2c041206f6c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-yawn.png",
+      "sourceSha256": "bca84145aac2c02840684fa88352e70c04f372b17e7d0e709b036731c61fba27"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f3.png",
+      "sha256": "fa4aa38fe46d5eb3bbab2f55564ca67281767455687cb93f6d11a5e4531b99c1",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-yawn.png",
+      "sourceSha256": "bca84145aac2c02840684fa88352e70c04f372b17e7d0e709b036731c61fba27"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-yawn/core-idle-yawn__d0__f4.png",
+      "sha256": "7cbf5cfca0e89011090936687ba95ac56bb0f2ce90d78dd1eebcf3586aa365b4",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-idle-yawn.png",
+      "sourceSha256": "bca84145aac2c02840684fa88352e70c04f372b17e7d0e709b036731c61fba27"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-look-cursor/core-look-cursor__d0__f0.png",
+      "sha256": "d504042fe2fee8c65143f350aa80e3555864e92e5a21a33e7cd9435599106792",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-look-cursor.png",
+      "sourceSha256": "86e8763dadba354f5bc4c7b63c8bb28109f1d1e225e1d32d8c9431b31995b36f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-look-cursor/core-look-cursor__d0__f1.png",
+      "sha256": "ef24aa99e4fa96d44689ae52755c75b527d404631eaf553ae9631acedf6b316e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-look-cursor.png",
+      "sourceSha256": "86e8763dadba354f5bc4c7b63c8bb28109f1d1e225e1d32d8c9431b31995b36f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-look-cursor/core-look-cursor__d0__f2.png",
+      "sha256": "2280ddd9cf0fc6ca1e4c75980eda5b9287a901b32422f50766ee6d553a5e3add",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-look-cursor.png",
+      "sourceSha256": "86e8763dadba354f5bc4c7b63c8bb28109f1d1e225e1d32d8c9431b31995b36f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-look-cursor/core-look-cursor__d0__f3.png",
+      "sha256": "f3451f6a1ab6b3eda334c467d6552e1fdb50103b2bece585c236123b0150fbf2",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-look-cursor.png",
+      "sourceSha256": "86e8763dadba354f5bc4c7b63c8bb28109f1d1e225e1d32d8c9431b31995b36f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-return-home/core-return-home__d0__f0.png",
+      "sha256": "979c53586c848402945968801d5229e6fef9c0ba47c14dd182492e5465ed01fc",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-return-home.png",
+      "sourceSha256": "6f308c28e5e4d34107a3e3dfc5603d5d95259fdb8d6387643ff5581af2aa4bd5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-return-home/core-return-home__d0__f1.png",
+      "sha256": "8d3c8d1c7f73baeb0044176ff6a92b2ff1e2f09c750c463ea776e7162cbd4fa6",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-return-home.png",
+      "sourceSha256": "6f308c28e5e4d34107a3e3dfc5603d5d95259fdb8d6387643ff5581af2aa4bd5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-return-home/core-return-home__d0__f2.png",
+      "sha256": "a349cdd6d9a9e385e7f5f5a495f61a002a70fdb3b4f76cc7c24c89968ee93a9f",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-return-home.png",
+      "sourceSha256": "6f308c28e5e4d34107a3e3dfc5603d5d95259fdb8d6387643ff5581af2aa4bd5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-return-home/core-return-home__d0__f3.png",
+      "sha256": "e34fefaedd40b9decd7e22d4fd08db293a4c0c4c5cd2fee758a9195a55f071b0",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-return-home.png",
+      "sourceSha256": "6f308c28e5e4d34107a3e3dfc5603d5d95259fdb8d6387643ff5581af2aa4bd5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-return-home/core-return-home__d0__f4.png",
+      "sha256": "9f220a3d2d57cd9dd811d1bcdfe29b22e3c726d6b1d55fdb442c826c6a96ca10",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-return-home.png",
+      "sourceSha256": "6f308c28e5e4d34107a3e3dfc5603d5d95259fdb8d6387643ff5581af2aa4bd5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d0/core-walk-cardinal__d0__f0.png",
+      "sha256": "9d2d9ab54158cf9f8f5cb0b927c131e9e70271d4ae65121c045b1ff0aa7760ca",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d0.png",
+      "sourceSha256": "37e26c519c7f4f716c9d54f3e796989e4009c661e64dabb3652931fe1c47a7a0"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d0/core-walk-cardinal__d0__f1.png",
+      "sha256": "21cdc586a3ca705654e60fac35c3f50ce4d188a0bb950128a0d648587ba2a2a9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d0.png",
+      "sourceSha256": "37e26c519c7f4f716c9d54f3e796989e4009c661e64dabb3652931fe1c47a7a0"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d0/core-walk-cardinal__d0__f2.png",
+      "sha256": "d7c8ff162aed3577b765be6a24e4afdf13e224ea049adc1e2bc2a222403a2868",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d0.png",
+      "sourceSha256": "37e26c519c7f4f716c9d54f3e796989e4009c661e64dabb3652931fe1c47a7a0"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d1/core-walk-cardinal__d1__f0.png",
+      "sha256": "fb740e77f6fceaf9d297ecfcd7951d3a3df97716b9ca1d15f408fe9f07e800da",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d1.png",
+      "sourceSha256": "b844570d33d09c1f32a452d7e300a1b8efd94917063c498547005ba82fe611e6"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d1/core-walk-cardinal__d1__f1.png",
+      "sha256": "db495a7fbc810c3ec1d1cd3d07278e53d8a10c6ccfd976789020d8b542ada6e6",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d1.png",
+      "sourceSha256": "b844570d33d09c1f32a452d7e300a1b8efd94917063c498547005ba82fe611e6"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d1/core-walk-cardinal__d1__f2.png",
+      "sha256": "d73f52208c40df23b8f374958d89a45627ef83a3bc7e3e502197416cb2c2a528",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d1.png",
+      "sourceSha256": "b844570d33d09c1f32a452d7e300a1b8efd94917063c498547005ba82fe611e6"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d2/core-walk-cardinal__d2__f0.png",
+      "sha256": "fce10d49ae2d547d62139e871461a361db546cf7d4c3085dc0598e4b7e1b1c5d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d2.png",
+      "sourceSha256": "20ca1128d3dedf9294e64ed38ebe6d9f7248c9b54373dffc306053e5d9ec4d87"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d2/core-walk-cardinal__d2__f1.png",
+      "sha256": "c3ea84f72fcbe0a947e79a192642e2ae1e26cd7a68aed5de4a2876b1a9650adc",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d2.png",
+      "sourceSha256": "20ca1128d3dedf9294e64ed38ebe6d9f7248c9b54373dffc306053e5d9ec4d87"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d2/core-walk-cardinal__d2__f2.png",
+      "sha256": "21d7ed2b687c50f0848947c1b086ee17119ccc0e7a6d193d3240c761e87951f5",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d2.png",
+      "sourceSha256": "20ca1128d3dedf9294e64ed38ebe6d9f7248c9b54373dffc306053e5d9ec4d87"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d3/core-walk-cardinal__d3__f0.png",
+      "sha256": "d0894cad644890eca7345333d0fad1c8e3fabd87351a4d9d89ddf38567fb1d2e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d3.png",
+      "sourceSha256": "ce2d0569befad3f334872f942f8749bfcf40f7fd95a3005c02d4eea1b93c122c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d3/core-walk-cardinal__d3__f1.png",
+      "sha256": "6fb53b887688e01703a6ae42ba0a99ac4951ec97e54a2fa84b18de7891f02ac7",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d3.png",
+      "sourceSha256": "ce2d0569befad3f334872f942f8749bfcf40f7fd95a3005c02d4eea1b93c122c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-cardinal/d3/core-walk-cardinal__d3__f2.png",
+      "sha256": "6b0b43f3f2a6f0c7373bf5e20d205bcef5450d58cf49cbdba770ca280f240cca",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-cardinal-d3.png",
+      "sourceSha256": "ce2d0569befad3f334872f942f8749bfcf40f7fd95a3005c02d4eea1b93c122c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d0/core-walk-diagonal__d0__f0.png",
+      "sha256": "acc8dc1a9fe703c987433f32fb5522d5019ffe3ebf7d4bb5cf6a32f3c77dd943",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d0.png",
+      "sourceSha256": "3924acaa27e30505952dffd650fa66345cd76ffad10c27ab8e90f7a6ef45895b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d0/core-walk-diagonal__d0__f1.png",
+      "sha256": "617d3a894aa7fdce9f63d86fc762c3442e4f3052c5aebc57856b17d2f48ecfd9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d0.png",
+      "sourceSha256": "3924acaa27e30505952dffd650fa66345cd76ffad10c27ab8e90f7a6ef45895b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d0/core-walk-diagonal__d0__f2.png",
+      "sha256": "2108938cc545686cceaaba83832cf406a2305558fbab624e6dd90135638b5751",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d0.png",
+      "sourceSha256": "3924acaa27e30505952dffd650fa66345cd76ffad10c27ab8e90f7a6ef45895b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d1/core-walk-diagonal__d1__f0.png",
+      "sha256": "0580ab477ff660e5339d79ebb05c93eb58e56e11a411108c096ed01526a6726d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d1.png",
+      "sourceSha256": "e879c464754fb3e26566eeef202563af697f240f03b1a817507f2bd71e40c8f0"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d1/core-walk-diagonal__d1__f1.png",
+      "sha256": "52033c33b5cf3c0e5fd7d7a6643262785c55336f802dfdd782b3db8cf9c5e5dd",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d1.png",
+      "sourceSha256": "e879c464754fb3e26566eeef202563af697f240f03b1a817507f2bd71e40c8f0"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d1/core-walk-diagonal__d1__f2.png",
+      "sha256": "836d30ac967fa5fffc803d11c14897433d12d726cf8c3a7b13af3ce2aefca0fd",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d1.png",
+      "sourceSha256": "e879c464754fb3e26566eeef202563af697f240f03b1a817507f2bd71e40c8f0"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d2/core-walk-diagonal__d2__f0.png",
+      "sha256": "beb84eb568ac8e7fbf3d354bd8dfefe466e11127d9246bc37aacd0e4ca3e3897",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d2.png",
+      "sourceSha256": "4fe54be54446409c8fe0ec0660b89bd159ef8594215e768a82719fc566121b6f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d2/core-walk-diagonal__d2__f1.png",
+      "sha256": "e7a8adfbf0070996262edaab289795969ab7a00cd906bacc4c4602d76c3a89de",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d2.png",
+      "sourceSha256": "4fe54be54446409c8fe0ec0660b89bd159ef8594215e768a82719fc566121b6f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d2/core-walk-diagonal__d2__f2.png",
+      "sha256": "56255457a86bbc6cfaa8eb9250162d0d0784143976735edd92571eb008508923",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d2.png",
+      "sourceSha256": "4fe54be54446409c8fe0ec0660b89bd159ef8594215e768a82719fc566121b6f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d3/core-walk-diagonal__d3__f0.png",
+      "sha256": "dc8372437d512056f442b02f04bdc21a711e1658b628e333dd62c089cefc7b7d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d3.png",
+      "sourceSha256": "df6cc5a37586517b6737fb9257cee6c4ef090a60b96713f5fcb2fd6ab11f6fe7"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d3/core-walk-diagonal__d3__f1.png",
+      "sha256": "4b8c425758c42468a3d609834249807c3c71cd29686f630e54d23b9df12f2050",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d3.png",
+      "sourceSha256": "df6cc5a37586517b6737fb9257cee6c4ef090a60b96713f5fcb2fd6ab11f6fe7"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-walk-diagonal/d3/core-walk-diagonal__d3__f2.png",
+      "sha256": "b7940967aec86127c2928012b00953508cda82e39345fdbb269b1fa3ecba2568",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/core-walk-diagonal-d3.png",
+      "sourceSha256": "df6cc5a37586517b6737fb9257cee6c4ef090a60b96713f5fcb2fd6ab11f6fe7"
+    }
+  ]
+}

@@ -6,7 +6,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from tools.lore_editor.records import canonical_record_bytes, canonical_record_hash, record_path
+from PIL import Image
+
+from tools.dmi import Dmi
+from tools.lore_editor.records import canonical_record_bytes, canonical_record_hash, read_record, record_path
 from tools.lore_editor.tests.store_helpers import seed_override, seed_targets
 from webapp.store import db
 from webapp.store.schema import decode, table
@@ -54,6 +57,34 @@ class ApiWriteTests(unittest.TestCase):
 		self.assertEqual(result["id"], "items.radio")
 		self.assertEqual(decode(self.override_row(repo_root, "items.radio"))["name"], "New radio")
 		self.assertIn('name = "New radio"', (repo_root / GENERATED_PATH).read_text(encoding="utf-8"))
+
+	def test_save_entry_generates_with_icons_from_the_configured_game_checkout(self) -> None:
+		from tools.lore_editor.api import save_entry
+
+		repo_root = self.make_repo()
+		game_root = repo_root / "game"
+		dmi = Dmi(32, 32)
+		dmi.state("radio").frame(Image.new("RGBA", (32, 32), (255, 0, 0, 255)))
+		dmi_path = game_root / "icons/radio.dmi"
+		dmi_path.parent.mkdir(parents=True, exist_ok=True)
+		dmi.to_file(dmi_path)
+
+		result = save_entry(
+			repo_root,
+			entry_id="items.radio",
+			source_file=ITEMS_SOURCE_FILE,
+			entry={
+				"id": "items.radio",
+				"type_path": "/obj/item/radio",
+				"icons": {"icon": {"file": "icons/radio.dmi", "state": "radio"}},
+			},
+			asset_root=game_root,
+		)
+
+		self.assertEqual(result["id"], "items.radio")
+		saved_record = read_record(record_path(repo_root, "override", "items.radio"))
+		self.assertEqual(saved_record["icons"]["icon"]["file"], "icons/radio.dmi")
+		self.assertIn("icons/radio.dmi", (repo_root / GENERATED_PATH).read_text(encoding="utf-8"))
 
 	def test_save_entry_writes_a_canonical_record_with_an_expected_hash(self) -> None:
 		from tools.lore_editor.api import save_entry

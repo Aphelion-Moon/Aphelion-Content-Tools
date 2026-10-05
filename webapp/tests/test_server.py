@@ -14,8 +14,10 @@ from PIL import Image
 
 from tools.dmi import Dmi
 from tools.lore_editor.app.manifest import ExportManifest, sha256_bytes
+from tools.lore_editor.catalog import activate_catalog_targets
 from tools.lore_editor.export import PreparedExport
 from tools.lore_editor.tests.store_helpers import seed_targets
+from webapp.git_adapter import repository_revision
 from webapp.server import create_server
 
 
@@ -354,6 +356,8 @@ class StandaloneServerTests(unittest.TestCase):
 			run_git(tool_root, "commit", "-m", "Tool source")
 			run_git(game_root, "add", "--all")
 			run_git(game_root, "commit", "-m", "Game source")
+			with patch("webapp.store.embeddings._load_model", return_value=None):
+				activate_catalog_targets(tool_root, [], source_game_revision=repository_revision(game_root), source_provenance="release-seed")
 			before = artifact.read_bytes()
 
 			server = create_server(tool_root, 0, game_repo_root=game_root)

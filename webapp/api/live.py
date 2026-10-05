@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from webapp.git_adapter import workspace_revision
 from webapp.store.health import store_health
+from webapp.store.lifecycle import read_projection
 from webapp.tool_registry import load_tool_registry
 from webapp.tooling import list_active_runs, list_tools
 
@@ -33,8 +35,10 @@ POLL_INTERVAL_SECONDS = 2.0
 class Broadcaster:
 	"""Fans one poll of backend state out to every connected client."""
 
-	def __init__(self, repo_root: Path) -> None:
+	def __init__(self, repo_root: Path, game_repo_root: Path | None = None, *, editor_runs: Callable[[], list[dict[str, object]]] | None = None) -> None:
 		self._repo_root = repo_root
+		self._game_repo_root = game_repo_root
+		self._editor_runs = editor_runs
 		self._clients: set[WebSocket] = set()
 		self._lock = asyncio.Lock()
 		self._task: asyncio.Task[None] | None = None
@@ -70,20 +74,25 @@ class Broadcaster:
 				await socket.close()
 
 	def _collect(self) -> dict[str, object]:
-		labels = {tool["id"]: tool["label"] for tool in list_tools(load_tool_registry())}
+		labels = {str(tool["id"]): str(tool["label"]) for tool in list_tools(load_tool_registry())}
 		runs = [
-			{**run, "tool_label": labels.get(run["tool_id"], run["tool_id"])}
+			{**run, "tool_label": labels.get(str(run["tool_id"]), run["tool_id"])}
 			for run in list_active_runs(self._repo_root)
 		]
-		try:
-			revision = asdict(workspace_revision(self._repo_root))
-		except (OSError, ValueError):
-			revision = None
-		return {
-			"health": store_health(self._repo_root),
-			"active_runs": runs,
-			"workspace_revision": revision,
-		}
+		with read_projection(self._repo_root):
+			try:
+				observed = workspace_revision(self._repo_root, self._game_repo_root)
+				revision = asdict(observed)
+				game_source = observed.game_source
+			except (OSError, ValueError):
+				revision = None
+				game_source = None
+			return {
+				"definition_runs": self._editor_runs() if self._editor_runs else [],
+				"health": store_health(self._repo_root, self._game_repo_root, game_source=game_source),
+				"active_runs": runs,
+				"workspace_revision": revision,
+			}
 
 	async def _broadcast(self, message_type: str, payload: object) -> None:
 		frame = json.dumps({"type": message_type, "data": payload})

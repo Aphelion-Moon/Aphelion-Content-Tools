@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "toy-tug-grip",
+  "clipScale": 0.7,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-grip/toy-tug-grip__d0__f0.png",
+      "sha256": "d8857c2dd7fc579fafc08df2ad44dc2265d41461dc438f2f01da83c35619f56a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-grip/toy-tug-grip__d0__f1.png",
+      "sha256": "47a495a7803fdb19d9dbf10ef9c1efe8e4b6e0e52213dfeb5d8c3d5bc14f89e5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-grip/toy-tug-grip__d0__f2.png",
+      "sha256": "97162b026dbf7a84123fb4f9c6654f11a0b306c34a882e18527a0a323b87ac03"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-grip/toy-tug-grip__d0__f3.png",
+      "sha256": "6d632fc33e1daa5caaee6a8be6a300fbcf117d426dbaa5542e3199f58bdaba9a"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-grip.png",
+  "sourceSha256": "1be2a8340b42dec08d96492ce58e41d084473560c5e0a9b18402d653af04d237",
+  "tool": "generated-strip-v4"
+}

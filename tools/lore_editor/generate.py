@@ -256,19 +256,25 @@ def generate_dm(
 	return f"{header}\n" + "\n\n".join(blocks) + "\n"
 
 
-def format_validation_error(repo_root: Path, corpus: LoreCorpus) -> str | None:
-	issues = validate_corpus(repo_root, corpus)
+def format_validation_error(repo_root: Path, corpus: LoreCorpus, *, asset_root: Path | None = None) -> str | None:
+	issues = validate_corpus(repo_root, corpus, asset_root=asset_root)
 	if not issues:
 		return None
 	formatted_issues = "\n".join(f"- {issue.path}: {issue.message}" for issue in issues)
 	return f"Lore corpus validation failed:\n{formatted_issues}"
 
 
-def write_generated_dm(repo_root: Path, *, check_only: bool = False, corpus: LoreCorpus | None = None) -> None:
+def write_generated_dm(
+	repo_root: Path,
+	*,
+	check_only: bool = False,
+	corpus: LoreCorpus | None = None,
+	asset_root: Path | None = None,
+) -> None:
 	"""Validate and write or compare the Aphelion DM artifact atomically."""
 	resolved_root = repo_root.resolve()
 	corpus = corpus or load_corpus(resolved_root)
-	validation_error = format_validation_error(resolved_root, corpus)
+	validation_error = format_validation_error(resolved_root, corpus, asset_root=asset_root)
 	if validation_error is not None:
 		raise ValueError(validation_error)
 

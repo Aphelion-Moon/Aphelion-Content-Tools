@@ -1,6 +1,6 @@
 import { lazy, type Component } from 'solid-js';
 
-// THE place a tool is registered. Adding a tool means adding one entry here -- nothing else.
+// Lazy component registry. IDs/routes are checked against the generated backend capability catalog.
 //
 // Pre-rewrite, the same facts were spread across nine locations that had to be hand-synchronised: the nav
 // markup in five separate HTML files, plus TOOL_ROUTES / TOOL_SCRIPTS / TOOL_STYLES / TOOL_TITLES and
@@ -65,6 +65,22 @@ export const TOOLS: readonly ToolManifest[] = [
 		title: 'Lore Editor',
 		description: 'Review catalog content and maintain lore overrides.',
 		component: lazy(() => import('./loreEditor/LoreEditorPage')),
+	},
+	{
+		id: 'outfit-editor',
+		route: '/outfit-editor',
+		navLabel: 'Outfit Editor',
+		title: 'Outfit Editor',
+		description: 'Create, update, and replace outfits with source and character previews.',
+		component: lazy(() => import('./definitionEditor/OutfitEditorPage')),
+	},
+	{
+		id: 'job-editor',
+		route: '/job-editor',
+		navLabel: 'Job Editor',
+		title: 'Job Editor',
+		description: 'Author jobs, linked outfits, ID access, and reviewed source changes.',
+		component: lazy(() => import('./definitionEditor/JobEditorPage')),
 	},
 	{
 		id: 'graph',

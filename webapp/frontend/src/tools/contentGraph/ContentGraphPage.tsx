@@ -1,11 +1,12 @@
 import { useSearchParams } from '@solidjs/router';
-import { For, Show, createEffect, createMemo, createResource, createSignal, onCleanup, onMount, type Accessor } from 'solid-js';
+import { For, Show, createEffect, createMemo, createResource, createSignal, onCleanup, onMount, untrack, type Accessor } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import Card from '~/components/Card';
 import OpenFileActions from '~/components/OpenFileActions';
 import { api } from '~/lib/api';
+import { waitForToolRun } from '~/lib/toolRuns';
 import type { components } from '~/lib/api-schema';
-import { announceError, announceSuccess } from '~/lib/notify';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import { addReference } from '~/lib/references';
 import { setSelectedContext } from '~/store/appStore';
 import ModularDebugPanel from './ModularDebugPanel';
@@ -42,7 +43,7 @@ export default function ContentGraphPage() {
 	const [scanOutput, setScanOutput] = createSignal('');
 	const [scanBusy, setScanBusy] = createSignal(false);
 	const [refreshToken, setRefreshToken] = createSignal(1);
-	const [explorerQuery, setExplorerQuery] = createSignal('');
+		const [explorerQuery, setExplorerQuery] = createSignal('');
 	const [nodeQuery, setNodeQuery] = createSignal('');
 	const [visibleKinds, setVisibleKinds] = createSignal<ReadonlySet<NodeKind>>(new Set(ALL_KINDS));
 	const [visibleOwners, setVisibleOwners] = createSignal<ReadonlySet<NodeOwner>>(new Set(ALL_OWNERS));
@@ -67,8 +68,15 @@ export default function ContentGraphPage() {
 	let graphContainer!: HTMLDivElement;
 	let renderer: SigmaGraphRenderer | null = null;
 	let simulation: GraphSimulationHandle | null = null;
+	let initializedSnapshot: string | null = null;
+	const scanObserver = new AbortController();
+	onCleanup(() => scanObserver.abort());
 
-	const [graphResponse, { refetch: refetchGraph }] = createResource(refreshToken, () => api.get<GraphResponse>('/api/graph'));
+	const [graphResponse, { refetch: refetchGraph }] = createResource(() => api.get<GraphResponse>('/api/graph'));
+	async function refreshGraph(): Promise<void> {
+		setRefreshToken((value) => value + 1);
+		await refetchGraph();
+	}
 	const rawGraph = createMemo<RawGraph | null>(() => {
 		const graph = graphResponse()?.graph;
 		return graph ? { nodes: graph.nodes, edges: graph.edges } : null;
@@ -82,20 +90,35 @@ export default function ContentGraphPage() {
 		if (!response.scanned || !graph) {
 			setStatusMessage('No content graph has been scanned yet.');
 			setScopeReady(false);
+			initializedSnapshot = null;
 			return;
 		}
 		const manifest = response.manifest;
 		setStatusMessage(manifest
 			? `${manifest.node_count.toLocaleString()} nodes · ${manifest.edge_count.toLocaleString()} edges · revision ${manifest.game_repo_revision.slice(0, 12)}`
 			: `${graph.nodes.length.toLocaleString()} nodes · ${graph.edges.length.toLocaleString()} edges`);
-		if (!scopeReady()) {
+		const snapshot = manifest?.snapshot_sha256 ?? `${graph.nodes.length}:${graph.edges.length}:${graph.nodes.map((node) => node.id).join('\0')}`;
+		if (snapshot !== initializedSnapshot) {
 			const initial = defaultScopeIds(graph);
 			const deepLinked = typeof searchParams.selected === 'string' ? searchParams.selected : null;
 			if (deepLinked && graph.nodes.some((node) => node.id === deepLinked)) initial.add(deepLinked);
 			setScope(initial);
 			setScopeReady(true);
+			initializedSnapshot = snapshot;
 			if (deepLinked) setSelectedNodeId(deepLinked);
 		}
+	});
+
+	// Query changes also arrive from shared search and references while this route is mounted.
+	createEffect(() => {
+		const graph = rawGraph();
+		if (!graph) return;
+		const linked = typeof searchParams.selected === 'string' ? searchParams.selected : null;
+		const exists = linked && graph.nodes.some((node) => node.id === linked);
+		untrack(() => {
+			if (exists && linked) setScope((current) => current.has(linked) ? current : new Set([...current, linked]));
+			setSelectedNodeId(exists ? linked : null);
+		});
 	});
 
 	const scopedGraph = createMemo<RawGraph | null>(() => {
@@ -207,25 +230,24 @@ export default function ContentGraphPage() {
 		for (const id of subtreeIds(nodeId, index.childrenByParent)) checked ? next.add(id) : next.delete(id);
 		setScope(next);
 	}
-	async function pollRun(runId: string): Promise<ToolRun> {
-		for (;;) {
-			const run = await api.get<ToolRun>(`/api/tools/runs/${encodeURIComponent(runId)}`);
-			setScanOutput(run.output);
-			if (run.status !== 'queued' && run.status !== 'running') return run;
-			await new Promise((resolve) => window.setTimeout(resolve, 750));
-		}
-	}
 	async function scanContent(): Promise<void> {
+		if (scanBusy()) return;
 		setScanBusy(true); setStatusMessage('Scanning modular content…');
 		try {
 			const started = await api.post<ToolRun>('/api/tools/scan-content');
-			const finished = await pollRun(started.run_id);
+			if (scanObserver.signal.aborted) return;
+			reportParsec({ type: 'job', phase: 'started', tool: 'content-graph', summary: 'Scanning the content graph.', dedupeKey: `graph-scan:${started.run_id}` });
+			const finished = await waitForToolRun(started.run_id, { signal: scanObserver.signal, onUpdate: (run) => setScanOutput(run.output) });
 			if (finished.status !== 'succeeded') throw new Error(finished.output || `Scan ${finished.status}.`);
-			setScopeReady(false); setRefreshToken((value) => value + 1); await refetchGraph();
-			announceSuccess('Content graph scan complete.', 'content-graph');
+			await refreshGraph();
+			if (scanObserver.signal.aborted) return;
+			reportParsec({ type: 'job', phase: 'completed', tool: 'content-graph', summary: 'Content graph scan complete.', dedupeKey: `graph-scan:${started.run_id}` });
 		} catch (error) {
-			setStatusMessage(error instanceof Error ? error.message : String(error)); announceError(error, 'content-graph');
-		} finally { setScanBusy(false); }
+			if (scanObserver.signal.aborted) return;
+			const message = error instanceof Error ? error.message : String(error);
+			setStatusMessage(message);
+			reportParsec({ type: 'job', phase: 'failed', tool: 'content-graph', summary: 'Content graph scan failed.', technicalDetail: message });
+		} finally { if (!scanObserver.signal.aborted) setScanBusy(false); }
 	}
 	function updateSet<T extends string>(current: ReadonlySet<T>, value: T, checked: boolean): ReadonlySet<T> {
 		const next = new Set(current); checked ? next.add(value) : next.delete(value); return next;
@@ -254,7 +276,7 @@ export default function ContentGraphPage() {
 		<Show when={rawGraph()} fallback={<EmptyGraph onScan={scanContent} busy={scanBusy()} />}>
 			<div class={styles.graphLayout}>
 				<aside class={styles.explorerPanel} aria-label="Graph explorer and filters">
-					<details open><summary>Visibility filters</summary>
+					<details><summary>Visibility filters</summary>
 						<FilterGroup legend="Node kinds" values={ALL_KINDS} labels={KIND_LABELS} selected={visibleKinds} onChange={(value, checked) => setVisibleKinds(updateSet(visibleKinds(), value, checked))} />
 						<FilterGroup legend="Owner" values={ALL_OWNERS} labels={OWNER_LABELS} selected={visibleOwners} onChange={(value, checked) => setVisibleOwners(updateSet(visibleOwners(), value, checked))} />
 						<FilterGroup legend="Edge relations" values={ALL_RELATIONS} labels={RELATION_LABELS} selected={visibleRelations} onChange={(value, checked) => setVisibleRelations(updateSet(visibleRelations(), value, checked))} />
@@ -308,8 +330,13 @@ function ExplorerNode(props: { readonly nodeId: string; readonly index: TreeInde
 function NodeDetails(props: { readonly node: GraphNode | null; readonly onFocus: () => void; readonly onEgo: () => void }) {
 	async function pin(): Promise<void> {
 		if (!props.node) return;
-		try { await addReference({ tool: 'graph', kind: 'graph_node', key: props.node.id, label: nodeLabel(props.node), path: props.node.path }); announceSuccess('Added graph node to shared references.', 'content-graph'); }
-		catch (error) { announceError(error, 'content-graph'); }
+		try {
+			await addReference({ tool: 'graph', kind: 'graph_node', key: props.node.id, label: nodeLabel(props.node), path: props.node.path });
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'content-graph', summary: 'Added graph node to shared references.' });
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			reportParsec({ type: 'mutation', phase: 'failed', tool: 'content-graph', summary: 'Could not add the graph node to shared references.', technicalDetail: message });
+		}
 	}
 	return <aside class={styles.detailPanel} aria-label="Selected node details"><h2>Details</h2><Show when={props.node} fallback={<p class={styles.metadata}>Click a node or choose it from the accessible table.</p>}>{(node) => <><h3>{nodeLabel(node())}</h3><dl class={styles.details}><dt>Kind</dt><dd>{node().kind}</dd><dt>Owner</dt><dd>{node().owner ?? '—'}</dd><dt>Connections</dt><dd>{node().degree}</dd><dt>Path</dt><dd>{node().path ?? '—'}</dd><Show when={node().markerCount}><><dt>Markers</dt><dd>{node().markerCount}</dd></></Show></dl><div class={styles.buttonRow}><button type="button" onClick={() => void pin()}>Add to references</button><button type="button" onClick={props.onFocus}>Focus rings</button><button type="button" onClick={props.onEgo}>Ego view</button></div><Show when={node().path}>{(path) => <OpenFileActions label="File" repository="game" path={path()} />}</Show><Show when={node().corePath}>{(path) => <OpenFileActions label="Core file" repository="game" path={path()} />}</Show></>}</Show></aside>;
 }

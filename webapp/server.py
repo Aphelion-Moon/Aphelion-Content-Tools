@@ -617,7 +617,7 @@ class WebAppRequestHandler(BaseHTTPRequestHandler):
 		if parsed.path == "/api/store/health":
 			try:
 				store_health = _load_store_health_function()
-				self.send_json(store_health(self.server.repo_root))
+				self.send_json(store_health(self.server.repo_root, self.server.game_repo_root))
 			except (OSError, ValueError) as exc:
 				self.send_error_json(HTTPStatus.BAD_REQUEST, str(exc))
 			return

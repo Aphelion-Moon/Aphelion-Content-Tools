@@ -1,0 +1,34 @@
+{
+  "tool": "portalrabbit-effect-envelope-v1",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/effect-radio-ping.png",
+  "sourceSha256": "b0ea36ca69c7113f18980adc559d49b060e7da65e5548fe6995f66f6ee780b14",
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "envelope": [
+    32,
+    32,
+    64,
+    64
+  ],
+  "clipScale": 0.4444444444444444,
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-radio-ping/effect-radio-ping__d0__f0.png",
+      "sha256": "56b11fe0441f4d02bd8d2862c0a31e83a9c90a8afd9ea2bc8ae6280d1d0a9c6c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-radio-ping/effect-radio-ping__d0__f1.png",
+      "sha256": "4afd2bc736688efe7c6ae42732a38a02a6acf82b52dd2659cd9e8496c012c30f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-radio-ping/effect-radio-ping__d0__f2.png",
+      "sha256": "4f7b27e040fe48ece15ae60f524c4fe46cdd01ab8a36d696be8311a71ef7a0d1"
+    }
+  ]
+}

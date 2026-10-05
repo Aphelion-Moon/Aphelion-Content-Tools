@@ -1,0 +1,80 @@
+.history {
+	padding: 1rem;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+}
+
+.headingRow,
+.controls,
+.confirmation {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.65rem;
+	flex-wrap: wrap;
+}
+
+.headingRow h2,
+.eyebrow {
+	margin: 0;
+}
+
+.eyebrow,
+.storage,
+.help {
+	color: var(--muted);
+}
+
+.eyebrow {
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.filters {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	gap: 0.55rem;
+	margin: 0.8rem 0;
+}
+
+.filters label,
+.controls label {
+	display: grid;
+	gap: 0.2rem;
+}
+
+.filters button {
+	align-self: end;
+}
+
+.warning {
+	color: var(--warn);
+}
+
+.confirmation {
+	margin-top: 0.7rem;
+	padding: 0.55rem;
+	border: 1px solid var(--danger);
+	border-radius: var(--radius);
+}
+
+.records {
+	display: grid;
+	max-height: 32rem;
+	margin: 0.8rem 0 0;
+	padding: 0;
+	gap: 0.45rem;
+	overflow-y: auto;
+	list-style: none;
+}
+
+.records li {
+	padding: 0.55rem;
+	background: var(--bg-void);
+	border-left: 3px solid var(--border);
+	font-size: 0.84rem;
+	overflow-wrap: anywhere;
+}

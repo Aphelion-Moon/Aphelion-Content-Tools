@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "habitat-bed-approach",
+  "clipScale": 0.7203389830508474,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-approach/habitat-bed-approach__d0__f0.png",
+      "sha256": "7fc18f3c94e7464cad3f852ee9e27266982cc56d0e81b1d9f8ab24df4cf427da"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-approach/habitat-bed-approach__d0__f1.png",
+      "sha256": "50779a528c71d08fe0da8b7777f5a06a4ca3787bf94ce0120a2c7a512b76faea"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-approach/habitat-bed-approach__d0__f2.png",
+      "sha256": "2db05236ef32bc663b2c7b7969ab488842076ff8eb904187a8612e2393a422ba"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-approach/habitat-bed-approach__d0__f3.png",
+      "sha256": "449385ebacbb20fbee415fb00897a402f10fea5ba1a636ce99f1aca9329cf85d"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    85,
+    85
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-approach.png",
+  "sourceSha256": "700272f7e5e25d3da57cafcef990b022f1d2e43cf91d2a8291e3c1daca3da8f1",
+  "tool": "generated-strip-v4"
+}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import io
 import json
@@ -22,10 +23,6 @@ else:
 	from .tool_registry import load_tool_registry
 	from .tooling import ToolDefinition
 
-# A fixed authkey is enough here: the pipe address is itself unique per repo root and this is a local,
-# single-user desktop tool with no untrusted other processes on the machine to defend against.
-AUTH_KEY = b"aphelion-content-tools-store-worker"
-
 MAX_OUTPUT_CHARACTERS = 64_000
 MAX_LOG_CHARACTERS = 1_000_000
 MAX_RETAINED_RUNS = 200
@@ -33,11 +30,15 @@ LOG_ROOT = Path("tools/logs")
 RUN_STATE_ROOT = LOG_ROOT / "runs"
 
 
-def pipe_address(repo_root: Path) -> str:
-	"""A Windows named-pipe address unique to this repo root, so a worker for one checkout never talks
-	to a client meant for another."""
+def pipe_address(repo_root: Path, launch_nonce: str | None = None) -> str:
+	"""Return the per-launch Windows pipe address for one checkout."""
 	digest = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[:16]
-	return rf"\\.\pipe\aphelion-store-worker-{digest}"
+	if launch_nonce is not None and (
+		len(launch_nonce) != 32 or any(character not in "0123456789abcdef" for character in launch_nonce.casefold())
+	):
+		raise ValueError("Store worker launch nonce is invalid.")
+	suffix = f"-{launch_nonce}" if launch_nonce else ""
+	return rf"\\.\pipe\aphelion-store-worker-{digest}{suffix}"
 
 
 class JobCancelled(Exception):
@@ -336,11 +337,29 @@ def _handle_connection(worker: Worker, definitions: tuple[ToolDefinition, ...], 
 	return True
 
 
-def serve(repo_root: Path) -> None:
+def _launch_credentials() -> tuple[str, bytes]:
+	launch_nonce = os.environ.get("APHELION_STORE_WORKER_NONCE", "")
+	encoded_authkey = os.environ.get("APHELION_STORE_WORKER_AUTHKEY", "")
+	if not launch_nonce or not encoded_authkey:
+		raise RuntimeError("Store worker launch credentials are missing.")
+	try:
+		authkey = base64.urlsafe_b64decode(encoded_authkey.encode("ascii"))
+	except (ValueError, UnicodeError) as exc:
+		raise RuntimeError("Store worker launch credentials are invalid.") from exc
+	if len(authkey) < 32:
+		raise RuntimeError("Store worker launch credentials are invalid.")
+	return launch_nonce, authkey
+
+
+def serve(repo_root: Path, *, launch_nonce: str | None = None, authkey: bytes | None = None) -> None:
 	worker = Worker(repo_root)
 	definitions = load_tool_registry()
-	address = pipe_address(repo_root)
-	listener = Listener(address=address, family="AF_PIPE", authkey=AUTH_KEY)
+	if launch_nonce is None or authkey is None:
+		environment_nonce, environment_authkey = _launch_credentials()
+		launch_nonce = launch_nonce or environment_nonce
+		authkey = authkey or environment_authkey
+	address = pipe_address(repo_root, launch_nonce)
+	listener = Listener(address=address, family="AF_PIPE", authkey=authkey)
 	try:
 		while True:
 			conn = listener.accept()

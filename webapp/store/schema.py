@@ -11,7 +11,9 @@ from .db import (
 	RECORD_HASH_FIELD,
 	TEXT_FIELD,
 	VECTOR_FIELD,
+	WritableTable,
 	get_or_create_table,
+	read_table,
 )
 
 # Every table shares the same shape: a handful of small "promoted" columns used for keys and predicate
@@ -157,7 +159,17 @@ KEYWORD_ONLY_TABLES = frozenset(("graph_nodes", "graph_edges", "unresolved_marke
 def table(repo_root, name: str, *, store_dir=None):
 	if name not in TABLE_SCHEMAS:
 		raise ValueError(f"Unknown store table '{name}'.")
-	return get_or_create_table(repo_root, name, TABLE_SCHEMAS[name], store_dir=store_dir)
+	return read_table(repo_root, name, store_dir=store_dir)
+
+
+def writable_table(repo_root, name: str, *, store_dir):
+	from .generations import require_staged_table
+
+	if name not in TABLE_SCHEMAS:
+		raise ValueError(f"Unknown store table '{name}'.")
+	stage = require_staged_table(store_dir, name)
+	opened = get_or_create_table(repo_root, name, TABLE_SCHEMAS[name], store_dir=store_dir)
+	return WritableTable(opened, stage.require_active)
 
 
 def decode(row: dict[str, object]) -> dict[str, object]:

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "scenarios": {
+    "matching": {
+      "description": "Canonical lore and both game-derived manifests match their repositories."
+    },
+    "game_changed": {
+      "description": "Canonical lore is unchanged but game HEAD advances after catalog and graph creation."
+    },
+    "dataset_build_failed": {
+      "description": "An inactive dataset build fails before activation and the prior generation remains active."
+    }
+  }
+}

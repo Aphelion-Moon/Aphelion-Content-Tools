@@ -1,0 +1,35 @@
+{
+  "tool": "portalrabbit-composition-v1",
+  "frames": [
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-scratch/core-idle-scratch__d0__f0.png",
+      "sourceSha256": "f4d2062ca96ee84f81f292c705a37e1cfda38e07fc2e60d283cbfd0127910700",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f0.png",
+      "sha256": "5c33d687ff6b71d55f447bdc51e7e719d3a64849debac13c897a90673a145c15"
+    },
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-scratch/core-idle-scratch__d0__f1.png",
+      "sourceSha256": "e4befef36f163edbfb9a040f349b799572a19462a68e2b7c69707a2356330f91",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f1.png",
+      "sha256": "f127ea78f4b0f3dd2aedfb4cb6016e37e7a8eb04d7d470d1ff0e18824529e259"
+    },
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-scratch/core-idle-scratch__d0__f2.png",
+      "sourceSha256": "320e80a7de0500d5e24763cb64ae42458a02c775cebb8b65b28c6a314c7dd349",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f2.png",
+      "sha256": "27f7d1af97dc8fb62cac9643e217d83c9cc84e8c8baa8030743d276171c07d73"
+    },
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-scratch/core-idle-scratch__d0__f3.png",
+      "sourceSha256": "41519bb9f8a3b48cbf9bad5ff374e65f14a84cdaf5fc038218e3a35a26c754b3",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f3.png",
+      "sha256": "1933bccad7ede55b64f975b61d80fae494afd2e99bc72a9b45f7ad91ce25fdbf"
+    },
+    {
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/pixel/parsec-core/core-idle-scratch/core-idle-scratch__d0__f4.png",
+      "sourceSha256": "1b4edf398923b7cdd82343d3f16f9f42c01ef22812adc689743a940b79381ce0",
+      "output": "webapp/frontend/src/assets/parsec/prepared/parsec-core/core-idle-scratch/core-idle-scratch__d0__f4.png",
+      "sha256": "cab53c7a9d64de32c3d13ac76d2bed729ad7e374388a1048a664ac6678bf5c14"
+    }
+  ]
+}

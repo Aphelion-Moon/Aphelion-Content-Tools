@@ -104,6 +104,54 @@ class GitAdapterTests(unittest.TestCase):
 		self.assertTrue(status.dirty)
 		self.assertFalse(status.conflicted)
 
+	def test_workspace_revision_changes_when_a_dataset_generation_is_activated(self) -> None:
+		from webapp.store.metadata import activate_projection, new_projection_metadata, write_projection_marker
+
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		content_revision = workspace_revision(repo_root).content_revision
+		first = new_projection_metadata(content_revision)
+		write_projection_marker(repo_root, first)
+		activate_projection(repo_root, first)
+		before = workspace_revision(repo_root)
+		second = new_projection_metadata(content_revision)
+		write_projection_marker(repo_root, second)
+		activate_projection(repo_root, second)
+		after = workspace_revision(repo_root)
+		self.assertNotEqual(before, after)
+		self.assertEqual(before.projection_revision, after.projection_revision)
+		self.assertEqual(after.projection_generation_id, second.generation_id)
+
+	def test_workspace_revision_tracks_the_selected_game_checkout_and_head(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		game_directory, game_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		self.addCleanup(game_directory.cleanup)
+		before = workspace_revision(repo_root, game_root)
+		(game_root / "README.md").write_text("updated\n", encoding="utf-8")
+		run_git(game_root, "commit", "-am", "Update fixture")
+		after = workspace_revision(repo_root, game_root)
+		self.assertNotEqual(before, after)
+		self.assertEqual(before.game_source.worktree_id, after.game_source.worktree_id)
+		self.assertEqual(after.game_source.head, git_adapter.repository_revision(game_root))
+		self.assertNotEqual(after.game_source.worktree_id, after.worktree_id)
+
+	def test_source_edits_in_an_already_dirty_checkout_change_workspace_revision(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		game_directory, game_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		self.addCleanup(game_directory.cleanup)
+		(game_root / "code").mkdir()
+		core = game_root / "code/marker.dm"
+		core.write_text("// APHELION EDIT - first\n", encoding="utf-8")
+		before = workspace_revision(repo_root, game_root)
+		core.write_text("// APHELION EDIT - second version\n", encoding="utf-8")
+		after = workspace_revision(repo_root, game_root)
+		self.assertEqual(before.game_source.head, after.game_source.head)
+		self.assertTrue(before.game_source.dirty and after.game_source.dirty)
+		self.assertNotEqual(before.game_source.graph_observation, after.game_source.graph_observation)
+		self.assertNotEqual(before, after)
+
 	def test_create_branch_rejects_unsafe_names_and_switches_branch(self) -> None:
 		temporary_directory, repo_root = self.make_repo()
 		self.addCleanup(temporary_directory.cleanup)
@@ -165,6 +213,17 @@ class GitAdapterTests(unittest.TestCase):
 		self.assertEqual(owned[0].kind, "group")
 		self.assertEqual(owned[0].record_id, "items")
 		self.assertEqual(owned[0].summary, "Items")
+
+	def test_definition_drafts_are_owned_and_change_workspace_revision(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		before = workspace_revision(repo_root)
+		from tools.definition_editor.storage import DraftStore
+		from tools.definition_editor.tests.test_authoring import draft
+		DraftStore(repo_root).save(draft(), expected_hash=None)
+		owned = list_owned_changes(repo_root, 'tool')
+		self.assertEqual([(item.kind, item.record_id) for item in owned], [('outfit_draft', 'test-outfit')])
+		self.assertNotEqual(before, workspace_revision(repo_root))
 
 	def test_stage_and_commit_leaves_preexisting_staged_unrelated_files_alone(self) -> None:
 		temporary_directory, repo_root = self.make_repo()
@@ -625,6 +684,21 @@ class GitAdapterTests(unittest.TestCase):
 		url = github_blob_url(repo_root, "a_module")
 
 		self.assertEqual(f"https://github.com/AphelionDevelopment/Meridian-Rift/tree/{head}/a_module", url)
+
+	def test_github_blob_url_rejects_a_path_that_escapes_the_repository(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+		run_git(repo_root, "remote", "add", "origin", "https://github.com/AphelionDevelopment/Meridian-Rift.git")
+
+		with self.assertRaises(ValueError):
+			github_blob_url(repo_root, "../outside")
+
+	def test_line_history_rejects_a_path_that_escapes_the_repository(self) -> None:
+		temporary_directory, repo_root = self.make_repo()
+		self.addCleanup(temporary_directory.cleanup)
+
+		with self.assertRaises(ValueError):
+			line_history(repo_root, "../outside", 1)
 
 	def test_line_history_reports_the_commit_that_introduced_the_line(self) -> None:
 		temporary_directory, repo_root = self.make_repo()

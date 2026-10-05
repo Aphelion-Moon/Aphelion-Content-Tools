@@ -31,19 +31,36 @@ record identifiers, revisions, hashes, and browser input as hostile.
   application-store path. Tool pages may own local interaction state.
 - Structured records under `tools/lore_editor/content/` are canonical. LanceDB, catalogs, caches,
   frontend builds, generated DreamMaker, and AutoWiki material are derived outputs.
+- Every derived dataset must identify its source repository and revision, schema, extractor/indexer/model
+  versions, content hash, and build state. Do not call a workspace current when a required dataset was
+  built from another revision. Build multi-table datasets outside the active snapshot, verify them, and
+  activate them with one atomic pointer change.
+- Shared selected context, references, and search results are typed and revision-bound. Re-resolve or
+  visibly invalidate them when the workspace snapshot changes. Keep exact, structural, full-text, and
+  semantic search capabilities distinct in APIs and UI claims.
+- A tool declaration includes its required datasets, jobs, search providers, mutation capabilities,
+  integrations, and availability. Keep the frontend lazy-component registry validated against the
+  backend capability catalog; do not rely on hand-synchronized metadata.
 - The Content Graph reads both inherited NOVA and current APHELION forms without rewriting unrelated
   history. New Aphelion output uses the current APHELION convention.
 
 ## Repository and export safety
 
-Bind application services to loopback. Never send GitHub, AutoWiki, or other credentials to browser
-code. GitHub Desktop owns authentication, pushes, pull requests, and complex merges.
+Bind application services to loopback and protect mutating HTTP and WebSocket paths with a per-launch
+session, exact Host/Origin validation, and typed authorization. Never send GitHub, AutoWiki, remote
+service, or broad integration credentials to browser code. A browser user grant must not be replaced by
+a backend service credential. GitHub Desktop owns authentication, pushes, pull requests, and complex
+merges unless a separately approved integration changes that boundary.
 
 Export is a prepare/apply workflow. Apply only to a compatible, clean, conflict-free Meridian-Rift
 checkout whose revision and generated-artifact hash still match the stage. Permit only
 `modular_aphelion/modules/lore_overhaul/code/generated_lore_overrides.dm`, enforce resolved parent
 containment, and use atomic replacement or complete rollback. There is no dirty-checkout force path.
 Never hand-edit generated DM.
+
+All other Meridian-Rift changes use the same staged change-set standard: compatible clean checkout,
+repository write lease, allowed resolved paths, base revision and hashes, preview, validation, atomic
+apply or complete rollback, and a receipt. Routes and tool pages do not write game files directly.
 
 ## Verification
 

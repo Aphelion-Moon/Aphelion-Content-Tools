@@ -4,12 +4,13 @@ import { TOOLS } from '~/tools/registry';
 import { appState } from '~/store/appStore';
 import { formatBytes } from '~/lib/format';
 import Elapsed from '~/components/Elapsed';
+import styles from './HomePage.module.css';
 
 export default function HomePage() {
 	const otherTools = () => TOOLS.filter((tool) => tool.id !== 'home');
 
 	return (
-		<>
+		<div class={styles.dashboard} aria-label="Content tools overview">
 			<Card eyebrow="About" heading="Aphelion Content Tools">
 				<p>
 					A suite of local tools for working on the Meridian-Rift SS13 fork: reviewing and overriding lore
@@ -34,13 +35,29 @@ export default function HomePage() {
 				>
 					{(health) => (
 						<>
+							<p>
+								<strong>{health().workspace.current ? 'Workspace current' : 'Workspace stale'}</strong>
+								<Show when={health().workspace.reason}>
+									{(reason) => <> — {reason()}</>}
+								</Show>
+							</p>
+							<ul class={`${cardStyles.metadata} ${styles.metrics}`} aria-label="Workspace datasets">
+								<For each={health().workspace.datasets}>
+									{(dataset) => (
+										<li title={dataset.reason ?? undefined}>
+											{dataset.kind}: {dataset.state}
+											<Show when={dataset.required}> — required</Show>
+										</li>
+									)}
+								</For>
+							</ul>
 							<p class={cardStyles.metadata}>
 								{health().total_rows.toLocaleString()} rows · {formatBytes(health().disk_bytes)}
 								<Show when={health().last_write_time}>
 									{(written) => <> · last write <Elapsed since={written()} /> ago</>}
 								</Show>
 							</p>
-							<ul class={cardStyles.metadata}>
+							<ul class={`${cardStyles.metadata} ${styles.metrics}`}>
 								<For each={Object.entries(health().tables)}>
 									{([name, count]) => (
 										<li>
@@ -70,6 +87,6 @@ export default function HomePage() {
 					</ul>
 				</Show>
 			</Card>
-		</>
+		</div>
 	);
 }

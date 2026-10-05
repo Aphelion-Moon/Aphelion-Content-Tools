@@ -1,0 +1,43 @@
+.workspace { display: grid; grid-template-columns: minmax(230px, .7fr) minmax(400px, 1.7fr) minmax(220px, .7fr); gap: 1rem; align-items: start; }
+.panel { padding: 1rem; border: 1px solid var(--line); background: var(--bg-1); min-width: 0; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-block: .8rem; }
+.toolbar button { flex: 0 0 auto; }
+.status { padding: .7rem 1rem; border-left: 3px solid var(--accent); background: var(--bg-2); margin-block: .75rem; }
+.error { color: var(--danger); white-space: pre-wrap; overflow-wrap: anywhere; }
+.hint { font-size: .82rem; color: var(--text-dim); }
+.picker { min-width: 0; }
+.typeList { height: 350px; overflow: auto; border: 1px solid var(--line); margin-top: .5rem; }
+.typeRow { position: absolute; top: 0; left: 0; width: 100%; height: 66px; padding: .6rem; border-bottom: 1px solid var(--line); cursor: pointer; overflow: hidden; }
+.typeRow[aria-selected=true] { background: var(--bg-3); outline: 1px solid var(--accent); outline-offset: -1px; }
+.typeRow strong, .typeRow code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.typeRow code { font-size: .7rem; color: var(--text-dim); }
+.thumbnail { width: 32px; height: 32px; image-rendering: pixelated; float: left; margin: 3px 8px 3px 0; }
+.inspector { min-width: 0; overflow-wrap: anywhere; }
+.equipment { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
+.equipment button { min-width: 0; text-align: left; }
+.equipment strong, .equipment code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.equipment code { font-size: .7rem; }
+.field { border-bottom: 1px solid var(--line); padding-block: .8rem; }
+.fieldHeading { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: .4rem; }
+.fieldHeading span { color: var(--text-dim); font-size: .73rem; overflow-wrap: anywhere; margin-right: auto; }
+.fieldActions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .35rem; }
+.fieldActions button, .fieldHeading button { font-size: .75rem; padding: .2rem .5rem; }
+.check { display: flex; align-items: center; gap: .35rem; font-size: .78rem; }
+.check input { width: auto; }
+.contentRow { display: grid; grid-template-columns: minmax(100px,1fr) 65px auto auto; gap: .25rem; margin-bottom: .3rem; }
+.source { width: 100%; min-height: 260px; font-family: var(--font-mono); font-size: .8rem; tab-size: 4; white-space: pre; }
+.diff { overflow: auto; max-height: 450px; background: var(--bg-0); padding: .7rem; font-size: .78rem; }
+.metadata { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+.group { margin-block: .8rem; border: 1px solid var(--line); padding: .6rem; }
+.group summary { cursor: pointer; color: var(--accent); }
+.drafts { display: flex; flex-direction: column; gap: .4rem; margin-top: .7rem; }
+.drafts button { text-align: left; overflow-wrap: anywhere; }
+.preview { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; }
+.preview img { width: 128px; height: 128px; image-rendering: pixelated; object-fit: contain; background: repeating-conic-gradient(var(--bg-2) 0 25%, var(--bg-3) 0 50%) 0 / 16px 16px; }
+.modal { position: fixed; inset: 15% 20%; z-index: 200; overflow: auto; background: var(--bg-1); border: 1px solid var(--accent); padding: 1rem; box-shadow: 0 0 0 100vmax #0009; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 1000px) { .workspace { grid-template-columns: 1fr; } .metadata { grid-template-columns: 1fr; } .modal { inset: 8%; } }
+
+.modalBackdrop { position: fixed; inset: 0; z-index: 100; background: rgb(0 0 0 / 65%); }
+
+.expression { width: 100%; min-height: 5rem; font-family: var(--font-mono); tab-size: 4; }

@@ -1,0 +1,1566 @@
+{
+  "parsec-feedback/empty-confused/d0/f0": {
+    "feet": {
+      "x": 49,
+      "y": 88
+    },
+    "face": {
+      "x": 23,
+      "y": 28
+    },
+    "scruff": {
+      "x": 35,
+      "y": 35
+    },
+    "mouth": {
+      "x": 12,
+      "y": 36
+    },
+    "interaction": {
+      "x": 48,
+      "y": 47
+    },
+    "toy": {
+      "x": 12,
+      "y": 36
+    },
+    "effect": {
+      "x": 23,
+      "y": 2
+    },
+    "shadow": {
+      "x": 49,
+      "y": 88
+    }
+  },
+  "parsec-feedback/empty-confused/d0/f1": {
+    "feet": {
+      "x": 49,
+      "y": 88
+    },
+    "face": {
+      "x": 24,
+      "y": 26
+    },
+    "scruff": {
+      "x": 36,
+      "y": 33
+    },
+    "mouth": {
+      "x": 12,
+      "y": 34
+    },
+    "interaction": {
+      "x": 48,
+      "y": 47
+    },
+    "toy": {
+      "x": 12,
+      "y": 34
+    },
+    "effect": {
+      "x": 24,
+      "y": 2
+    },
+    "shadow": {
+      "x": 49,
+      "y": 88
+    }
+  },
+  "parsec-feedback/empty-confused/d0/f2": {
+    "feet": {
+      "x": 49,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 25
+    },
+    "scruff": {
+      "x": 35,
+      "y": 32
+    },
+    "mouth": {
+      "x": 12,
+      "y": 33
+    },
+    "interaction": {
+      "x": 48,
+      "y": 46
+    },
+    "toy": {
+      "x": 12,
+      "y": 33
+    },
+    "effect": {
+      "x": 23,
+      "y": 2
+    },
+    "shadow": {
+      "x": 49,
+      "y": 87
+    }
+  },
+  "parsec-feedback/empty-confused/d0/f3": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 24,
+      "y": 27
+    },
+    "scruff": {
+      "x": 35,
+      "y": 33
+    },
+    "mouth": {
+      "x": 12,
+      "y": 35
+    },
+    "interaction": {
+      "x": 47,
+      "y": 47
+    },
+    "toy": {
+      "x": 12,
+      "y": 35
+    },
+    "effect": {
+      "x": 24,
+      "y": 3
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/error-anxious/d0/f0": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 29
+    },
+    "scruff": {
+      "x": 35,
+      "y": 36
+    },
+    "mouth": {
+      "x": 11,
+      "y": 37
+    },
+    "interaction": {
+      "x": 47,
+      "y": 46
+    },
+    "toy": {
+      "x": 11,
+      "y": 37
+    },
+    "effect": {
+      "x": 23,
+      "y": 2
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/error-anxious/d0/f1": {
+    "feet": {
+      "x": 49,
+      "y": 87
+    },
+    "face": {
+      "x": 22,
+      "y": 29
+    },
+    "scruff": {
+      "x": 34,
+      "y": 35
+    },
+    "mouth": {
+      "x": 10,
+      "y": 37
+    },
+    "interaction": {
+      "x": 47,
+      "y": 50
+    },
+    "toy": {
+      "x": 10,
+      "y": 37
+    },
+    "effect": {
+      "x": 22,
+      "y": 8
+    },
+    "shadow": {
+      "x": 49,
+      "y": 87
+    }
+  },
+  "parsec-feedback/error-anxious/d0/f2": {
+    "feet": {
+      "x": 51,
+      "y": 87
+    },
+    "face": {
+      "x": 20,
+      "y": 36
+    },
+    "scruff": {
+      "x": 32,
+      "y": 42
+    },
+    "mouth": {
+      "x": 9,
+      "y": 43
+    },
+    "interaction": {
+      "x": 48,
+      "y": 52
+    },
+    "toy": {
+      "x": 9,
+      "y": 43
+    },
+    "effect": {
+      "x": 20,
+      "y": 12
+    },
+    "shadow": {
+      "x": 51,
+      "y": 87
+    }
+  },
+  "parsec-feedback/error-anxious/d0/f3": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 25
+    },
+    "scruff": {
+      "x": 35,
+      "y": 31
+    },
+    "mouth": {
+      "x": 11,
+      "y": 32
+    },
+    "interaction": {
+      "x": 47,
+      "y": 50
+    },
+    "toy": {
+      "x": 11,
+      "y": 32
+    },
+    "effect": {
+      "x": 23,
+      "y": 10
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/error-anxious/d0/f4": {
+    "feet": {
+      "x": 49,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 30
+    },
+    "scruff": {
+      "x": 35,
+      "y": 36
+    },
+    "mouth": {
+      "x": 11,
+      "y": 38
+    },
+    "interaction": {
+      "x": 48,
+      "y": 48
+    },
+    "toy": {
+      "x": 11,
+      "y": 38
+    },
+    "effect": {
+      "x": 23,
+      "y": 5
+    },
+    "shadow": {
+      "x": 49,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-proud/d0/f0": {
+    "feet": {
+      "x": 51,
+      "y": 87
+    },
+    "face": {
+      "x": 24,
+      "y": 27
+    },
+    "scruff": {
+      "x": 35,
+      "y": 34
+    },
+    "mouth": {
+      "x": 13,
+      "y": 35
+    },
+    "interaction": {
+      "x": 48,
+      "y": 46
+    },
+    "toy": {
+      "x": 13,
+      "y": 35
+    },
+    "effect": {
+      "x": 24,
+      "y": 2
+    },
+    "shadow": {
+      "x": 51,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-proud/d0/f1": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 26,
+      "y": 24
+    },
+    "scruff": {
+      "x": 37,
+      "y": 30
+    },
+    "mouth": {
+      "x": 14,
+      "y": 32
+    },
+    "interaction": {
+      "x": 47,
+      "y": 47
+    },
+    "toy": {
+      "x": 14,
+      "y": 32
+    },
+    "effect": {
+      "x": 26,
+      "y": 3
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-proud/d0/f2": {
+    "feet": {
+      "x": 49,
+      "y": 87
+    },
+    "face": {
+      "x": 48,
+      "y": 31
+    },
+    "scruff": {
+      "x": 48,
+      "y": 38
+    },
+    "mouth": {
+      "x": 48,
+      "y": 39
+    },
+    "interaction": {
+      "x": 48,
+      "y": 46
+    },
+    "toy": {
+      "x": 48,
+      "y": 39
+    },
+    "effect": {
+      "x": 48,
+      "y": 2
+    },
+    "shadow": {
+      "x": 49,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-proud/d0/f3": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 24,
+      "y": 24
+    },
+    "scruff": {
+      "x": 35,
+      "y": 31
+    },
+    "mouth": {
+      "x": 13,
+      "y": 32
+    },
+    "interaction": {
+      "x": 47,
+      "y": 46
+    },
+    "toy": {
+      "x": 13,
+      "y": 32
+    },
+    "effect": {
+      "x": 24,
+      "y": 2
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-wag/d0/f0": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 20,
+      "y": 27
+    },
+    "scruff": {
+      "x": 32,
+      "y": 33
+    },
+    "mouth": {
+      "x": 9,
+      "y": 35
+    },
+    "interaction": {
+      "x": 47,
+      "y": 47
+    },
+    "toy": {
+      "x": 9,
+      "y": 35
+    },
+    "effect": {
+      "x": 20,
+      "y": 3
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-wag/d0/f1": {
+    "feet": {
+      "x": 46,
+      "y": 87
+    },
+    "face": {
+      "x": 19,
+      "y": 27
+    },
+    "scruff": {
+      "x": 32,
+      "y": 33
+    },
+    "mouth": {
+      "x": 8,
+      "y": 35
+    },
+    "interaction": {
+      "x": 47,
+      "y": 48
+    },
+    "toy": {
+      "x": 8,
+      "y": 35
+    },
+    "effect": {
+      "x": 19,
+      "y": 4
+    },
+    "shadow": {
+      "x": 46,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-wag/d0/f2": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 47,
+      "y": 31
+    },
+    "scruff": {
+      "x": 47,
+      "y": 37
+    },
+    "mouth": {
+      "x": 47,
+      "y": 39
+    },
+    "interaction": {
+      "x": 47,
+      "y": 47
+    },
+    "toy": {
+      "x": 47,
+      "y": 39
+    },
+    "effect": {
+      "x": 47,
+      "y": 3
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-wag/d0/f3": {
+    "feet": {
+      "x": 45,
+      "y": 87
+    },
+    "face": {
+      "x": 18,
+      "y": 28
+    },
+    "scruff": {
+      "x": 31,
+      "y": 34
+    },
+    "mouth": {
+      "x": 7,
+      "y": 36
+    },
+    "interaction": {
+      "x": 48,
+      "y": 48
+    },
+    "toy": {
+      "x": 7,
+      "y": 36
+    },
+    "effect": {
+      "x": 18,
+      "y": 5
+    },
+    "shadow": {
+      "x": 45,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-success-wag/d0/f4": {
+    "feet": {
+      "x": 45,
+      "y": 87
+    },
+    "face": {
+      "x": 19,
+      "y": 28
+    },
+    "scruff": {
+      "x": 32,
+      "y": 34
+    },
+    "mouth": {
+      "x": 8,
+      "y": 36
+    },
+    "interaction": {
+      "x": 47,
+      "y": 48
+    },
+    "toy": {
+      "x": 8,
+      "y": 36
+    },
+    "effect": {
+      "x": 19,
+      "y": 5
+    },
+    "shadow": {
+      "x": 45,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-warning-alert/d0/f0": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 27
+    },
+    "scruff": {
+      "x": 34,
+      "y": 34
+    },
+    "mouth": {
+      "x": 12,
+      "y": 35
+    },
+    "interaction": {
+      "x": 47,
+      "y": 46
+    },
+    "toy": {
+      "x": 12,
+      "y": 35
+    },
+    "effect": {
+      "x": 23,
+      "y": 2
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-warning-alert/d0/f1": {
+    "feet": {
+      "x": 49,
+      "y": 87
+    },
+    "face": {
+      "x": 24,
+      "y": 29
+    },
+    "scruff": {
+      "x": 36,
+      "y": 36
+    },
+    "mouth": {
+      "x": 12,
+      "y": 37
+    },
+    "interaction": {
+      "x": 48,
+      "y": 46
+    },
+    "toy": {
+      "x": 12,
+      "y": 37
+    },
+    "effect": {
+      "x": 24,
+      "y": 1
+    },
+    "shadow": {
+      "x": 49,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-warning-alert/d0/f2": {
+    "feet": {
+      "x": 47,
+      "y": 87
+    },
+    "face": {
+      "x": 24,
+      "y": 26
+    },
+    "scruff": {
+      "x": 35,
+      "y": 33
+    },
+    "mouth": {
+      "x": 13,
+      "y": 34
+    },
+    "interaction": {
+      "x": 47,
+      "y": 46
+    },
+    "toy": {
+      "x": 13,
+      "y": 34
+    },
+    "effect": {
+      "x": 24,
+      "y": 1
+    },
+    "shadow": {
+      "x": 47,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-warning-alert/d0/f3": {
+    "feet": {
+      "x": 47,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 26
+    },
+    "scruff": {
+      "x": 34,
+      "y": 33
+    },
+    "mouth": {
+      "x": 13,
+      "y": 34
+    },
+    "interaction": {
+      "x": 47,
+      "y": 46
+    },
+    "toy": {
+      "x": 13,
+      "y": 34
+    },
+    "effect": {
+      "x": 23,
+      "y": 1
+    },
+    "shadow": {
+      "x": 47,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-working-focus/d0/f0": {
+    "feet": {
+      "x": 47,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 25
+    },
+    "scruff": {
+      "x": 35,
+      "y": 32
+    },
+    "mouth": {
+      "x": 11,
+      "y": 33
+    },
+    "interaction": {
+      "x": 47,
+      "y": 46
+    },
+    "toy": {
+      "x": 11,
+      "y": 33
+    },
+    "effect": {
+      "x": 23,
+      "y": 0
+    },
+    "shadow": {
+      "x": 47,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-working-focus/d0/f1": {
+    "feet": {
+      "x": 51,
+      "y": 87
+    },
+    "face": {
+      "x": 19,
+      "y": 31
+    },
+    "scruff": {
+      "x": 32,
+      "y": 37
+    },
+    "mouth": {
+      "x": 7,
+      "y": 39
+    },
+    "interaction": {
+      "x": 48,
+      "y": 48
+    },
+    "toy": {
+      "x": 7,
+      "y": 39
+    },
+    "effect": {
+      "x": 19,
+      "y": 4
+    },
+    "shadow": {
+      "x": 51,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-working-focus/d0/f2": {
+    "feet": {
+      "x": 51,
+      "y": 87
+    },
+    "face": {
+      "x": 19,
+      "y": 30
+    },
+    "scruff": {
+      "x": 32,
+      "y": 36
+    },
+    "mouth": {
+      "x": 6,
+      "y": 38
+    },
+    "interaction": {
+      "x": 48,
+      "y": 48
+    },
+    "toy": {
+      "x": 6,
+      "y": 38
+    },
+    "effect": {
+      "x": 19,
+      "y": 4
+    },
+    "shadow": {
+      "x": 51,
+      "y": 87
+    }
+  },
+  "parsec-feedback/feedback-working-focus/d0/f3": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 26
+    },
+    "scruff": {
+      "x": 35,
+      "y": 33
+    },
+    "mouth": {
+      "x": 10,
+      "y": 34
+    },
+    "interaction": {
+      "x": 47,
+      "y": 46
+    },
+    "toy": {
+      "x": 10,
+      "y": 34
+    },
+    "effect": {
+      "x": 23,
+      "y": 0
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/fetch-dig/d0/f0": {
+    "feet": {
+      "x": 46,
+      "y": 87
+    },
+    "face": {
+      "x": 18,
+      "y": 40
+    },
+    "scruff": {
+      "x": 31,
+      "y": 46
+    },
+    "mouth": {
+      "x": 7,
+      "y": 47
+    },
+    "interaction": {
+      "x": 47,
+      "y": 52
+    },
+    "toy": {
+      "x": 7,
+      "y": 47
+    },
+    "effect": {
+      "x": 18,
+      "y": 14
+    },
+    "shadow": {
+      "x": 46,
+      "y": 87
+    }
+  },
+  "parsec-feedback/fetch-dig/d0/f1": {
+    "feet": {
+      "x": 50,
+      "y": 87
+    },
+    "face": {
+      "x": 19,
+      "y": 41
+    },
+    "scruff": {
+      "x": 32,
+      "y": 47
+    },
+    "mouth": {
+      "x": 8,
+      "y": 48
+    },
+    "interaction": {
+      "x": 48,
+      "y": 53
+    },
+    "toy": {
+      "x": 8,
+      "y": 48
+    },
+    "effect": {
+      "x": 19,
+      "y": 15
+    },
+    "shadow": {
+      "x": 50,
+      "y": 87
+    }
+  },
+  "parsec-feedback/fetch-dig/d0/f2": {
+    "feet": {
+      "x": 47,
+      "y": 87
+    },
+    "face": {
+      "x": 18,
+      "y": 41
+    },
+    "scruff": {
+      "x": 31,
+      "y": 47
+    },
+    "mouth": {
+      "x": 7,
+      "y": 48
+    },
+    "interaction": {
+      "x": 47,
+      "y": 52
+    },
+    "toy": {
+      "x": 7,
+      "y": 48
+    },
+    "effect": {
+      "x": 18,
+      "y": 14
+    },
+    "shadow": {
+      "x": 47,
+      "y": 87
+    }
+  },
+  "parsec-feedback/fetch-dig/d0/f3": {
+    "feet": {
+      "x": 51,
+      "y": 87
+    },
+    "face": {
+      "x": 18,
+      "y": 40
+    },
+    "scruff": {
+      "x": 31,
+      "y": 45
+    },
+    "mouth": {
+      "x": 7,
+      "y": 47
+    },
+    "interaction": {
+      "x": 47,
+      "y": 54
+    },
+    "toy": {
+      "x": 7,
+      "y": 47
+    },
+    "effect": {
+      "x": 18,
+      "y": 16
+    },
+    "shadow": {
+      "x": 51,
+      "y": 87
+    }
+  },
+  "parsec-feedback/fetch-dig/d0/f4": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 18,
+      "y": 40
+    },
+    "scruff": {
+      "x": 31,
+      "y": 46
+    },
+    "mouth": {
+      "x": 7,
+      "y": 47
+    },
+    "interaction": {
+      "x": 47,
+      "y": 53
+    },
+    "toy": {
+      "x": 7,
+      "y": 47
+    },
+    "effect": {
+      "x": 18,
+      "y": 15
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/fetch-dig/d0/f5": {
+    "feet": {
+      "x": 48,
+      "y": 87
+    },
+    "face": {
+      "x": 18,
+      "y": 42
+    },
+    "scruff": {
+      "x": 31,
+      "y": 47
+    },
+    "mouth": {
+      "x": 7,
+      "y": 49
+    },
+    "interaction": {
+      "x": 47,
+      "y": 54
+    },
+    "toy": {
+      "x": 7,
+      "y": 49
+    },
+    "effect": {
+      "x": 18,
+      "y": 16
+    },
+    "shadow": {
+      "x": 48,
+      "y": 87
+    }
+  },
+  "parsec-feedback/reconnect-pant/d0/f0": {
+    "feet": {
+      "x": 50,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 28
+    },
+    "scruff": {
+      "x": 34,
+      "y": 34
+    },
+    "mouth": {
+      "x": 12,
+      "y": 36
+    },
+    "interaction": {
+      "x": 47,
+      "y": 47
+    },
+    "toy": {
+      "x": 12,
+      "y": 36
+    },
+    "effect": {
+      "x": 23,
+      "y": 3
+    },
+    "shadow": {
+      "x": 50,
+      "y": 87
+    }
+  },
+  "parsec-feedback/reconnect-pant/d0/f1": {
+    "feet": {
+      "x": 49,
+      "y": 87
+    },
+    "face": {
+      "x": 23,
+      "y": 28
+    },
+    "scruff": {
+      "x": 35,
+      "y": 35
+    },
+    "mouth": {
+      "x": 12,
+      "y": 36
+    },
+    "interaction": {
+      "x": 48,
+      "y": 46
+    },
+    "toy": {
+      "x": 12,
+      "y": 36
+    },
+    "effect": {
+      "x": 23,
+      "y": 2
+    },
+    "shadow": {
+      "x": 49,
+      "y": 87
+    }
+  },
+  "parsec-feedback/reconnect-pant/d0/f2": {
+    "feet": {
+      "x": 49,
+      "y": 87
+    },
+    "face": {
+      "x": 24,
+      "y": 28
+    },
+    "scruff": {
+      "x": 36,
+      "y": 35
+    },
+    "mouth": {
+      "x": 12,
+      "y": 36
+    },
+    "interaction": {
+      "x": 48,
+      "y": 46
+    },
+    "toy": {
+      "x": 12,
+      "y": 36
+    },
+    "effect": {
+      "x": 24,
+      "y": 2
+    },
+    "shadow": {
+      "x": 49,
+      "y": 87
+    }
+  },
+  "parsec-feedback/reconnect-pant/d0/f3": {
+    "feet": {
+      "x": 49,
+      "y": 87
+    },
+    "face": {
+      "x": 48,
+      "y": 31
+    },
+    "scruff": {
+      "x": 48,
+      "y": 37
+    },
+    "mouth": {
+      "x": 48,
+      "y": 39
+    },
+    "interaction": {
+      "x": 48,
+      "y": 47
+    },
+    "toy": {
+      "x": 48,
+      "y": 39
+    },
+    "effect": {
+      "x": 48,
+      "y": 3
+    },
+    "shadow": {
+      "x": 49,
+      "y": 87
+    }
+  },
+  "parsec-feedback/search-sniff/d0/f0": {
+    "feet": {
+      "x": 60,
+      "y": 87
+    },
+    "face": {
+      "x": 21,
+      "y": 56
+    },
+    "scruff": {
+      "x": 34,
+      "y": 62
+    },
+    "mouth": {
+      "x": 13,
+      "y": 63
+    },
+    "interaction": {
+      "x": 47,
+      "y": 53
+    },
+    "toy": {
+      "x": 13,
+      "y": 63
+    },
+    "effect": {
+      "x": 21,
+      "y": 15
+    },
+    "shadow": {
+      "x": 60,
+      "y": 87
+    }
+  },
+  "parsec-feedback/search-sniff/d0/f1": {
+    "feet": {
+      "x": 61,
+      "y": 87
+    },
+    "face": {
+      "x": 21,
+      "y": 65
+    },
+    "scruff": {
+      "x": 34,
+      "y": 70
+    },
+    "mouth": {
+      "x": 13,
+      "y": 72
+    },
+    "interaction": {
+      "x": 47,
+      "y": 54
+    },
+    "toy": {
+      "x": 13,
+      "y": 72
+    },
+    "effect": {
+      "x": 21,
+      "y": 16
+    },
+    "shadow": {
+      "x": 61,
+      "y": 87
+    }
+  },
+  "parsec-feedback/search-sniff/d0/f2": {
+    "feet": {
+      "x": 56,
+      "y": 87
+    },
+    "face": {
+      "x": 26,
+      "y": 76
+    },
+    "scruff": {
+      "x": 39,
+      "y": 81
+    },
+    "mouth": {
+      "x": 11,
+      "y": 83
+    },
+    "interaction": {
+      "x": 48,
+      "y": 54
+    },
+    "toy": {
+      "x": 11,
+      "y": 83
+    },
+    "effect": {
+      "x": 26,
+      "y": 16
+    },
+    "shadow": {
+      "x": 56,
+      "y": 87
+    }
+  },
+  "parsec-feedback/search-sniff/d0/f3": {
+    "feet": {
+      "x": 59,
+      "y": 87
+    },
+    "face": {
+      "x": 20,
+      "y": 54
+    },
+    "scruff": {
+      "x": 33,
+      "y": 60
+    },
+    "mouth": {
+      "x": 12,
+      "y": 61
+    },
+    "interaction": {
+      "x": 47,
+      "y": 53
+    },
+    "toy": {
+      "x": 12,
+      "y": 61
+    },
+    "effect": {
+      "x": 20,
+      "y": 15
+    },
+    "shadow": {
+      "x": 59,
+      "y": 87
+    }
+  },
+  "parsec-feedback/search-sniff/d0/f4": {
+    "feet": {
+      "x": 61,
+      "y": 87
+    },
+    "face": {
+      "x": 21,
+      "y": 56
+    },
+    "scruff": {
+      "x": 33,
+      "y": 61
+    },
+    "mouth": {
+      "x": 12,
+      "y": 63
+    },
+    "interaction": {
+      "x": 48,
+      "y": 54
+    },
+    "toy": {
+      "x": 12,
+      "y": 63
+    },
+    "effect": {
+      "x": 21,
+      "y": 16
+    },
+    "shadow": {
+      "x": 61,
+      "y": 87
+    }
+  },
+  "parsec-feedback/tool-growl/d0/f0": {
+    "feet": {
+      "x": 49,
+      "y": 86
+    },
+    "face": {
+      "x": 23,
+      "y": 28
+    },
+    "scruff": {
+      "x": 35,
+      "y": 34
+    },
+    "mouth": {
+      "x": 11,
+      "y": 36
+    },
+    "interaction": {
+      "x": 48,
+      "y": 46
+    },
+    "toy": {
+      "x": 11,
+      "y": 36
+    },
+    "effect": {
+      "x": 23,
+      "y": 2
+    },
+    "shadow": {
+      "x": 49,
+      "y": 86
+    }
+  },
+  "parsec-feedback/tool-growl/d0/f1": {
+    "feet": {
+      "x": 49,
+      "y": 86
+    },
+    "face": {
+      "x": 23,
+      "y": 28
+    },
+    "scruff": {
+      "x": 35,
+      "y": 34
+    },
+    "mouth": {
+      "x": 11,
+      "y": 36
+    },
+    "interaction": {
+      "x": 47,
+      "y": 46
+    },
+    "toy": {
+      "x": 11,
+      "y": 36
+    },
+    "effect": {
+      "x": 23,
+      "y": 3
+    },
+    "shadow": {
+      "x": 49,
+      "y": 86
+    }
+  },
+  "parsec-feedback/tool-growl/d0/f2": {
+    "feet": {
+      "x": 49,
+      "y": 86
+    },
+    "face": {
+      "x": 23,
+      "y": 28
+    },
+    "scruff": {
+      "x": 35,
+      "y": 34
+    },
+    "mouth": {
+      "x": 11,
+      "y": 36
+    },
+    "interaction": {
+      "x": 46,
+      "y": 46
+    },
+    "toy": {
+      "x": 11,
+      "y": 36
+    },
+    "effect": {
+      "x": 23,
+      "y": 3
+    },
+    "shadow": {
+      "x": 49,
+      "y": 86
+    }
+  },
+  "parsec-feedback/tool-growl/d0/f3": {
+    "feet": {
+      "x": 50,
+      "y": 86
+    },
+    "face": {
+      "x": 48,
+      "y": 32
+    },
+    "scruff": {
+      "x": 48,
+      "y": 38
+    },
+    "mouth": {
+      "x": 48,
+      "y": 40
+    },
+    "interaction": {
+      "x": 48,
+      "y": 47
+    },
+    "toy": {
+      "x": 48,
+      "y": 40
+    },
+    "effect": {
+      "x": 48,
+      "y": 4
+    },
+    "shadow": {
+      "x": 50,
+      "y": 86
+    }
+  },
+  "parsec-feedback/tool-growl/d0/f4": {
+    "feet": {
+      "x": 50,
+      "y": 86
+    },
+    "face": {
+      "x": 23,
+      "y": 28
+    },
+    "scruff": {
+      "x": 35,
+      "y": 34
+    },
+    "mouth": {
+      "x": 11,
+      "y": 36
+    },
+    "interaction": {
+      "x": 48,
+      "y": 46
+    },
+    "toy": {
+      "x": 11,
+      "y": 36
+    },
+    "effect": {
+      "x": 23,
+      "y": 2
+    },
+    "shadow": {
+      "x": 50,
+      "y": 86
+    }
+  }
+}

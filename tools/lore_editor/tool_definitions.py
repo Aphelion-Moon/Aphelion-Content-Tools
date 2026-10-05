@@ -4,14 +4,26 @@ from webapp.tooling import ToolDefinition
 
 TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
 	ToolDefinition(
+		id="catalog-reload",
+		label="Load release catalog",
+		description=(
+			"Replace the current catalog with the verified release supplied by the maintainer. "
+			"Checks the release manifest, target data, and selected game revision before activation. "
+			"Your authored records are preserved; a failed download leaves the current catalog available. "
+			"Requires a matching catalog-seed.json release manifest."
+		),
+		tool_root="tools/lore_editor",
+		commands=(("catalog-reload",),),
+		game_repo_commands=frozenset({"catalog-reload"}),
+	),
+	ToolDefinition(
 		id="catalog-refresh",
 		label="Refresh catalog",
 		description=(
-			"Recompile the BYOND catalog probe against the game checkout and rebuild targets.json, the "
-			"snapshot of every reviewable type the Lore Editor's Catalog list is built from. Run this "
-			"after pulling new upstream/game changes, or after the game checkout's DM code changed in a "
-			"way that could add, remove, or rename reviewable types — otherwise the Catalog can drift out "
-			"of sync with what actually compiles in the game repo."
+			"Run the BYOND catalog probe against the game checkout to update local authoring targets. "
+			"Use after changes that add, remove, or rename reviewable types. This requires the maintained "
+			"game probe and build tools. Local probe output remains unverified for export; load a matching "
+			"release catalog before preparing an export."
 		),
 		tool_root="tools/lore_editor",
 		commands=(("catalog-refresh",),),
@@ -47,10 +59,9 @@ TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
 		id="refresh-validate",
 		label="Refresh and validate",
 		description=(
-			"Run Refresh catalog and Validate content back to back — the combination you want before "
-			"trusting the Catalog is current and every override in it is still valid. A good first step "
-			"after pulling new game-repo changes, and the safest check to run right before preparing a "
-			"Game Repository Export."
+			"Run the local BYOND catalog probe, then validate authored records and generated output. "
+			"This updates local authoring data but does not verify compiler provenance for export. "
+			"Load a matching release catalog before preparing a Game Repository Export."
 		),
 		tool_root="tools/lore_editor",
 		commands=(("catalog-refresh",), ("validate", "--check-generated")),

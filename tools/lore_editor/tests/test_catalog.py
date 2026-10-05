@@ -19,6 +19,58 @@ def write_json(path: Path, payload: object) -> None:
 
 
 class RefreshCatalogTests(unittest.TestCase):
+	def setUp(self) -> None:
+		model = patch("webapp.store.embeddings._load_model", return_value=None)
+		model.start()
+		self.addCleanup(model.stop)
+
+	def test_source_changes_during_probe_or_staging_preserve_previous_catalog(self) -> None:
+		from webapp.store import db
+		from webapp.store.metadata import active_projection_metadata
+
+		catalog, _source, _validation = self.import_modules()
+		for change_at in ("probe", "activation"):
+			with self.subTest(change_at=change_at), tempfile.TemporaryDirectory() as temp_dir:
+				root = Path(temp_dir)
+				tool_root, game_root = root / "tool", root / "game"
+				tool_root.mkdir()
+				game_root.mkdir()
+				(game_root / "tgstation.dme").write_text("", encoding="utf-8")
+				(game_root / ".gitignore").write_text("data/\n", encoding="utf-8")
+				for arguments in (("init", "--initial-branch=main"), ("config", "user.name", "Fixture"), ("config", "user.email", "fixture@example.invalid"), ("add", "--all"), ("commit", "-m", "Fixture")):
+					subprocess.run(["git", "-C", str(game_root), *arguments], check=True, capture_output=True, text=True)
+				catalog.activate_catalog_targets(tool_root, [], source_game_revision="previous")
+				before = active_projection_metadata(tool_root)
+				before_manifest = catalog.read_catalog_manifest(tool_root)
+				probe_output = game_root / "data/lore_overhaul_targets.json"
+				write_json(probe_output, [])
+				upsert = db.upsert_rows
+
+				def change_source(game_root=game_root):
+					(game_root / "source.dm").write_text("/datum/changed\n", encoding="utf-8")
+					subprocess.run(["git", "-C", str(game_root), "add", "source.dm"], check=True, capture_output=True)
+					subprocess.run(["git", "-C", str(game_root), "commit", "-m", "Concurrent edit"], check=True, capture_output=True)
+
+				def run_probe(_root, change_at=change_at, probe_output=probe_output, change_source=change_source):
+					if change_at == "probe":
+						change_source()
+					return probe_output
+
+				def write_manifest(*args, upsert=upsert, change_at=change_at, change_source=change_source, **kwargs):
+					result = upsert(*args, **kwargs)
+					if change_at == "activation" and any(row.get("id") == "catalog" for row in args[2]):
+						change_source()
+					return result
+
+				with (
+					patch.object(catalog, "_run_catalog_probe", side_effect=run_probe),
+					patch.object(db, "upsert_rows", side_effect=write_manifest),
+					self.assertRaisesRegex(ValueError, "source changed"),
+				):
+					catalog.refresh_catalog(tool_root, game_repo_root=game_root)
+				self.assertEqual(active_projection_metadata(tool_root), before)
+				self.assertEqual(catalog.read_catalog_manifest(tool_root), before_manifest)
+
 	def import_modules(self):
 		try:
 			catalog_module = importlib.import_module("tools.lore_editor.catalog")
@@ -168,6 +220,7 @@ class RefreshCatalogTests(unittest.TestCase):
 			self.assertEqual(catalog_module.read_current_targets(tool_root), targets)
 			manifest = catalog_module.read_catalog_manifest(tool_root)
 			self.assertEqual(1, manifest.target_count)
+			self.assertEqual("unverified", manifest.source_provenance)
 
 	def test_refresh_catalog_rejects_game_repository_missing_marker_file(self) -> None:
 		catalog_module, _source_module, _validation_module = self.import_modules()

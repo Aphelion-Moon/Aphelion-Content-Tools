@@ -1,0 +1,34 @@
+{
+  "tool": "portalrabbit-effect-envelope-v1",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/effect-hearts.png",
+  "sourceSha256": "4cf2e6de2528f1205fe14ab108c01680f87dc7e8c87bc29aa0e9551d2cf0a583",
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "envelope": [
+    44,
+    44,
+    53,
+    64
+  ],
+  "clipScale": 0.19148936170212766,
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-hearts/effect-hearts__d0__f0.png",
+      "sha256": "ab333f5bebce822b07299504ffb3db4c0712b91b10ccda2b1daa5c176c9d6103"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-hearts/effect-hearts__d0__f1.png",
+      "sha256": "3628c2f129a1df5f5059719e6932ebefb25a925f08309da0fb805cd6f8db2b63"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-hearts/effect-hearts__d0__f2.png",
+      "sha256": "84845711e83d074641672af3d258a3fc4fe9c223963d48035dd2dc0adfcbe816"
+    }
+  ]
+}

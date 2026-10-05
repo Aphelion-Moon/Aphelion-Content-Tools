@@ -1,0 +1,34 @@
+{
+  "crop": [
+    37,
+    240,
+    1897,
+    557
+  ],
+  "destination": "webapp/frontend/src/assets/parsec/source/references/habitat-cage-enter.reference.png",
+  "minimumMargin": 16,
+  "occupiedBounds": [
+    53,
+    256,
+    1881,
+    541
+  ],
+  "outputSha256": "4b7a1328c78db678d151f2b48118dc35ca6fd35d5ffc6e570239949ce91af326",
+  "outputSize": [
+    1860,
+    317
+  ],
+  "retainedMargin": [
+    16,
+    16,
+    16,
+    16
+  ],
+  "source": "webapp/frontend/src/assets/parsec/source/generated/habitat-cage-enter.imagegen.png",
+  "sourceSha256": "71ab58c6f108101e55a004cf045c95c1d1f81491f50dd51d289152277a2a235a",
+  "sourceSize": [
+    1933,
+    814
+  ],
+  "tool": "manual-reference-trim-v1"
+}

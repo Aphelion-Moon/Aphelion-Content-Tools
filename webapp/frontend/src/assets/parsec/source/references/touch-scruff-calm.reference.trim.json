@@ -1,0 +1,34 @@
+{
+  "crop": [
+    170,
+    211,
+    1807,
+    567
+  ],
+  "destination": "webapp/frontend/src/assets/parsec/source/references/touch-scruff-calm.reference.png",
+  "minimumMargin": 16,
+  "occupiedBounds": [
+    186,
+    227,
+    1791,
+    551
+  ],
+  "outputSha256": "49520ff31043f5621e76d05c1487e842602dc56b237b6cead7024cf7f09e36db",
+  "outputSize": [
+    1637,
+    356
+  ],
+  "retainedMargin": [
+    16,
+    16,
+    16,
+    16
+  ],
+  "source": "webapp/frontend/src/assets/parsec/source/generated/touch-scruff-calm.imagegen.png",
+  "sourceSha256": "7125b9814c76db050930b2231f11f5ee0105f75d0dfd205dce9ed60440ce1715",
+  "sourceSize": [
+    1983,
+    793
+  ],
+  "tool": "manual-reference-trim-v1"
+}

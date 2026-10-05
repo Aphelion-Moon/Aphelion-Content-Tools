@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import base64
 import contextlib
+import os
+import secrets
 import subprocess
 import sys
 import threading
@@ -8,6 +11,8 @@ import time
 from dataclasses import dataclass
 from multiprocessing.connection import Client
 from pathlib import Path
+
+from webapp.process_tree import KillOnCloseJob
 
 
 @dataclass(frozen=True)
@@ -37,18 +42,31 @@ def list_tools(definitions: tuple[ToolDefinition, ...]) -> list[dict[str, str]]:
 WORKER_START_TIMEOUT_SECONDS = 20.0
 WORKER_POLL_INTERVAL_SECONDS = 0.05
 WORKER_SHUTDOWN_TIMEOUT_SECONDS = 5.0
+WORKER_AUTHKEY_ENV = "APHELION_STORE_WORKER_AUTHKEY"
+WORKER_NONCE_ENV = "APHELION_STORE_WORKER_NONCE"
+
+
+def _worker_command(repo_root: Path) -> list[str]:
+	resolved_root = repo_root.resolve()
+	if getattr(sys, "frozen", False):
+		return [sys.executable, "--store-worker", "--repo-root", str(resolved_root)]
+	worker_script = Path(__file__).resolve().with_name("store_worker.py")
+	return [sys.executable, str(worker_script), "--repo-root", str(resolved_root)]
 
 
 class _WorkerHandle:
 	def __init__(self, repo_root: Path) -> None:
 		self.repo_root = repo_root.resolve()
 		self.process: subprocess.Popen | None = None
+		self.process_job: KillOnCloseJob | None = None
 		self.lock = threading.Lock()
+		self.launch_nonce = ""
+		self.authkey = b""
 
 	@property
 	def address(self) -> str:
 		from .store_worker import pipe_address
-		return pipe_address(self.repo_root)
+		return pipe_address(self.repo_root, self.launch_nonce)
 
 	@property
 	def startup_log_path(self) -> Path:
@@ -65,26 +83,43 @@ class _WorkerHandle:
 		with self.lock:
 			if self.process is not None and self.process.poll() is None:
 				return
+			if self.process_job is not None:
+				self.process_job.close()
+				self.process_job = None
+			self.launch_nonce = secrets.token_hex(16)
+			self.authkey = secrets.token_bytes(32)
 			# Run store_worker.py by path, not "-m webapp.store_worker": the worker's job is to operate
 			# on `self.repo_root` (which may be an arbitrary --repo-root, including a temp directory in
 			# tests) -- it must not be confused with *this* installation's own directory, which is what
 			# the child process actually needs on its import path to find the `webapp`/`tools` packages.
-			worker_script = Path(__file__).resolve().with_name("store_worker.py")
 			self.startup_log_path.parent.mkdir(parents=True, exist_ok=True)
+			process_job = KillOnCloseJob()
 			with self.startup_log_path.open("a", encoding="utf-8", newline="") as startup_log:
 				startup_log.write(f"\nStarting store worker for {self.repo_root}.\n")
 				startup_log.flush()
+				environment = os.environ.copy()
+				environment[WORKER_NONCE_ENV] = self.launch_nonce
+				environment[WORKER_AUTHKEY_ENV] = base64.urlsafe_b64encode(self.authkey).decode("ascii")
 				self.process = subprocess.Popen(
-					[sys.executable, str(worker_script), "--repo-root", str(self.repo_root)],
+					_worker_command(self.repo_root),
 					stdin=subprocess.DEVNULL,
 					stdout=startup_log,
 					stderr=subprocess.STDOUT,
+					env=environment,
 				)
-			self._wait_until_reachable()
+			try:
+				process_job.assign(self.process.pid)
+				self.process_job = process_job
+				self._wait_until_reachable()
+			except Exception:
+				process_job.close()
+				if self.process.poll() is None:
+					self.process.kill()
+					self.process.wait(timeout=WORKER_SHUTDOWN_TIMEOUT_SECONDS)
+				self.process = None
+				raise
 
 	def _wait_until_reachable(self) -> None:
-		from .store_worker import AUTH_KEY
-
 		deadline = _now() + WORKER_START_TIMEOUT_SECONDS
 		last_error: Exception | None = None
 		while _now() < deadline:
@@ -94,7 +129,7 @@ class _WorkerHandle:
 					f"Startup diagnostics:\n{self._startup_diagnostics()}"
 				)
 			try:
-				with Client(self.address, family="AF_PIPE", authkey=AUTH_KEY):
+				with Client(self.address, family="AF_PIPE", authkey=self.authkey):
 					return
 			except OSError as exc:
 				last_error = exc
@@ -107,15 +142,21 @@ class _WorkerHandle:
 	def shut_down(self) -> None:
 		with self.lock:
 			if self.process is None:
+				if self.process_job is not None:
+					self.process_job.close()
+					self.process_job = None
 				return
 			with contextlib.suppress(OSError):
-				_send(self.address, {"action": "shutdown", "repo_root": str(self.repo_root)})
+				_send(self.address, {"action": "shutdown", "repo_root": str(self.repo_root)}, self.authkey)
 			try:
 				self.process.wait(timeout=WORKER_SHUTDOWN_TIMEOUT_SECONDS)
 			except subprocess.TimeoutExpired:
 				self.process.kill()
 				self.process.wait(timeout=WORKER_SHUTDOWN_TIMEOUT_SECONDS)
 			self.process = None
+			if self.process_job is not None:
+				self.process_job.close()
+				self.process_job = None
 
 
 def _now() -> float:
@@ -126,9 +167,8 @@ def _sleep(seconds: float) -> None:
 	time.sleep(seconds)
 
 
-def _send(address: str, message: dict[str, object]) -> dict[str, object]:
-	from .store_worker import AUTH_KEY
-	with Client(address, family="AF_PIPE", authkey=AUTH_KEY) as conn:
+def _send(address: str, message: dict[str, object], authkey: bytes) -> dict[str, object]:
+	with Client(address, family="AF_PIPE", authkey=authkey) as conn:
 		conn.send(message)
 		return conn.recv()
 
@@ -152,14 +192,14 @@ def _request(handle: _WorkerHandle, message: dict[str, object]) -> dict[str, obj
 	message = {**message, "repo_root": str(handle.repo_root)}
 	handle.ensure_started()
 	try:
-		response = _send(handle.address, message)
+		response = _send(handle.address, message, handle.authkey)
 	except (OSError, EOFError):
 		# The worker died between calls (crashed, was killed) -- respawn once and retry. This is the
 		# actual payoff of moving execution into its own process: a bug in job code can only take down
 		# the worker, never the always-on HTTP server, and the server can recover instead of every
 		# subsequent click just failing forever.
 		handle.ensure_started()
-		response = _send(handle.address, message)
+		response = _send(handle.address, message, handle.authkey)
 	if not response.get("ok"):
 		error_type = response.get("error_type")
 		error_message = str(response.get("error") or "Unknown store worker error.")
@@ -198,7 +238,7 @@ def list_active_runs(repo_root: Path) -> list[dict[str, object]]:
 	if handle is None or handle.process is None or handle.process.poll() is not None:
 		return []
 	try:
-		response = _send(handle.address, {"action": "list_active", "repo_root": str(handle.repo_root)})
+		response = _send(handle.address, {"action": "list_active", "repo_root": str(handle.repo_root)}, handle.authkey)
 	except (OSError, EOFError):
 		return []
 	if not response.get("ok"):

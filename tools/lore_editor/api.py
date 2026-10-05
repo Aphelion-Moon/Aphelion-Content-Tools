@@ -9,9 +9,10 @@ from threading import Lock
 
 from tools.dmi import Dmi
 from webapp.git_adapter import find_line_in_tracked_files
+from webapp.json_storage import rollback_files
 from webapp.path_safety import resolve_repo_path
 from webapp.store import db
-from webapp.store.metadata import active_projection_metadata
+from webapp.store.lifecycle import selected_projection, with_projection_read
 
 from .generate import write_generated_dm
 from .icon_preview import list_icon_files, list_icon_states
@@ -128,7 +129,7 @@ _REVIEW_CATALOG_INDEX_CACHE_LOCK = Lock()
 
 def _store_cache_revision(repo_root: Path) -> tuple[object, ...]:
 	"""Combine same-process writes with the durable projection generation used across processes."""
-	active = active_projection_metadata(repo_root)
+	active = selected_projection(repo_root).metadata
 	if active is None:
 		return (db.current_generation(), None)
 	return (
@@ -600,6 +601,7 @@ def _review_entries_snapshot(
 		return snapshot
 
 
+@with_projection_read
 def list_review_response(
 	repo_root: Path,
 	*,
@@ -669,6 +671,7 @@ def list_review_response(
 	}
 
 
+@with_projection_read
 def groups_response(repo_root: Path) -> dict[str, object]:
 	corpus = load_corpus(repo_root)
 	group_config = load_groups(repo_root)
@@ -723,22 +726,18 @@ def save_group_response(
 		type_path_prefixes=tuple(payload.get("type_path_prefixes", [])),
 		keyword_scope=tuple(payload["keyword_scope"]) if "keyword_scope" in payload else DEFAULT_KEYWORD_SCOPE,
 	)
-	save_group(
-		repo_root,
-		group,
-		expected_record_hash=expected_record_hash,
-		enforce_record_hash=enforce_record_hash,
-		require_new=require_new,
-	)
 	assignments = payload.get("assignments", [])
 	if not isinstance(assignments, list) or any(not isinstance(type_path, str) for type_path in assignments):
 		raise ValueError("Group assignments must be an array of type paths.")
-	for type_path in assignments:
-		current = load_groups(repo_root).assignments.get(type_path, ())
-		updated = tuple(group.id if existing != group.id else existing for existing in current)
-		if group.id not in updated:
-			updated += (group.id,)
-			save_group_assignments(repo_root, type_path, updated)
+	# Resolve and validate every key before the first canonical mutation.
+	paths = [record_path(repo_root, 'group', group.id), *[record_path(repo_root, 'assignment', key) for key in assignments]]
+	with repository_write_lock(repo_root), rollback_files(paths):
+		save_group(repo_root, group, expected_record_hash=expected_record_hash,
+			enforce_record_hash=enforce_record_hash, require_new=require_new)
+		for type_path in assignments:
+			current = load_groups(repo_root).assignments.get(type_path, ())
+			if group.id not in current:
+				save_group_assignments(repo_root, type_path, (*current, group.id))
 	return {"group": _group_payload(group), "issues": [], "projection": _refresh_projection(repo_root)}
 
 
@@ -995,7 +994,7 @@ def _upsert_override_locked(
 	canonical_existed = canonical_path.exists()
 	try:
 		atomic_write_record(canonical_path, entry)
-		write_generated_dm(resolved_root, corpus=candidate)
+		write_generated_dm(resolved_root, corpus=candidate, asset_root=asset_root)
 	except Exception:
 		if previous_payload is not None:
 			atomic_write_record(canonical_path, previous_payload)
@@ -1059,6 +1058,7 @@ def delete_entry(
 	*,
 	entry_id: str,
 	source_file: str,
+	asset_root: Path | None = None,
 	expected_record_hash: str | None = None,
 ) -> dict[str, object]:
 	with repository_write_lock(repo_root):
@@ -1066,6 +1066,7 @@ def delete_entry(
 			repo_root,
 			entry_id=entry_id,
 			source_file=source_file,
+			asset_root=asset_root,
 			expected_record_hash=expected_record_hash,
 		)
 
@@ -1075,6 +1076,7 @@ def _delete_entry_locked(
 	*,
 	entry_id: str,
 	source_file: str,
+	asset_root: Path | None,
 	expected_record_hash: str | None,
 ) -> dict[str, object]:
 	validate_entry_id(entry_id)
@@ -1101,7 +1103,7 @@ def _delete_entry_locked(
 	original_generated_bytes = generated_path.read_bytes() if original_generated_exists else None
 	try:
 		canonical_path.unlink()
-		write_generated_dm(resolved_root)
+		write_generated_dm(resolved_root, asset_root=asset_root)
 	except Exception:
 		atomic_write_record(canonical_path, previous_payload)
 		if original_generated_exists and original_generated_bytes is not None:
@@ -1113,10 +1115,10 @@ def _delete_entry_locked(
 	return {"deleted": True, "id": entry_id, "projection": _refresh_projection(resolved_root)}
 
 
-def generate_output(repo_root: Path) -> dict[str, object]:
+def generate_output(repo_root: Path, *, asset_root: Path | None = None) -> dict[str, object]:
 	generated_path = repo_root.resolve() / WorkspaceLayout.from_root(repo_root).generated_dm_path
 	original_bytes = generated_path.read_bytes() if generated_path.exists() else None
-	write_generated_dm(repo_root.resolve())
+	write_generated_dm(repo_root.resolve(), asset_root=asset_root)
 	return {
 		"generated": True,
 		"changed": generated_path.read_bytes() != original_bytes,

@@ -1,0 +1,34 @@
+{
+  "crop": [
+    72,
+    139,
+    2091,
+    555
+  ],
+  "destination": "webapp/frontend/src/assets/parsec/source/references/core-idle-seated.reference.png",
+  "minimumMargin": 16,
+  "occupiedBounds": [
+    88,
+    155,
+    2075,
+    539
+  ],
+  "outputSha256": "a3724d11e4fe049accb72421d1e41601f752e4a01b43cab754f99ff7cb1b56d5",
+  "outputSize": [
+    2019,
+    416
+  ],
+  "retainedMargin": [
+    16,
+    16,
+    16,
+    16
+  ],
+  "source": "webapp/frontend/src/assets/parsec/source/generated/core-idle-seated.imagegen.png",
+  "sourceSha256": "5d3bf03dc8fe1e5bb6a4c8e3633d7d534f22c36039cba6ee0872fae07ea7e879",
+  "sourceSize": [
+    2138,
+    735
+  ],
+  "tool": "manual-reference-trim-v1"
+}

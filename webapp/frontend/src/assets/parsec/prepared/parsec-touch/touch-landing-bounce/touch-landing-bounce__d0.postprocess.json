@@ -1,0 +1,51 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "touch-landing-bounce",
+  "clipScale": 0.711864406779661,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-bounce/touch-landing-bounce__d0__f0.png",
+      "sha256": "d1a0c38550b1ad6fdcde95e05f0e737aa4c7160986593b2f1bff4809bcbdfd83"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-bounce/touch-landing-bounce__d0__f1.png",
+      "sha256": "dc889778243ad543e5ae4f77d8360e5c34ce8f1587ec5e37c7897d375569c912"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-bounce/touch-landing-bounce__d0__f2.png",
+      "sha256": "84f7c60f267b8575b58deaf1680a81821215410ffc084f30437d3693d73eabde"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-bounce/touch-landing-bounce__d0__f3.png",
+      "sha256": "d4604c98db2dc4ddd32fcb3996fa57c768627fe8dd5ea365511a1a643c94bba3"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-bounce/touch-landing-bounce__d0__f4.png",
+      "sha256": "397200b35e29084ffaa37f26d5290784e44600b00eef77a3d9c2d2ede51dde76"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-landing-bounce/touch-landing-bounce__d0__f5.png",
+      "sha256": "b6474bf68791dd1e2439aeec334faac7dd7937e33a6679d0ce4fba2cad165368"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/touch-landing-bounce.png",
+  "sourceSha256": "54cd027503b97d0a2d2bc60b54e30214d0b31454a0a45431eebea35fd03d7bfb",
+  "tool": "generated-strip-v4"
+}

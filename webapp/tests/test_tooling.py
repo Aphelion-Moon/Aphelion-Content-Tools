@@ -4,6 +4,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.lore_editor.tests.store_helpers import seed_targets
 from webapp import tooling
@@ -65,6 +66,44 @@ class ToolingClientTests(unittest.TestCase):
 		with self.assertRaises(ValueError):
 			tooling.start_tool(self.repo_root, self.definitions, "not-a-real-tool")
 		self.assertNotIn(str(self.repo_root.resolve()), tooling._workers)
+
+	def test_worker_uses_new_pipe_credentials_for_each_real_launch(self) -> None:
+		handle = tooling._WorkerHandle(self.repo_root)
+		try:
+			handle.ensure_started()
+			first_nonce = handle.launch_nonce
+			first_authkey = handle.authkey
+			first_address = handle.address
+			self.assertTrue(first_nonce)
+			self.assertEqual(len(first_authkey), 32)
+			self.assertIn(first_nonce, first_address)
+			self.assertNotIn(first_authkey.hex(), " ".join(tooling._worker_command(self.repo_root)))
+			handle.shut_down()
+
+			handle.ensure_started()
+			self.assertNotEqual(first_nonce, handle.launch_nonce)
+			self.assertNotEqual(first_authkey, handle.authkey)
+			self.assertNotEqual(first_address, handle.address)
+		finally:
+			handle.shut_down()
+
+	def test_frozen_sidecar_relaunches_itself_in_store_worker_mode(self) -> None:
+		with patch.object(tooling.sys, "frozen", True, create=True), patch.object(
+			tooling.sys,
+			"executable",
+			str(Path("C:/Aphelion/aphelion-sidecar.exe")),
+		):
+			command = tooling._worker_command(self.repo_root)
+
+		self.assertEqual(
+			command,
+			[
+				str(Path("C:/Aphelion/aphelion-sidecar.exe")),
+				"--store-worker",
+				"--repo-root",
+				str(self.repo_root.resolve()),
+			],
+		)
 
 	def test_generate_runs_to_completion_through_the_real_worker_process(self) -> None:
 		run = tooling.start_tool(self.repo_root, self.definitions, "generate")

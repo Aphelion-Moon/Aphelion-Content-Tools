@@ -1,0 +1,356 @@
+[
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "a5b823ba350b84f14d4d42fc59c51531a1859ab14eea2a8f679f536ed72be832",
+    "frame": 0,
+    "id": "dogbed",
+    "occupied_size": [
+      84,
+      45
+    ],
+    "offset": [
+      6,
+      45
+    ],
+    "path": "icons/obj/bed.dmi",
+    "prepared_sha256": "24316f2bfcc2eea6d09587e7f4914979fe72d14d5bad065b8a9191d47f5486e6",
+    "scale": 3,
+    "source_bounds": [
+      2,
+      15,
+      30,
+      30
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "de4bea42f897c5870a295cdbdd9acc340df564a81765cec338945345d6026357",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "dogbed"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "2c553c74cd3f32afe36da30ba3ca6ef69364001eaaa5df4384eb6fb0d7dee348",
+    "frame": 0,
+    "id": "cage-open",
+    "occupied_size": [
+      57,
+      87
+    ],
+    "offset": [
+      19,
+      3
+    ],
+    "path": "icons/obj/pet_carrier.dmi",
+    "prepared_sha256": "a249e54e9aa46d11aa932a44f0a7becc7f6009911f197fa556583f0c27037da4",
+    "scale": 3,
+    "source_bounds": [
+      7,
+      3,
+      26,
+      32
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "63f335bbaffc8bf27f3e9a7706b8077f63b0f6a7e9c7f5f96bb9cffb31abcf5a",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "pet_carrier_open"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "8ae8f89fec60c17152ed3f09a911e4e465b95688e4b48b65445f568f739f6d95",
+    "frame": 0,
+    "id": "cage-closed",
+    "occupied_size": [
+      57,
+      81
+    ],
+    "offset": [
+      19,
+      9
+    ],
+    "path": "icons/obj/pet_carrier.dmi",
+    "prepared_sha256": "19081d64d5c10dd3d600f1d5445ac392176786e108bd0e890c2752692bcdce7a",
+    "scale": 3,
+    "source_bounds": [
+      7,
+      3,
+      26,
+      30
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "63f335bbaffc8bf27f3e9a7706b8077f63b0f6a7e9c7f5f96bb9cffb31abcf5a",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "pet_carrier_closed"
+  },
+  {
+    "base_extracted_sha256": "8ae8f89fec60c17152ed3f09a911e4e465b95688e4b48b65445f568f739f6d95",
+    "base_state": "pet_carrier_closed",
+    "baseline_y": 90,
+    "composed_sha256": "68508807ebfe916319bc9926356b14dfd0d99e911e985f850602826911a94600",
+    "direction": 0,
+    "extracted_sha256": "7e5a2f4a8ba53cbe01bfbc7f1323bd362a3cc6f8196f99e3bd07a5fd4aab2780",
+    "frame": 0,
+    "id": "cage-locked",
+    "occupied_size": [
+      57,
+      81
+    ],
+    "offset": [
+      19,
+      9
+    ],
+    "path": "icons/obj/pet_carrier.dmi",
+    "prepared_sha256": "6fbf094ba45954824bdd1ebcda879a23266f9bd2a59bbdf834eeeb10dbd576d2",
+    "scale": 3,
+    "source_bounds": [
+      7,
+      3,
+      26,
+      30
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "63f335bbaffc8bf27f3e9a7706b8077f63b0f6a7e9c7f5f96bb9cffb31abcf5a",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "pet_carrier_locked"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "42ba6c73d008630f154e5007edbe4ad01874ce96ef900e676c25d3703abf711d",
+    "frame": 0,
+    "id": "cage-occupied",
+    "occupied_size": [
+      57,
+      81
+    ],
+    "offset": [
+      19,
+      9
+    ],
+    "path": "icons/obj/pet_carrier.dmi",
+    "prepared_sha256": "d889540652e2d156dc282349761a3806ca84362fbb4ffc5745e7483bd19e6a62",
+    "scale": 3,
+    "source_bounds": [
+      7,
+      3,
+      26,
+      30
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "63f335bbaffc8bf27f3e9a7706b8077f63b0f6a7e9c7f5f96bb9cffb31abcf5a",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "pet_carrier_occupied"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "5428df23d6ad580fb0c779e69be3ae66fad6afd41857590c7dc564a7ce9070e5",
+    "frame": 0,
+    "id": "tennis-ball",
+    "occupied_size": [
+      36,
+      36
+    ],
+    "offset": [
+      30,
+      54
+    ],
+    "path": "modular_nova/master_files/icons/obj/balls.dmi",
+    "prepared_sha256": "dcea48a552af1094531ae3859712d32ce3bdf01b931f9c957b754c4630eab88e",
+    "scale": 3,
+    "source_bounds": [
+      10,
+      10,
+      22,
+      22
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "43938986d723b8035653ba107fc63fa2106bf082fd09f1be723a939d42bb38d7",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "tennis_classic"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "801edc2cc8a8876521ab0ae1d06d417195865f934d69d14859e064fe3a9efde4",
+    "frame": 0,
+    "id": "hairbrush",
+    "occupied_size": [
+      63,
+      66
+    ],
+    "offset": [
+      16,
+      24
+    ],
+    "path": "modular_nova/modules/hairbrush/icons/hairbrush.dmi",
+    "prepared_sha256": "eb4dbf2c73b56983d6d166e20496eff148e7a5f6f54f6bbddd944df9f2cdc95f",
+    "scale": 3,
+    "source_bounds": [
+      7,
+      6,
+      28,
+      28
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "9dcaf79b407ad47aa7c2759c36339663975174d4a2c4df48152ca4fb3c15b39f",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "brush"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "a1979775233a86729918907fafdd6a5dac61f6a92f7e9b60ded6083d960f8f84",
+    "frame": 0,
+    "id": "toy-mouse",
+    "occupied_size": [
+      78,
+      33
+    ],
+    "offset": [
+      9,
+      57
+    ],
+    "path": "icons/obj/toys/toy.dmi",
+    "prepared_sha256": "b474dd241348d66e44ed6ea27c106b7dd501c2c63116300e5d7b01214d9717f1",
+    "scale": 3,
+    "source_bounds": [
+      1,
+      18,
+      27,
+      29
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "d207d30a2b55b259687c8679fa5c42b7291740f03ff8470c214f445a8f8758b2",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "toy_mouse"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "95586ef23a01ac742ae963e822fbbcc8f75ab9d879516618cdac33ce488b7f3f",
+    "frame": 0,
+    "id": "carp-plush",
+    "occupied_size": [
+      63,
+      63
+    ],
+    "offset": [
+      16,
+      27
+    ],
+    "path": "icons/obj/toys/plushes.dmi",
+    "prepared_sha256": "a67bbe0966e1b65451aefce6121042bd6da41caf4cee373fe063a82966845985",
+    "scale": 3,
+    "source_bounds": [
+      5,
+      10,
+      26,
+      31
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "619a5749d74b1eb4e3404d26842eb781ea9b7cfa56909289289fa98aea49d973",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "map_plushie_carp"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "4051feb98e090372f54ed90ad5c0f4e58df69a43907001d33c50961f4453af00",
+    "frame": 0,
+    "id": "toolbox",
+    "occupied_size": [
+      63,
+      39
+    ],
+    "offset": [
+      16,
+      51
+    ],
+    "path": "icons/obj/storage/toolbox.dmi",
+    "prepared_sha256": "b02404fc98692fe32a6cf3ff9cf1dfad44bbcb3a193e5e92967cefa83a2407d0",
+    "scale": 3,
+    "source_bounds": [
+      5,
+      10,
+      26,
+      23
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "19d0d10907a834e3291b2f35ede0d81bdbb60c35f19ff2577b705e9b985f88a1",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "red"
+  },
+  {
+    "base_state": null,
+    "baseline_y": 90,
+    "direction": 0,
+    "extracted_sha256": "fbbd26dba646d63788eb4594ee77072574864f7fcf2c5effdcb73913496bfd09",
+    "frame": 0,
+    "id": "tug-rope",
+    "occupied_size": [
+      75,
+      36
+    ],
+    "offset": [
+      10,
+      54
+    ],
+    "path": "icons/obj/stack_objects.dmi",
+    "prepared_sha256": "2d026679c12ab54fa6d6e8202e47bbd1ae674063e9f2183e06bab525490255c9",
+    "scale": 3,
+    "source_bounds": [
+      4,
+      10,
+      29,
+      22
+    ],
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "cffe1747e4fc71e597831cb80c74c1a55022ea40b86e79b2a2eae4c3b57a96bf",
+    "source_size": [
+      32,
+      32
+    ],
+    "state": "coil"
+  }
+]

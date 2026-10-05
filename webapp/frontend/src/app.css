@@ -1,84 +1,105 @@
-/* The ONE global stylesheet: design tokens and the small set of genuinely app-wide element defaults.
-   Everything else is a component-scoped *.module.css.
-
-   This scoping rule is not stylistic. Pre-rewrite, tools/content_graph/web/graph.css declared a bare
-   `button { width: auto }` that overrode styles.css's `button { width: 100% }`. Because the SPA appended
-   that stylesheet to <head> permanently, visiting Content Graph once silently changed every other tool's
-   buttons for the rest of the session. Bare element selectors do not belong in a per-tool stylesheet. */
+/* Shared Meridian tokens and element defaults. Tool-specific selectors belong in CSS modules. */
+@font-face { font-family: Neuromax; src: url('./assets/meridian/neuromax.otf') format('opentype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: Behavior; src: url('./assets/meridian/behavior.otf') format('opentype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: Telematic; src: url('./assets/meridian/telematic.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'IBM Plex Mono'; src: url('./assets/meridian/plex-mono.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: Atkinson; src: url('./assets/meridian/atkinson.woff2') format('woff2'); font-weight: 200 800; font-display: swap; }
 
 :root {
-	color-scheme: dark;
-	font-family: system-ui, sans-serif;
-
-	--void: #17072e;
-	--hull: #310047;
-	--violet: #660094;
-	--orchid: #9614d0;
-	--magenta: #bb44f0;
-	--plasma: #d16aff;
-	--muted: #c7a9d4;
-	--border: #6c278d;
-	--ink: #f8eaff;
-
-	--ok: #52f0b0;
-	--warn: #f2a93c;
-	--danger: #f2a9dd;
+ color-scheme: dark;
+ --font-sans: Neuromax, system-ui, sans-serif;
+ --font-display: Behavior, system-ui, sans-serif;
+ --font-brand: Telematic, system-ui, sans-serif;
+ --font-mono: 'IBM Plex Mono', Consolas, monospace;
+ --font-reading: Atkinson, system-ui, sans-serif;
+ font-family: var(--font-sans);
+ font-size: 16px;
+ line-height: 1.55;
+ --bg-void: #0e0c0b;
+ --bg-0: #131110;
+ --bg-1: #1a1714;
+ --bg-2: #211d19;
+ --bg-3: #292520;
+ --line-soft: #241f1b;
+ --line: #2e2a25;
+ --line-strong: #453f36;
+ --text: #ece5d8;
+ --text-dim: #a89f90;
+ --text-faint: #8f887c;
+ --text-ghost: #5c574e;
+ --accent: #56d4dc;
+ --accent-ink: #0d1516;
+ --spec-green: #7bc86f;
+ --spec-yellow: #e5c25b;
+ --spec-orange: #e0863f;
+ --spec-red: #d95f4c;
+ --spec-magenta: #c06bb4;
+ --radius: 3px;
+ --shadow-panel: 0 1px 2px #00000040;
+ --shadow-overlay: 0 24px 64px -12px #000000d0;
+ /* Compatibility aliases keep existing and future tools on the shared theme. */
+ --void: var(--bg-0);
+ --hull: var(--bg-1);
+ --violet: var(--bg-2);
+ --orchid: var(--bg-3);
+ --magenta: var(--accent);
+ --plasma: var(--accent);
+ --muted: var(--text-dim);
+ --border: var(--line);
+ --ink: var(--text);
+ --surface: var(--bg-1);
+ --ok: var(--spec-green);
+ --warn: var(--spec-yellow);
+ --warning: var(--warn);
+ --danger: var(--spec-red);
 }
 
-* {
-	box-sizing: border-box;
-}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: var(--bg-0); color: var(--text); }
+body::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 100; background: url('./assets/meridian/grain.png') repeat; opacity: .02; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height: 1.35; letter-spacing: .015em; }
+p, dd { overflow-wrap: anywhere; }
+code, pre, kbd { font-family: var(--font-mono); }
+::selection { background: var(--accent); color: var(--accent-ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 
-body {
-	margin: 0;
-	min-height: 100vh;
-	background: radial-gradient(circle at top, var(--hull), var(--void) 62%);
-	color: var(--ink);
-}
-
-a {
-	color: var(--plasma);
-}
-
-/* Shared form/control defaults. Tools needing different button metrics scope the change to their own
-   module rather than redefining `button` globally. */
+/* Text fields fill their owner; buttons retain intrinsic width. */
 input,
 textarea,
-select,
+select {
+ width: 100%;
+ min-width: 0;
+ border: 1px solid var(--line-strong);
+ border-radius: var(--radius);
+ background: var(--bg-void);
+ color: inherit;
+ padding: .6rem .75rem;
+ font: inherit;
+}
+input::placeholder, textarea::placeholder { color: var(--text-faint); opacity: 1; }
+textarea { font-family: var(--font-reading); line-height: 1.6; }
 button {
-	width: 100%;
-	border: 1px solid var(--border);
-	border-radius: 0.4rem;
-	background: rgba(23, 7, 46, 0.9);
-	color: inherit;
-	padding: 0.6rem;
-	font: inherit;
+ width: auto;
+ border: 1px solid var(--line-strong);
+ border-radius: var(--radius);
+ padding: .5rem 1rem;
+ font: inherit;
+ cursor: pointer;
+ background: var(--bg-1);
+ color: var(--text-dim);
 }
-
-button {
-	cursor: pointer;
-	background: var(--orchid);
-	border-color: var(--magenta);
-	color: #fff;
-}
-
-button:hover:not(:disabled) {
-	background: var(--magenta);
-}
-
-button:disabled {
-	cursor: wait;
-	opacity: 0.55;
-}
-
-.sr-only {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
-	border: 0;
+button:hover:not(:disabled) { background: var(--bg-2); color: var(--text); border-color: var(--text-faint); }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (prefers-reduced-motion: reduce) {
+ :not(:where([data-parsec-companion], [data-parsec-companion] *)),
+ :not(:where([data-parsec-companion], [data-parsec-companion] *))::before,
+ :not(:where([data-parsec-companion], [data-parsec-companion] *))::after {
+  scroll-behavior: auto !important;
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+ }
 }

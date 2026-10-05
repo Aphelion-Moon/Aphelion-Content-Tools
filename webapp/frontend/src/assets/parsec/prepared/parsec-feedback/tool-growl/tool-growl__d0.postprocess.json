@@ -1,0 +1,47 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "tool-growl",
+  "clipScale": 0.7850467289719626,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f0.png",
+      "sha256": "6f540ca7e9ebbf22a39a2b81397ae8a5e3e3d92e57f39493598da6095fdf2e1e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f1.png",
+      "sha256": "d9ecaf95fae10721e52c2424fdaa03e583a92fd0e40d4a7a7cd5029db0a86a2f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f2.png",
+      "sha256": "8b68b3c9385fb50a6ad0c0cdd6f9ba768bb639333b30f6415959e809450edce2"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f3.png",
+      "sha256": "6e9f5644640764f7ab1e628c52f253a5ab5b57e04c8480da4ccf55529768d1c4"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f4.png",
+      "sha256": "de949c3f4617b0785678190be70d91c5b4d30f1d382f3b1378da4a98f13a3ab2"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/tool-growl.png",
+  "sourceSha256": "6ca712e31ab48c94cf486d6e32086759bc39478ff16d010a23bfa33c31f311ed",
+  "tool": "generated-strip-v4"
+}

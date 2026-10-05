@@ -1,0 +1,34 @@
+.actor {
+	position: absolute;
+	left: 0;
+	top: 0;
+	background-repeat: no-repeat;
+	image-rendering: pixelated;
+	transform-origin: center;
+	will-change: transform;
+	pointer-events: none;
+}
+
+.scruff {
+	position: absolute;
+	border-radius: 50%;
+	cursor: grab;
+	touch-action: none;
+	outline: none;
+	pointer-events: auto;
+}
+
+.scruff:focus-visible {
+	box-shadow: 0 0 0 2px var(--ok);
+}
+
+.actor[data-held='true'] .scruff {
+	cursor: grabbing;
+}
+
+.effect {
+	position: absolute;
+	background-repeat: no-repeat;
+	image-rendering: pixelated;
+	pointer-events: none;
+}

@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "intrusive-loiter",
+  "clipScale": 0.7241379310344828,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-loiter/intrusive-loiter__d0__f0.png",
+      "sha256": "19ff199b996f2b4b2979b88db8d19194f896728a338e887c4a07abbf7e0928f8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-loiter/intrusive-loiter__d0__f1.png",
+      "sha256": "422e139fd1304921e6f0e08e9034f4c5fe37d9621282f6821f952e145a6b8370"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-loiter/intrusive-loiter__d0__f2.png",
+      "sha256": "697ce75176ee53b16c95ceec51d7a774c0ad4dcd99b4dfc667ff227bfcebdb44"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-loiter/intrusive-loiter__d0__f3.png",
+      "sha256": "6502fa21d4db9ecddf334f9d692607e5ce56102984088afa01faa7e68de4bc78"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-loiter.png",
+  "sourceSha256": "aef92d738f1a72326cf9a4b9eadbc3926b748e6c481c4f284da3d0b8d32508ce",
+  "tool": "generated-strip-v4"
+}

@@ -1,10 +1,12 @@
-import { For, Show, createSignal, createMemo } from 'solid-js';
+import { For, Show, createEffect, createSignal, createMemo, onCleanup } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { api } from '~/lib/api';
+import { createAsyncScope } from '~/lib/asyncScope';
 import type { components } from '~/lib/api-schema';
 import { TOOLS } from '~/tools/registry';
 import { appState, setSelectedContext, type SearchResult } from '~/store/appStore';
 import { buildSearchRequest, contextFromResult, navigationRoute } from './globalSearchModel';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import styles from './GlobalSearch.module.css';
 
 // Global search, backed by /api/search.
@@ -24,6 +26,7 @@ const SEARCH_SCOPES = {
 	lore: ['catalog_targets', 'overrides', 'groups', 'reviews', 'assignments'],
 	graph: ['graph_nodes', 'graph_edges', 'unresolved_markers'],
 	files: ['manifests', 'references'],
+	definitions: ['job_definitions', 'outfit_definitions'],
 } as const;
 type SearchScopeName = keyof typeof SEARCH_SCOPES;
 
@@ -58,10 +61,33 @@ export default function GlobalSearch() {
 	const [scope, setScope] = createSignal<SearchScopeName>('everything');
 	const [activeIndex, setActiveIndex] = createSignal(-1);
 	const [searchError, setSearchError] = createSignal<string | null>(null);
+	const [revisionNotice, setRevisionNotice] = createSignal<string | null>(null);
 
 	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
-	// Guards against an earlier, slower request overwriting a later one's results.
-	let latestRequest = 0;
+	const requests = createAsyncScope();
+	onCleanup(() => { clearTimeout(debounceTimer); requests.dispose(); });
+	let observedRevisionKey: string | undefined;
+	createEffect(() => {
+		const revision = appState.workspaceRevision;
+		const nextKey = revision === null ? '' : JSON.stringify(revision);
+		if (observedRevisionKey === undefined) {
+			observedRevisionKey = nextKey;
+			return;
+		}
+		if (nextKey === observedRevisionKey) return;
+		const firstRevision = observedRevisionKey === '';
+		observedRevisionKey = nextKey;
+		if (firstRevision && !query().trim()) return;
+		requests.invalidate();
+		clearTimeout(debounceTimer);
+		setResults([]);
+		setSemanticStatus(null);
+		setSearchError(null);
+		setSearching(false);
+		setOpen(false);
+		setActiveIndex(-1);
+		setRevisionNotice('Workspace changed. Search results cleared; run the search again.');
+	});
 
 	const pageMatches = createMemo(() => {
 		const needle = query().trim().toLowerCase();
@@ -70,6 +96,8 @@ export default function GlobalSearch() {
 	});
 
 	async function runSearch(text: string): Promise<void> {
+		requests.invalidate();
+		const isCurrent = requests.capture();
 		const trimmed = text.trim();
 		if (!trimmed) {
 			setResults([]);
@@ -78,36 +106,66 @@ export default function GlobalSearch() {
 			setSearchError(null);
 			return;
 		}
-		const requestId = ++latestRequest;
 		setSearching(true);
+		reportParsec({
+			type: 'search',
+			phase: 'started',
+			tool: 'global-search',
+			query: trimmed,
+			dedupeKey: 'global-search',
+		});
 		try {
 			const payload = await api.post<SearchResponse>(
 				'/api/search',
 				buildSearchRequest(trimmed, appState.selectedContext, RESULT_LIMIT, SEARCH_SCOPES[scope()]),
 			);
-			if (requestId !== latestRequest) return;
-			setResults(payload.results ?? []);
+			if (!isCurrent()) return;
+			const nextResults = payload.results ?? [];
+			setResults(nextResults);
 			setSemanticStatus(payload.semantic_search);
 			setSearchError(null);
+			const resultCount = pageMatches().length + nextResults.length;
+			reportParsec({
+				type: 'search',
+				phase: resultCount === 0 ? 'empty' : 'completed',
+				tool: 'global-search',
+				query: trimmed,
+				resultCount,
+				dedupeKey: 'global-search',
+			});
 		} catch (caught) {
 			// Page matches still render even when the store search fails, so the box stays useful.
-			if (requestId === latestRequest) {
+			if (isCurrent()) {
 				setResults([]);
-				setSearchError(caught instanceof Error ? caught.message : String(caught));
+				const message = caught instanceof Error ? caught.message : String(caught);
+				setSearchError(message);
+				reportParsec({
+					type: 'search',
+					phase: 'failed',
+					tool: 'global-search',
+					query: trimmed,
+					technicalDetail: message,
+					dedupeKey: 'global-search',
+				});
 			}
 		} finally {
-			if (requestId === latestRequest) setSearching(false);
+			if (isCurrent()) setSearching(false);
 		}
-		setOpen(true);
 	}
 
 	function onInput(event: InputEvent & { currentTarget: HTMLInputElement }) {
+		requests.invalidate();
 		const value = event.currentTarget.value;
+		setResults([]);
+		setSemanticStatus(null);
+		setSearchError(null);
+		setRevisionNotice(null);
+		setSearching(Boolean(value.trim()));
 		setQuery(value);
 		setOpen(Boolean(value.trim()));
 		setActiveIndex(-1);
 		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => void runSearch(value), DEBOUNCE_MS);
+		if (value.trim()) debounceTimer = setTimeout(() => void runSearch(value), DEBOUNCE_MS);
 	}
 
 	function goTo(route: string) {
@@ -200,6 +258,8 @@ export default function GlobalSearch() {
 				<select
 					value={scope()}
 					onChange={(event) => {
+						clearTimeout(debounceTimer);
+						setOpen(Boolean(query().trim()));
 						setScope(event.currentTarget.value as SearchScopeName);
 						if (query().trim()) void runSearch(query());
 					}}
@@ -208,8 +268,10 @@ export default function GlobalSearch() {
 					<option value="lore">Lore</option>
 					<option value="graph">Content graph</option>
 					<option value="files">Files &amp; references</option>
+					<option value="definitions">Jobs &amp; outfits</option>
 				</select>
 			</label>
+			<Show when={revisionNotice()}>{(message) => <p class={styles.revisionNotice} role="status">{message()}</p>}</Show>
 
 			<Show when={open()}>
 				<div id={LISTBOX_ID} class={styles.results} role="listbox" aria-label="Search suggestions">

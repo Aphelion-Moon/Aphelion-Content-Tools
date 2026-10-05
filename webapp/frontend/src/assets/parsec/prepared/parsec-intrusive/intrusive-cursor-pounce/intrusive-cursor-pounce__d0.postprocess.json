@@ -1,0 +1,51 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "intrusive-cursor-pounce",
+  "clipScale": 0.7049180327868853,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f0.png",
+      "sha256": "6cf66f0d4dd7fbc5ff13c1378796d5e8a613a92b11d8d0580d3602eae5820bca"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f1.png",
+      "sha256": "5fe0439045f813b62bec64edfea51e45f43a9e7f842601ef2af6a1fc7a3b7ef5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f2.png",
+      "sha256": "c584beb25497d5ffd7f3e33f856a679421b4854840d8b7027c5ef65306878c2c"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f3.png",
+      "sha256": "232e9f08f40aee66d5cab8ca564a0b5399e0e40f7143a2f1dafaf6dbbba686f3"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f4.png",
+      "sha256": "1cce8cdb5cfbb0d3f92309ef30b0c8282177314c492b199f41ef294d30a71047"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-cursor-pounce/intrusive-cursor-pounce__d0__f5.png",
+      "sha256": "dcf83d45d89ae25390c3a7220162e7c41d694438159467b61a14ecd016872ca9"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    86,
+    86
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-cursor-pounce.png",
+  "sourceSha256": "31344af36dab1b3382bd11ee33d95a8d65f058cb99c0a1a068a51c880bb5f888",
+  "tool": "generated-strip-v4"
+}

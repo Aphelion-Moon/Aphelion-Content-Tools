@@ -1,0 +1,22 @@
+import { For, Show, createSignal } from 'solid-js';
+import type { DefinitionField } from './types';
+import { formatContents, literalString, parseContents, stringExpression } from './draft';
+import styles from './DefinitionEditor.module.css';
+
+export default function FieldEditor(props: { field: DefinitionField; expression?: string | undefined; onChange: (value: string | undefined) => void; onPick: () => void; onInspect: () => void; onPreview: (path: string) => void; onConstants: () => void }) {
+	const [raw, setRaw] = createSignal(false);
+	const expression = () => props.expression ?? props.field.expression ?? '';
+	const rows = () => /contents|implants|skillchips/.test(props.field.name) ? parseContents(expression()) : null;
+	const label = props.field.name.replaceAll('_', ' ');
+	const stringValue = () => literalString(expression());
+	return <div class={styles.field}>
+		<div class={styles.fieldHeading}><strong>{label}</strong><span>{props.expression === undefined ? `From ${props.field.owner_type}` : 'Local change'}</span><Show when={props.expression !== undefined}><button onClick={() => props.onChange(undefined)}>Reset</button></Show></div>
+		<p class={styles.hint}>Indexed expression: <code>{props.field.expression ?? 'Unresolved — inspect source'}</code><br />Effective indexed value: <code>{props.field.value_known ? JSON.stringify(props.field.value) : 'Unknown; native validation required'}</code></p>
+		<Show when={!raw() && rows() !== null} fallback={<label><span class={styles.srOnly}>{label}</span><Show when={raw() || expression().includes('\n')} fallback={<input value={stringValue() !== null ? stringValue()! : expression()} onInput={(event) => props.onChange(stringValue() !== null ? stringExpression(event.currentTarget.value) : event.currentTarget.value)} spellcheck={false} />}><textarea class={styles.expression} value={expression()} rows="4" onInput={(event) => props.onChange(event.currentTarget.value)} spellcheck={false} /></Show></label>}>
+			<For each={rows() ?? []}>{(item, index) => <div class={styles.contentRow}><input aria-label={`${label} item ${index() + 1}`} value={item.typePath} onInput={(event) => { const next = [...rows()!]; next[index()] = { ...item, typePath: event.currentTarget.value }; props.onChange(formatContents(next)); }} /><input aria-label={`${label} count ${index() + 1}`} type="number" min="1" max="1000" value={item.count} onInput={(event) => { const next = [...rows()!]; next[index()] = { ...item, count: Math.min(1000, Math.max(1, Math.trunc(Number(event.currentTarget.value)) || 1)) }; props.onChange(formatContents(next)); }} /><button aria-label={`Move ${label} item ${index() + 1} up`} disabled={index() === 0} onClick={() => { const next = [...rows()!]; [next[index() - 1], next[index()]] = [next[index()]!, next[index() - 1]!]; props.onChange(formatContents(next)); }}>↑</button><button aria-label={`Remove ${label} item ${index() + 1}`} onClick={() => props.onChange(formatContents(rows()!.filter((_, position) => position !== index())))}>Remove</button></div>}</For>
+			<button onClick={() => props.onChange(formatContents([...(rows() ?? []), { typePath: '/obj/item', count: 1, counted: !/implants|skillchips/.test(props.field.name) }]))}>Add content</button>
+		</Show>
+		<div class={styles.fieldActions}><Show when={/^(outfit|plasmaman_outfit|vox_outfit|akula_outfit|job|jobtype|id_trim|.*contents|implants|skillchips|uniform|suit|suit_store|head|mask|neck|shoes|gloves|ears|glasses|belt|back|backpack|satchel|duffelbag|l_pocket|r_pocket|l_hand|r_hand|pda|id|accessory)$/.test(props.field.name)}><button onClick={props.onPick}>Choose type</button></Show><Show when={/^\/obj\/item(?:\/\w+)*$/.test(expression())}><button onClick={() => props.onPreview(expression())}>Preview item</button></Show><Show when={/(^|_)access($|_)|flags$|department|paycheck|^(pda_slot|modified_outfit_slots)$/.test(props.field.name)}><button onClick={props.onConstants}>Choose constant</button></Show><button onClick={() => props.onChange('null')}>Clear</button><button disabled={!props.field.source} onClick={props.onInspect}>Source</button><label class={styles.check}><input type="checkbox" checked={raw()} onChange={(event) => setRaw(event.currentTarget.checked)} /> DM expression</label></div>
+		<Show when={!props.field.editable && props.field.source}><p class={styles.hint}>This source is not safely patchable in place. An inherited override may still be available.</p></Show>
+	</div>;
+}

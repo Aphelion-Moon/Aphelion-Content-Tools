@@ -1,0 +1,356 @@
+{
+  "parsec-core/core-idle-pant/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 0
+  },
+  "parsec-core/core-idle-pant/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 0
+  },
+  "parsec-core/core-idle-pant/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 0
+  },
+  "parsec-core/core-idle-pant/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 0
+  },
+  "parsec-core/core-idle-scratch/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 0
+  },
+  "parsec-core/core-idle-scratch/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 0
+  },
+  "parsec-core/core-idle-scratch/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 0
+  },
+  "parsec-core/core-idle-scratch/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 0
+  },
+  "parsec-core/core-idle-scratch/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 96
+  },
+  "parsec-core/core-idle-seated/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 96
+  },
+  "parsec-core/core-idle-seated/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 96
+  },
+  "parsec-core/core-idle-seated/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 96
+  },
+  "parsec-core/core-idle-seated/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 96
+  },
+  "parsec-core/core-idle-sniff/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 96
+  },
+  "parsec-core/core-idle-sniff/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 96
+  },
+  "parsec-core/core-idle-sniff/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 96
+  },
+  "parsec-core/core-idle-sniff/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 192
+  },
+  "parsec-core/core-idle-standing/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 192
+  },
+  "parsec-core/core-idle-standing/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 192
+  },
+  "parsec-core/core-idle-standing/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 192
+  },
+  "parsec-core/core-idle-standing/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 192
+  },
+  "parsec-core/core-idle-yawn/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 192
+  },
+  "parsec-core/core-idle-yawn/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 192
+  },
+  "parsec-core/core-idle-yawn/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 192
+  },
+  "parsec-core/core-idle-yawn/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 288
+  },
+  "parsec-core/core-idle-yawn/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 288
+  },
+  "parsec-core/core-look-cursor/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 288
+  },
+  "parsec-core/core-look-cursor/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 288
+  },
+  "parsec-core/core-look-cursor/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 288
+  },
+  "parsec-core/core-look-cursor/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 288
+  },
+  "parsec-core/core-return-home/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 288
+  },
+  "parsec-core/core-return-home/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 288
+  },
+  "parsec-core/core-return-home/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 384
+  },
+  "parsec-core/core-return-home/d0/f3": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 384
+  },
+  "parsec-core/core-return-home/d0/f4": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 384
+  },
+  "parsec-core/core-walk-cardinal/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 384
+  },
+  "parsec-core/core-walk-cardinal/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 384
+  },
+  "parsec-core/core-walk-cardinal/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 384
+  },
+  "parsec-core/core-walk-cardinal/d1/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 384
+  },
+  "parsec-core/core-walk-cardinal/d1/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 384
+  },
+  "parsec-core/core-walk-cardinal/d1/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 480
+  },
+  "parsec-core/core-walk-cardinal/d2/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 480
+  },
+  "parsec-core/core-walk-cardinal/d2/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 480
+  },
+  "parsec-core/core-walk-cardinal/d2/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 480
+  },
+  "parsec-core/core-walk-cardinal/d3/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 480
+  },
+  "parsec-core/core-walk-cardinal/d3/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 480
+  },
+  "parsec-core/core-walk-cardinal/d3/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 480
+  },
+  "parsec-core/core-walk-diagonal/d0/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 480
+  },
+  "parsec-core/core-walk-diagonal/d0/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 576
+  },
+  "parsec-core/core-walk-diagonal/d0/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 576
+  },
+  "parsec-core/core-walk-diagonal/d1/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 576
+  },
+  "parsec-core/core-walk-diagonal/d1/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 288,
+    "y": 576
+  },
+  "parsec-core/core-walk-diagonal/d1/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 384,
+    "y": 576
+  },
+  "parsec-core/core-walk-diagonal/d2/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 480,
+    "y": 576
+  },
+  "parsec-core/core-walk-diagonal/d2/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 576,
+    "y": 576
+  },
+  "parsec-core/core-walk-diagonal/d2/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 672,
+    "y": 576
+  },
+  "parsec-core/core-walk-diagonal/d3/f0": {
+    "height": 96,
+    "width": 96,
+    "x": 0,
+    "y": 672
+  },
+  "parsec-core/core-walk-diagonal/d3/f1": {
+    "height": 96,
+    "width": 96,
+    "x": 96,
+    "y": 672
+  },
+  "parsec-core/core-walk-diagonal/d3/f2": {
+    "height": 96,
+    "width": 96,
+    "x": 192,
+    "y": 672
+  }
+}

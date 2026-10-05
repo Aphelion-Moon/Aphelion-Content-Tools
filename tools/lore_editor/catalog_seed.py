@@ -8,9 +8,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.request import urlopen
 
-from webapp.json_storage import atomic_write, canonical_json_bytes
+from webapp.game_repository import validate_game_repository
+from webapp.git_adapter import observe_game_source
+from webapp.json_storage import atomic_write, canonical_json_bytes, rollback_files
 
-from .catalog import activate_catalog_targets, normalize_targets, read_current_targets, refresh_catalog
+from .catalog import (
+	activate_catalog_targets,
+	normalize_targets,
+	read_current_targets,
+	refresh_catalog,
+	verified_catalog_snapshot,
+)
 
 CATALOG_SEED_SCHEMA_VERSION = 1
 CATALOG_SEED_GENERATOR_VERSION = "1.0.0"
@@ -84,10 +92,9 @@ def package_catalog_seed(
 	generator_version: str = CATALOG_SEED_GENERATOR_VERSION,
 ) -> CatalogSeedManifest:
 	"""Package the active catalog as a canonical release asset and its small versioned manifest."""
-	targets = read_current_targets(repo_root.resolve())
-	if not targets:
+	catalog, seed_bytes = verified_catalog_snapshot(repo_root.resolve(), source_game_revision=source_game_commit)
+	if not catalog.target_count:
 		raise ValueError("No catalog targets are available to package.")
-	seed_bytes = canonical_json_bytes(normalize_targets(targets))
 	manifest = CatalogSeedManifest(
 		schema_version=CATALOG_SEED_SCHEMA_VERSION,
 		source_game_commit=source_game_commit,
@@ -96,8 +103,11 @@ def package_catalog_seed(
 		sha256=hashlib.sha256(seed_bytes).hexdigest(),
 		download_url=download_url,
 	)
-	atomic_write(seed_path.resolve(), seed_bytes)
-	atomic_write(manifest_path.resolve(), canonical_json_bytes(manifest.to_dict()))
+	if seed_path.resolve() == manifest_path.resolve():
+		raise ValueError('The seed and manifest must use different paths.')
+	with rollback_files((seed_path.resolve(), manifest_path.resolve())):
+		atomic_write(seed_path.resolve(), seed_bytes)
+		atomic_write(manifest_path.resolve(), canonical_json_bytes(manifest.to_dict()))
 	return manifest
 
 
@@ -166,6 +176,50 @@ def download_seed(manifest: CatalogSeedManifest, cache_root: Path, *, opener=Non
 		temporary_path.unlink(missing_ok=True)
 
 
+def _release_targets(manifest: CatalogSeedManifest, cache_root: Path) -> tuple[list[dict[str, object]], str]:
+	seed_path = cached_seed_path(manifest, cache_root)
+	try:
+		return _validate_seed(seed_path, manifest), "cached-seed"
+	except (OSError, ValueError):
+		seed_path = download_seed(manifest, cache_root)
+		return _validate_seed(seed_path, manifest), "downloaded-seed"
+
+
+def reload_catalog_seed(
+	repo_root: Path,
+	*,
+	manifest_path: Path | None = None,
+	cache_root: Path | None = None,
+	game_repo_root: Path | None = None,
+	on_progress=None,
+) -> CatalogBootstrapResult:
+	"""Explicitly replace authoring data with a verified release; never run a fallback probe."""
+	resolved_root = repo_root.resolve()
+	manifest = load_seed_manifest((manifest_path or resolved_root / DEFAULT_MANIFEST_PATH).resolve())
+	resolved_game_root = game_repo_root.resolve() if game_repo_root is not None else None
+	source = None
+	if resolved_game_root is not None:
+		validate_game_repository(resolved_game_root)
+		source = observe_game_source(resolved_game_root)
+		if source is None or source.head != manifest.source_game_commit:
+			raise ValueError("The release catalog does not match the selected game revision. Obtain a matching release manifest from the maintainer.")
+
+	def verify_source() -> None:
+		if resolved_game_root is not None and observe_game_source(resolved_game_root) != source:
+			raise ValueError("The selected game checkout changed during catalog reload. Run the reload again.")
+
+	targets, source_kind = _release_targets(manifest, (cache_root or default_cache_root()).resolve())
+	activate_catalog_targets(
+		resolved_root,
+		targets,
+		source_game_revision=manifest.source_game_commit,
+		source_provenance="release-seed",
+		before_activate=verify_source,
+		on_progress=on_progress,
+	)
+	return CatalogBootstrapResult(source=source_kind, target_count=len(targets))
+
+
 def bootstrap_catalog(
 	repo_root: Path,
 	*,
@@ -183,19 +237,12 @@ def bootstrap_catalog(
 	try:
 		manifest = load_seed_manifest(resolved_manifest)
 		resolved_cache = (cache_root or default_cache_root()).resolve()
-		seed_path = cached_seed_path(manifest, resolved_cache)
-		source = "cached-seed"
-		try:
-			targets = _validate_seed(seed_path, manifest)
-		except (OSError, ValueError):
-			seed_path.unlink(missing_ok=True)
-			seed_path = download_seed(manifest, resolved_cache)
-			targets = _validate_seed(seed_path, manifest)
-			source = "downloaded-seed"
+		targets, source = _release_targets(manifest, resolved_cache)
 		activate_catalog_targets(
 			resolved_root,
 			targets,
 			source_game_revision=manifest.source_game_commit,
+			source_provenance="release-seed",
 		)
 		return CatalogBootstrapResult(source=source, target_count=len(targets))
 	except (OSError, ValueError) as exc:

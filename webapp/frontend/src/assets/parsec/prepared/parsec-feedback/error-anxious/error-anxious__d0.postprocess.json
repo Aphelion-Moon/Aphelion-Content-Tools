@@ -1,0 +1,47 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "error-anxious",
+  "clipScale": 0.6885245901639344,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f0.png",
+      "sha256": "19cc836edc6d0a0caa2cdd54b9578e9f0136c17016f10673fc8ece44c75d64aa"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f1.png",
+      "sha256": "72ba68c7f01cb40f5a822de4ce7dfcdc08ecdd8cccaa034a766df84f2ff5241e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f2.png",
+      "sha256": "cf68eb4b44a27b10cac0f58f720ecfe39d3920cfe31662945d0f98e5c18d62a1"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f3.png",
+      "sha256": "be59272dad5d2984a875132df078b66aec772664cd956be315740b803d30edb4"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f4.png",
+      "sha256": "b2a82cbcad88cb0e0628aadef037cafafc443ed12d1c3846797c023a851a0af1"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/error-anxious.png",
+  "sourceSha256": "28bdc7a995532bbab1b903644a9a06e8d8e32c2f601e9eb54ba810173d2d7abf",
+  "tool": "generated-strip-v4"
+}

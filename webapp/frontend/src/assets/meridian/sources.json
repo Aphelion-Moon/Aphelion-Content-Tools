@@ -1,0 +1,15 @@
+{
+  "source": "https://meridian.a13.info/about/",
+  "retrieved": "2026-09-09",
+  "purpose": "Local Meridian website branding and typography for the Content Tools shell. Every asset is referenced by application CSS or AppShell.",
+  "assets": {
+    "neuromax.otf": "https://meridian.a13.info/_astro/fonts/1f699277e6c770a6.otf",
+    "plex-mono.woff2": "https://meridian.a13.info/_astro/fonts/a3a0a8110b9e369d.woff2",
+    "behavior.otf": "https://meridian.a13.info/_astro/fonts/4599256bda6aaa08.otf",
+    "telematic.ttf": "https://meridian.a13.info/_astro/fonts/3d0ba6ecd0cca834.ttf",
+    "atkinson.woff2": "https://meridian.a13.info/_astro/fonts/b1abc7a0d7bc3334.woff2",
+    "mission-patch.webp": "https://meridian.a13.info/_astro/meridian-mission-patch.BKlcr1YJ_2mFFYE.webp",
+    "stars.png": "https://meridian.a13.info/_astro/layer1.D_lL3adq.png",
+    "grain.png": "https://meridian.a13.info/_astro/grain-blue-noise-512.BHVQ2Vs9.png"
+  }
+}

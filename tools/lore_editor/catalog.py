@@ -5,19 +5,20 @@ import shutil
 import socket
 import subprocess
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
 from webapp.game_repository import validate_game_repository
-from webapp.git_adapter import repository_revision
+from webapp.git_adapter import observe_game_source
 from webapp.json_storage import canonical_json_bytes
 from webapp.path_safety import read_json_file, resolve_repo_path
 from webapp.store import db
-from webapp.store.metadata import activate_projection, new_projection_metadata, projection_path, write_projection_marker
-from webapp.store.schema import decode, encode, table
+from webapp.store.generations import staged_projection
+from webapp.store.schema import decode, encode, table, writable_table
 
-from .app.manifest import CatalogManifest, sha256_bytes
+from .app.manifest import CatalogManifest, CatalogSourceProvenance, sha256_bytes
 from .model import SUPPORTED_ICON_KEYS
 from .reconcile import reconcile_projection, scan_canonical_records
 from .validation import TYPE_PATH_PATTERN
@@ -202,9 +203,11 @@ def activate_catalog_targets(
 	*,
 	source_game_revision: str,
 	generated_at: str | None = None,
+	source_provenance: CatalogSourceProvenance = "unverified",
+	before_activate: Callable[[], None] | None = None,
 	on_progress=None,
 ) -> CatalogManifest:
-	"""Install a verified catalog into a complete new projection generation, then activate it."""
+	"""Install normalized targets and their explicit provenance in a new projection generation."""
 	resolved_root = repo_root.resolve()
 	normalized_targets = normalize_targets(targets)
 	targets_bytes = canonical_json_bytes(normalized_targets)
@@ -213,31 +216,27 @@ def activate_catalog_targets(
 		game_repo_revision=source_game_revision,
 		generated_at=generated_at or datetime.now(UTC).isoformat(),
 		target_count=len(normalized_targets),
+		source_provenance=source_provenance,
 	)
 	with repository_write_lock(resolved_root):
+		if before_activate is not None:
+			before_activate()
 		reconcile_projection(resolved_root)
 		content_revision = scan_canonical_records(resolved_root).content_revision
-		metadata = new_projection_metadata(content_revision)
-		destination = projection_path(resolved_root, metadata.generation_id)
-		shutil.copytree(db.store_path(resolved_root), destination)
-		try:
+		with staged_projection(resolved_root, content_revision=content_revision, changed_tables={"catalog_targets", "manifests"}) as staged:
 			db.sync_snapshot(
-				table(resolved_root, "catalog_targets", store_dir=destination),
+				writable_table(resolved_root, "catalog_targets", store_dir=staged.path),
 				"id",
 				_target_rows(normalized_targets),
 				on_progress=on_progress,
 			)
-			db.upsert_rows(table(resolved_root, "manifests", store_dir=destination), "id", [{
+			db.upsert_rows(writable_table(resolved_root, "manifests", store_dir=staged.path), "id", [{
 				"id": "catalog",
 				"raw_json": encode(manifest.to_dict()),
 				"text": "",
 			}])
-			write_projection_marker(resolved_root, metadata)
-			activate_projection(resolved_root, metadata)
-		except Exception:
-			db.discard_connection(destination)
-			shutil.rmtree(destination, ignore_errors=True)
-			raise
+			if before_activate is not None:
+				before_activate()
 	return manifest
 
 
@@ -366,6 +365,21 @@ def read_catalog_manifest(repo_root: Path) -> CatalogManifest | None:
 	return CatalogManifest.from_dict(decode(row)) if row else None
 
 
+def verified_catalog_snapshot(repo_root: Path, *, source_game_revision: str) -> tuple[CatalogManifest, bytes]:
+	"""Read a source-bound catalog for export or release packaging under the projection write lock."""
+	with repository_write_lock(repo_root):
+		manifest = read_catalog_manifest(repo_root)
+		if manifest is None or manifest.source_provenance != "release-seed":
+			raise ValueError("The catalog source is unverified. A verified catalog is required for export or release packaging.")
+		if manifest.game_repo_revision != source_game_revision:
+			raise ValueError("The catalog source revision does not match the requested game revision.")
+		targets = normalize_targets(read_current_targets(repo_root))
+		content = canonical_json_bytes(targets)
+		if sha256_bytes(content) != manifest.snapshot_sha256 or len(targets) != manifest.target_count:
+			raise ValueError("The active catalog hash or target count does not match its provenance manifest.")
+		return manifest, content
+
+
 @dataclass(frozen=True)
 class CatalogDriftReport:
 	removed_type_paths: tuple[str, ...]
@@ -420,17 +434,25 @@ def refresh_catalog(repo_root: Path, *, game_repo_root: Path | None = None, on_p
 	resolved_game_root = (game_repo_root or repo_root).resolve()
 	if game_repo_root is not None:
 		validate_game_repository(resolved_game_root)
+	source = observe_game_source(resolved_game_root)
+	if source is None and (resolved_game_root / ".git").exists():
+		raise ValueError("Game source state could not be observed before the catalog probe.")
+
+	def verify_source() -> None:
+		if observe_game_source(resolved_game_root) != source:
+			raise ValueError("Game source changed during the catalog build. Run the refresh again.")
+
 	probe_output_path = _run_catalog_probe(resolved_game_root)
 	raw_targets = _read_probe_json(resolved_game_root, probe_output_path)
 	targets = normalize_targets(raw_targets)
-	try:
-		game_revision = repository_revision(resolved_game_root)
-	except (OSError, ValueError):
-		game_revision = "unknown"
+	verify_source()
+	# A fresh runtime JSON file does not prove which compiler inputs produced a reused DMB.
+	# Keep local catalogs readable, but never promote these observations to verified provenance.
 	activate_catalog_targets(
 		resolved_root,
 		targets,
-		source_game_revision=game_revision,
+		source_game_revision=source.head if source else "unknown",
+		before_activate=verify_source,
 		on_progress=on_progress,
 	)
 	return targets

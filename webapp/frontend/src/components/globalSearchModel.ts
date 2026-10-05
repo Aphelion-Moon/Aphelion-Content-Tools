@@ -31,6 +31,7 @@ export function contextFromResult(result: SearchResult): SelectedContext {
 		record_kind: result.navigation.record_kind,
 		record_id: result.navigation.record_id,
 		type_path: result.navigation.type_path ?? null,
+		...(result.navigation.catalog_id ? { catalog_id: result.navigation.catalog_id } : {}),
 		groups: [...new Set(groups)],
 		module: typeof module === 'string' ? module : null,
 	};
@@ -39,5 +40,7 @@ export function contextFromResult(result: SearchResult): SelectedContext {
 export function navigationRoute(result: SearchResult): string {
 	const params = new URLSearchParams({ selected: result.navigation.record_id });
 	if (result.navigation.type_path) params.set('type_path', result.navigation.type_path);
+	if (result.navigation.catalog_id) params.set('catalog_id', result.navigation.catalog_id);
+	if (result.navigation.record_kind === 'definition_draft') params.set('draft_id', result.navigation.record_id);
 	return `${result.navigation.route}?${params.toString()}`;
 }

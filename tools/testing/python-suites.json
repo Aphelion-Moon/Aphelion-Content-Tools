@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "test_roots": [
+    "tools/content_graph/tests",
+    "tools/definition_editor/tests",
+    "tools/docs/tests",
+    "tools/lore_editor/tests",
+    "tools/parsec_assets",
+    "tools/testing/tests",
+    "webapp/tests"
+  ],
+  "execution": {
+    "parallelism": 1,
+    "resource_policy": "Each suite runs in its own owned process tree. Heavy suites never overlap locally."
+  },
+  "suites": [
+    {
+      "id": "docs_and_testing",
+      "description": "Agent documentation and bounded-runner tests",
+      "include": [
+        "tools/docs/tests/test_*.py",
+        "tools/testing/tests/test_*.py"
+      ],
+      "timeout_seconds": 180,
+      "max_log_bytes": 1048576
+    },
+    {
+      "id": "content_graph",
+      "description": "Content Graph scanner, query, marker, and reference tests",
+      "include": [
+        "tools/content_graph/tests/test_*.py"
+      ],
+      "timeout_seconds": 600,
+      "max_log_bytes": 1048576
+    },
+    {
+      "id": "lore_editor",
+      "description": "Canonical lore, generation, export, launcher, and authoring tests",
+      "include": [
+        "tools/lore_editor/tests/test_*.py"
+      ],
+      "timeout_seconds": 1200,
+      "max_log_bytes": 2097152
+    },
+    {
+      "id": "parsec_assets",
+      "runner": "pytest",
+      "description": "Parsec asset pipeline and provenance tests",
+      "include": [
+        "tools/parsec_assets/test_*.py"
+      ],
+      "timeout_seconds": 600,
+      "max_log_bytes": 1048576
+    },
+    {
+      "id": "webapp_core",
+      "description": "Web API, repository, live, server, reference, and tooling tests",
+      "include": [
+        "webapp/tests/test_api.py",
+        "tools/definition_editor/tests/test_*.py",
+        "webapp/tests/test_definition_editor_api.py",
+        "webapp/tests/test_game_changes_authoring.py",
+        "webapp/tests/test_collaboration_api.py",
+        "webapp/tests/test_game_repository.py",
+        "webapp/tests/test_git_adapter.py",
+        "webapp/tests/test_graph_endpoints.py",
+        "webapp/tests/test_live.py",
+        "webapp/tests/test_references.py",
+        "webapp/tests/test_server.py",
+        "webapp/tests/test_server_startup.py",
+        "webapp/tests/test_tooling.py",
+        "webapp/tests/test_workspace_lock.py",
+        "webapp/tests/test_local_security.py",
+        "webapp/tests/test_write_boundaries.py"
+      ],
+      "timeout_seconds": 900,
+      "max_log_bytes": 2097152
+    },
+    {
+      "id": "webapp_store",
+      "description": "Projection, store CLI, and store health tests",
+      "include": [
+        "webapp/tests/test_store.py",
+        "webapp/tests/test_projection_lifecycle.py",
+        "webapp/tests/test_projection_tables.py",
+        "webapp/tests/test_store_cli.py",
+        "webapp/tests/test_store_health.py",
+        "webapp/tests/test_snapshot_registry.py",
+        "webapp/tests/test_workspace_status.py",
+        "webapp/tests/test_workspace_snapshots.py"
+      ],
+      "timeout_seconds": 900,
+      "max_log_bytes": 2097152
+    },
+    {
+      "id": "webapp_embeddings",
+      "description": "Embedding model lifecycle and failure tests",
+      "include": [
+        "webapp/tests/test_embeddings.py"
+      ],
+      "timeout_seconds": 600,
+      "max_log_bytes": 1048576
+    },
+    {
+      "id": "webapp_worker_process",
+      "description": "Owned process tree and persistent store worker tests",
+      "include": [
+        "webapp/tests/test_process_tree.py",
+        "webapp/tests/test_store_worker.py"
+      ],
+      "timeout_seconds": 600,
+      "max_log_bytes": 1048576
+    }
+  ]
+}

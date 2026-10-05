@@ -1,0 +1,34 @@
+{
+  "crop": [
+    63,
+    167,
+    1977,
+    562
+  ],
+  "destination": "webapp/frontend/src/assets/parsec/source/references/touch-release-toss.reference.png",
+  "minimumMargin": 16,
+  "occupiedBounds": [
+    79,
+    183,
+    1961,
+    546
+  ],
+  "outputSha256": "fce09dc9548b87b511eb0e4ab0b3feadc82730a3e77b934a660966bfa4f1439d",
+  "outputSize": [
+    1914,
+    395
+  ],
+  "retainedMargin": [
+    16,
+    16,
+    16,
+    16
+  ],
+  "source": "webapp/frontend/src/assets/parsec/source/generated/touch-release-toss.imagegen.png",
+  "sourceSha256": "7a8272bb28fa21d52d34d82cffe04aadb079ff612b00a518f8b7e9ecce29e2bd",
+  "sourceSize": [
+    1983,
+    793
+  ],
+  "tool": "manual-reference-trim-v1"
+}

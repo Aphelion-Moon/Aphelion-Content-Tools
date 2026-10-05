@@ -1,0 +1,51 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "toy-ball-retrieve",
+  "clipScale": 0.7,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f0.png",
+      "sha256": "7dfd86806a6af354a7cd4bd73475878f9eae1632cbf45e2d8216d81f529dfa46"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f1.png",
+      "sha256": "72abbaa867dc45610eaef6c07b45200e028f00c5ecd36fc9fff8708263d322b7"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f2.png",
+      "sha256": "5773bd8ecfa4edb349e3d75ba05a0ba40e0566d074cf5ff13eeddb3b7744b1cb"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f3.png",
+      "sha256": "3bb2408f111018ccd9e4fb0accc04d5f815b4c3ccfeb78199d62db0975043301"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f4.png",
+      "sha256": "cea73aadd727fdcbf6cd5ea387735ef3bf62cbed6ac8af12158949f933fc34bb"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f5.png",
+      "sha256": "8559ce702016d2ca149d848153c782914f630b1f8b515c6924526ccc9edfb045"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-retrieve.png",
+  "sourceSha256": "47e6f7d4f75de4a14a0d9b2d7bc1100d01a934f5139810df94f481c3486c3b7e",
+  "tool": "generated-strip-v4"
+}

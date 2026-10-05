@@ -10,7 +10,7 @@ the [writer guide](writer-guide.md); architecture and implementation history are
 This working-tree version is the normative architecture for Aphelion Content Tools. Historical design
 records explain prior decisions but do not override this guide.
 
-Target architecture: FastAPI and the Solid SPA.
+Shipped architecture: FastAPI and the Solid SPA.
 
 Legacy pages are transitional and must not receive new product behavior except for a
 documented migration or rollback fix. Pydantic models are the canonical HTTP schema, and
@@ -19,26 +19,28 @@ the production SPA, generated DreamMaker, and AutoWiki material are derived outp
 
 Focused implementation rules are indexed in the [development guides](development/README.md). They
 divide backend/schema, frontend/state, canonical data/generation, Content Graph, export safety,
-verification, and Meridian integration responsibilities without replacing the operational detail in
-this guide.
+verification, Meridian integration, and platform life-cycle responsibilities without replacing the
+operational detail in this guide. The 2026-08-27
+[platform audit](architecture/2026-08-27-platform-lifecycle-audit.md) records the evidence and the
+[repair plan](../docs/superpowers/plans/2026-08-27-platform-repair-and-expansion.md) sequences the
+replacement work.
 
 ## Repository structure
 
 `aphelion-content-tools` is a multi-tool suite, not a single app:
 
-- `webapp/` — the shared shell every tool runs inside: the local HTTP server (`server.py`,
-  `serve.py`), the generic Git adapter (`git_adapter.py`), the background job runner (`tooling.py`),
-  the game-checkout identity check (`game_repository.py`), generic manifest/JSON-storage primitives,
-  the **Home page** (`web/index.html`, `app.js`, `styles.css`), served at `/`, and the
-  **File Management page** (`web/file-management.html`, `file-management.js`), served at
-  `/file-management` — repository status, local Git actions, and the cross-tool "Database and Git"
-  job list live on File Management, not inside any one tool.
-- `tools/lore_editor/` — the Lore Editor tool: its own domain logic, content, catalog snapshot, and its
-  own page (`tools/lore_editor/web/index.html`, `app.js`), served by the shared shell at `/lore-editor`.
-  Imports the shared pieces from `webapp/` rather than owning them.
-- `tools/content_graph/` — the Content Graph tool: scanner, marker parser, its own manifest shape, and
-  its own standalone page (`tools/content_graph/web/graph.html`), served by the shared shell at `/graph`
-  but with no JS/CSS dependency on any other tool's page.
+- `webapp/api/` — typed FastAPI routes and the application factory; `webapp/serve_api.py` is the shipped
+  server entry point.
+- `webapp/frontend/` — the Solid SPA source and tracked production `dist/` artifact. Home, File
+  Management, Lore Editor, Content Graph, Parsec, shared search, and shared references are routes or
+  components in this one application.
+- `webapp/store/`, `webapp/tooling.py`, and `webapp/store_worker.py` — the worktree-scoped LanceDB
+  projection and persistent background-job process.
+- `tools/lore_editor/` — canonical Lore records plus framework-independent catalog, validation,
+  generation, and export domain logic.
+- `tools/content_graph/` — framework-independent scanner, marker parser/editor, query, and graph logic.
+- `webapp/web/` and `tools/*/web/` — rollback-only legacy assets; the shipped launcher does not serve
+  them.
 
 Each tool registers its own `ToolDefinition`s (see `tool_definitions.py` in each tool folder); the
 shell combines them into one background-job registry so File Management's "Database and Git" panel and
@@ -46,9 +48,8 @@ shell combines them into one background-job registry so File Management's "Datab
 
 ## Architecture
 
-The app is a Solid single-page frontend over a FastAPI backend. A migration is in progress: the new
-stack is authoritative for anything you build, while the legacy pages continue to serve users until each
-tool is ported.
+The app is a Solid single-page frontend over a FastAPI backend. The launcher cut over to this stack on
+2026-08-23. Legacy pages remain only for the explicit rollback window and must not receive product work.
 
 ### Frontend (`webapp/frontend/`)
 
@@ -62,9 +63,11 @@ Four rules carry most of the design, and each exists because its absence caused 
   rewrite `requestJson` existed in seven copies and `formatBytes` in three. Import them; never redeclare.
 - **One layout, in `src/components/AppShell.tsx`.** The sidebar chrome was previously duplicated verbatim
   across five HTML files, so every nav change meant editing all five.
-- **One registry, in `src/tools/registry.ts`.** A tool's route, label, accent, page component, and search
-  entry all come from a single manifest object. **Adding a tool is a one-file change.** The same facts
-  used to live in nine hand-synchronised places and had already drifted.
+- **One frontend registry, in `src/tools/registry.ts`.** A tool's route, label, accent, page component,
+  and frontend search entry come from a single manifest object. Backend routes, datasets, jobs,
+  mutations, integrations, and availability are separate today; the required target is a backend
+  capability catalog with a generated contract and a test that validates the frontend lazy-component
+  registry against it. Do not claim that adding a complete tool is a one-file change.
 - **Styles scoped by default.** `src/app.css` holds design tokens and app-wide element defaults; every
   other rule lives in a component-scoped `*.module.css`. A bare element selector in a per-tool stylesheet
   is a bug: `graph.css`'s `button { width: auto }` used to leak to every other tool for the rest of the
@@ -116,39 +119,106 @@ loop is cancellable. A single blocking native-library call cannot be interrupted
 process; cancellation is applied immediately when that call returns to Python, before the next command
 or successful completion is published.
 
-LanceDB connections use a zero-second read-consistency interval, which checks other-process writes on
-every read. Lore Editor's expensive computed-view caches combine the in-process generation counter with
-the active projection's durable generation ID, so an atomic projection activated by the worker invalidates
-API-process caches without a restart.
+Published LanceDB tables are read through a version-bound interface. Each process caches at most eight
+connections; eviction releases cache ownership without
+closing a connection still held by a table or query. Composite readers borrow one projection for their
+whole operation. Lore Editor's computed-view caches use that borrowed generation's ID, and a live poll
+uses the same generation for its workspace revision and health. Worker activation cannot mix table
+generations within those reads or tag old results with the newly active generation.
+
+Projection schema 2 copies only tables declared changed by a writer and reuses immutable physical
+owners for the others. Reference writes and schema upgrades happen inside stages. Read operations
+never create tables, and staged write handles cannot mutate published data after their scope closes.
+Backups materialize shared tables so they remain independent of subsequent generation cleanup.
+
+Projection retirement preserves active, previous, and live reader generations plus their table owners. OS-locked reader leases
+work across the API and worker processes and are released on process exit. A successful staged write
+or restore retires eligible completed generations in bounded batches; deletion runs after releasing the
+short lifecycle lock. Busy deletions are retried fairly, and failed cleanup does not undo publication.
+Incomplete or unrecognized directories remain available for investigation. See
+[projection lifecycle](development/data-and-generation.md#projection-lifecycle) for migration, embedding
+provenance and retention boundaries.
+
+The current projection revision is not a complete workspace revision: it can call canonical lore
+current while catalog or Content Graph data came from an older Meridian-Rift checkout. Until the
+workspace-snapshot repair lands, inspect every dataset manifest's game revision before relying on
+aggregate health. New derived datasets must follow
+[platform life-cycle and integration guidance](development/platform-lifecycle-and-integrations.md):
+build inactive, verify complete provenance, then activate atomically.
 
 The package is installable (`pip install -e ".[dev]"`), which is what lets modules use plain absolute
 imports. `pyproject.toml` configures `ruff` and an initial Pyright production boundary. Legacy DMI,
 dictionary-shaped graph code, and tests remain outside that type boundary; do not describe the whole
 repository as strict-typed until that debt is removed.
 
-### Legacy pages (`webapp/web/`, `tools/*/web/`) — do not extend
+### Legacy pages (`webapp/web/`, `tools/*/web/`) — rollback only
 
-The original no-build-step pages still serve users via `webapp/server.py` and are removed tool by tool as
-each is ported. They use plain scripts with a guarded
+The original no-build-step pages are not used by the shipped launcher. They remain temporarily as a
+rollback surface and use plain scripts with a guarded
 `if (typeof module !== 'undefined' && module.exports)` block exporting DOM-free functions for `node --test`.
-**Do not add pages or features here** — build them in `webapp/frontend/` instead.
+**Do not add pages or features here**. Delete them, their tests, `webapp/server.py`, and `webapp/serve.py`
+together only after the rollback window is explicitly closed.
 
 ## Parsec: the app's standard feedback-reporting surface
 
-Parsec (`webapp/web/parsec.js`) is the husky pixel-pet mascot living in the sidebar's "Database and Git"
-widget on every page, and — this is the part that matters for new work — **the app's standing pattern for
-reporting successes and errors**, not just a decoration. Any script can call
-`window.AphelionParsec.announce(message, {kind: 'success' | 'error' | 'info', tool})` to have her deliver a
-speech-bubble toast, in addition to (never instead of) whatever inline status text the page already shows.
-New success/error messaging should call `announce()` alongside its existing inline update, following the
-pattern already applied throughout `file-management.js`, `tools/lore_editor/web/app.js`, and
-`tools/content_graph/web/graph.js`: every real error (`.catch` blocks that show `error.message`) and every
-clear success confirmation announces; purely incidental/informational text (live counts, placeholder copy)
-does not — she's meant to surface things worth noticing, not narrate constantly.
+Parsec (`webapp/frontend/src/components/Parsec.tsx`) is the husky pixel-pet mascot in the shared sidebar
+and the app's central feedback authority. User-facing operations report a typed `ParsecEvent` through
+`src/lib/parsec/coordinator.ts`; the coordinator owns prioritization, delayed progress, deduplication,
+the bounded queue, character voice, the compact radio-log projection, and serialized activity-journal
+writes. Keep exact errors in `technicalDetail` and keep the useful inline status or error in the tool
+itself. The radio log uses playful character-facing copy and never replaces exact diagnostics.
+`src/lib/notify.ts` is a
+compatibility boundary for callers that have not yet migrated, not the API for new operation code.
 
-Her own settings/info page lives at `/parsec` (`webapp/web/parsec.html` + `parsec-page.js`), reachable via
-the gear icon on her box or the "Parsec" nav pill. Her sprite sheet (`webapp/web/vendor/parsec.png`) is
-cropped/repacked from "Husky Sprites" (opengameart.org/content/husky-sprites, CC0/public domain).
+`src/lib/parsec/journalTypes.ts` is an explicit persistence allowlist. It records typed event metadata,
+reviewed Parsec copy, animation reaction, route/context identifiers, allowed technical detail, and timing;
+it never serializes arbitrary event objects or lore bodies. Secret-shaped assignments are redacted before
+persistence. `indexedDbJournal.ts` opens the browser-local `aphelion-parsec` IndexedDB database and falls
+back to a session-memory journal without recursively reporting its own failure through Parsec. The bounded
+`appState.parsecLog` is only the live UI projection; `appState.announcements` remains a temporary
+compatibility projection and is not durable storage.
+
+Her settings/info route is `/parsec`. Idle chatter is browser-local and defaults to **Rare**; the other
+values are Off, Occasional, and Frequent. The single app-owned scheduler pauses while the document is
+hidden, an editable control is focused, work is active, a connection problem needs attention, or Parsec
+is already speaking. Page components must not create their own idle timers.
+
+The same route owns local activity-history filters, storage status, JSON/CSV export, explicit clear
+confirmation, and retention choices of 7, 30, 90 (default), or 365 days, or manual clear. Companion-profile
+export is deliberately separate and never fabricates activity history. CSV export prefixes formula-shaped
+cells, and profile/history data stays in the current browser unless the user explicitly exports it. A
+newer, unreadable journal schema is preserved until the user explicitly confirms the incompatible-database
+reset on this page; never delete or downgrade it automatically.
+
+The canonical sprite is `webapp/frontend/src/assets/parsec.png`, cropped/repacked from "Husky Sprites"
+(CC0/public domain). Coordinates, provenance, requested animations and icons, candidate status, and the
+human-assistance backlog live in [`parsec-asset-register.md`](parsec-asset-register.md). Update that
+register whenever an asset is added, evaluated, rejected, integrated, or relicensed.
+
+Parsec's production companion library is versioned through
+`webapp/frontend/src/assets/parsec/manifest.v1.ts`. It currently resolves all 60 required clips and 293
+authored frames across seven actor/effect atlases, 11 separately anchored SS13 objects, and eight exact-copy
+SS13 audio cues. `references/architecture/parsec-animation-storyboards.md` is the behavioral contract;
+`references/parsec-asset-register.md` records exact source paths, states, revisions, hashes, licensing,
+adaptations, rejections, and the remaining human-art backlog. Generated coordinates and anchor maps sit
+beside each atlas. Do not hand-edit generated atlases or their coordinate JSON: update the prepared frames
+or source inventory and rerun the corresponding script in `tools/parsec_assets/`.
+
+The visual runtime selects manifest frames and authored durations. Effects use a separate pointer-inert
+overlay, so hearts, alerts, scent, radio pings, and landing dust can never intercept application controls.
+Every clip has an explicit reduced-motion frame. Audio cues are scheduled from their storyboard frame,
+respect authored cue volume and cooldown, and pass through Parsec's master, voice, effects, alerts, and
+rare-idle controls. Audio defaults on but waits for a direct browser interaction before unlocking; rare
+idle remains deliberately quiet. Replacing a sound requires updating its source record and hash rather
+than silently transcoding or substituting it.
+
+`src/lib/parsec/runtime.ts` owns companion state, clip follow-ups, audio scheduling, and persistence.
+`companionScheduler.ts` is the only autonomous-behavior scheduler. It observes consent, focus, visibility,
+feedback duty, the current bed/cage state, reduced-distraction mode, and the configured presence policy.
+Intrusive behavior is an explicit opt-in presence mode, not a separate component or a license to activate
+application controls. Scruff handling, toys, movable furniture, and the viewport roaming layer all dispatch
+typed companion intents; keep new interactions in that reducer/runtime boundary instead of mutating UI
+state directly.
 
 ## Architecture summary (Lore Editor)
 
@@ -161,6 +231,24 @@ generation and icon previews, and receives only the generated runtime artifact
 workflow — it never receives editor code or raw per-record content. Authentication, pushes, pull
 requests, and complex merge conflicts are handled in GitHub Desktop; this tool only does local status,
 branch, and commit operations.
+
+The Solid route preserves the shared `AppShell`, tool registry, selected context, global search,
+references, typed API client, and live-state owner. Inside that shell, `LoreEditorPage` coordinates a
+two-pane workspace: `ReviewFilters` and the virtualized `ReviewList` remain mounted in the left queue,
+while `EntryEditor`, `ReviewActions`, or `GroupManager` occupy the independently scrolling right pane.
+Reviewer identity is a browser-local workspace preference; saved review records remain canonical
+per-record files and carry their explicit reviewer value. The rollback-only Lore HTML and JavaScript
+remain comparison references, not an alternate implementation.
+
+Global text-entry controls fill their owning field, but global buttons are content-sized. A component
+that needs a full-row action must opt into that width in its own CSS module. This prevents one page's
+button assumptions from recreating the oversized-control regression across every SPA route.
+
+Routine asynchronous feedback uses Parsec plus `LoadingIndicator`. Route-level `Suspense` is reserved
+for the initial lazy module load. A tool that mounts asynchronous content after it is already visible
+must add a nearer boundary so the shell and existing workspace remain mounted; its fallback uses the
+shared indicator and, for discrete user actions, announces the load through Parsec. Continuous search
+and filter requests keep quiet inline status so typing does not flood the announcement log.
 
 ## Content Graph
 
@@ -186,15 +274,36 @@ on page load.
 
 ## Refreshing the catalog
 
-Run this whenever the game repository's target list changes (new items, renamed types, etc.):
+To replace an existing stale or unverified catalog with a matching release, use **Load release catalog**
+in File Management, or run:
+
+```bash
+python tools/lore_editor/cli.py catalog-reload --repo-root . --game-repo <path-to-Meridian-Rift>
+```
+
+The command uses `tools/lore_editor/catalog-seed.json` and the per-user seed cache by default;
+`--manifest` and `--cache-root` can select alternate locations. It verifies the release bytes and the
+selected game revision, rechecks the checkout before activation, and replaces only the derived
+catalog. Failure keeps the existing catalog and authored records. It never falls back to a local
+probe. A matching release manifest must already be available; this checkout does not publish one yet.
+Startup's `catalog-bootstrap` intentionally keeps a nonempty catalog, so it cannot perform this repair.
+
+For local authoring data when the game repository's target list changes, use **Advanced catalog
+actions** or run:
 
 ```bash
 python tools/lore_editor/cli.py catalog-refresh --repo-root . --game-repo <path-to-Meridian-Rift>
 ```
 
-This builds and atomically activates a new LanceDB projection generation containing the catalog and its
-provenance manifest — nothing in the game checkout is modified. A failed projection build leaves the
-previous generation active.
+This runs the maintained BYOND probe and atomically activates a new LanceDB projection containing its
+catalog and provenance manifest. The probe uses game build artifacts and writes its runtime JSON;
+it does not authorize tracked game-content edits. A failed catalog projection build preserves the
+previous catalog. Source observations are checked before the probe and before publication.
+
+Local probe output remains available for authoring, but its game-source freshness is unverified until
+the compiler supplies an input receipt. A matching HEAD and fresh JSON do not prove the source of a
+reused compiled binary. Verified release seeds retain their release revision; see
+[catalog provenance](development/data-and-generation.md).
 
 To package the active catalog as a release asset plus its small tracked manifest:
 
@@ -202,10 +311,16 @@ To package the active catalog as a release asset plus its small tracked manifest
 python tools/lore_editor/cli.py catalog-seed-package --repo-root . --seed-output <release-dir>/catalog-targets.json --manifest-output tools/lore_editor/catalog-seed.json --source-game-commit <Meridian-Rift-SHA> --download-url <published-release-asset-URL>
 ```
 
+Packaging requires verified source provenance and the active catalog's exact source revision and
+target hash. It cannot relabel an old seed or promote an unverified local probe. Until compiler input
+receipts are integrated, local refresh can supply authoring data but cannot supply a new verified
+release catalog or authorize staged export.
+
 Publish the seed bytes at the exact URL before merging the manifest. Bootstrap downloads to a temporary
 file, verifies schema, byte size, SHA-256, canonical JSON, and every catalog target, then atomically moves
-it into `%LOCALAPPDATA%\AphelionContentTools\catalog-seeds`. `catalog-bootstrap` uses the cache first and
-falls back to `catalog-refresh` when a game checkout is available.
+it into `%LOCALAPPDATA%\AphelionContentTools\catalog-seeds`. Downloads use a 30-second socket timeout
+and stop if the response exceeds the manifest's byte size. `catalog-bootstrap` uses the cache first
+and falls back to `catalog-refresh` when a game checkout is available.
 
 Two safeguards apply whenever `--game-repo` is passed (to `catalog-refresh`, and always for
 `prepare-export`/`apply-export`):
@@ -347,22 +462,106 @@ To change the pinned Python version, edit `runtime_manifest.json`'s `version`, `
 `signature_subject_contains` fields together — an installer whose signature doesn't match the expected
 subject is rejected outright, so all three must stay consistent.
 
-## Verification checklist before calling a change complete
+### Projection recovery
+
+Canonical Git records remain authoritative. Use these commands from the content-tools checkout; none
+write to Meridian-Rift:
 
 ```powershell
-python -m unittest discover -s tools/lore_editor/tests -p 'test_*.py'
-python -m unittest discover -s webapp/tests -p 'test_*.py'
-python -m unittest discover -s tools/content_graph/tests -p 'test_*.py'
+python -m webapp.store.cli status --repo-root .
+python -m webapp.store.cli reconcile --repo-root .
+python -m webapp.store.cli rebuild --repo-root .
+python -m webapp.store.cli backup --repo-root . --output <backup-root> --label <label>
+python -m webapp.store.cli restore --repo-root . --backup <backup-directory>
+```
+
+`reconcile` is the normal branch-switch recovery path and changes only rows whose canonical record hash
+changed. `rebuild` creates a fresh projection generation. `backup` copies a labeled projection snapshot;
+`restore` activates that snapshot as explicitly stale data, after which `reconcile` reapplies the current
+branch's canonical records. Never resolve a record conflict by restoring LanceDB over Git.
+
+These commands currently establish canonical-lore currentness, not aggregate Meridian-Rift dataset
+currentness. Compare catalog and Content Graph manifest revisions to the selected game checkout. The
+planned workspace-snapshot CLI will make those dataset checks part of `status`, `verify`, and activation.
+
+### Windows packaging spike
+
+Install the pinned build toolchain and produce the isolated `onedir` artifact with:
+
+```powershell
+python -m pip install -r packaging/requirements-build.txt
+./packaging/build-sidecar.ps1 -OutputRoot <temporary-output-directory>
+```
+
+The build requires the quantized FastEmbed model in
+`%LOCALAPPDATA%\AphelionContentTools\models` and fails if it is absent. This is a measured spike, not a
+release pipeline. See [windows-sidecar-packaging-spike.md](architecture/windows-sidecar-packaging-spike.md)
+for size, startup, memory, offline, DMI, and process-tree results. Tauri work is blocked until the clean
+catalog bootstrap activates precomputed vectors instead of recomputing them on every writer's machine.
+
+## Verification checklist before calling a change complete
+
+### Job and outfit authoring
+
+The Solid `/job-editor` and `/outfit-editor` tools share the framework-independent
+`tools/definition_editor` domain and thin `/api/definitions` routes. Versioned records in
+`tools/job_editor/content` and `tools/outfit_editor/content` are canonical. Saves require the previous
+record hash and use the repository write coordinator. Shared workspace revisions include these roots;
+search reads their canonical records directly and carries the source catalog identity into navigation.
+Game application receipts reconcile the saved record to the refreshed catalog only when its saved hash
+and all expected game inputs still match. A concurrent edit requires explicit source-refresh review.
+
+The packaged Windows Meridian-MCP executable is selected by `tools/definition_editor/runtime/analyzer.json`
+and verified by SHA256 before execution. Its deterministic source catalog includes byte ranges,
+whole-file hashes, raw expressions, inheritance, procedures, reference editability, parser provenance,
+and build configuration. `job-outfit-definitions` is an optional workspace dataset built inactive and
+activated through the existing atomic snapshot pointer. Missing analysis or BYOND never blocks saving
+drafts. Unknown expressions and ambiguous physical occurrences remain inspectable and cannot authorize
+automatic in-place edits.
+
+Existing modular definitions are patched at their physical owning ranges. TG overrides and new
+identities go to the dedicated `content_tools/code/generated_outfits.dm` and `generated_jobs.dm`
+outputs, included in Meridian-Rift's explicit final phase. Generated blocks belong to their canonical
+record; later saves replace that exact block. Job access belongs to a linked ID trim. Replacement
+requires an explicit old-job selection choice and migrates only selected verified reference tokens;
+saved preferences, bans, configuration, and dynamic/map references are compatibility concerns, not
+silently migrated records.
+
+This workflow uses the shared `GameChangeSetService` create/modify transaction, separately from the
+single-artifact lore exporter. Validation copies private source, reparses the draft, and compiles the
+exact candidate with the maintained game build. Prepare/apply verifies the source/asset fingerprint,
+compiler/analyzer hashes, saved draft hash, clean compatible checkout, revision, and exact allowed file
+bytes. Server-held stages expire and cannot be supplied by browser content. The durable game-side
+journal supports complete rollback and interrupted-application recovery, including newly created files;
+its durable receipt is the commit point. Applying to the developer's dirty game checkout is refused.
+Private snapshots include referenced resource files even when Git ignores them, with the same input
+fingerprint used for validation and application. Git administration and runtime configuration stay
+excluded. The service retains at most two compiled candidates; superseded/applied candidates, failed
+or analysis-only copies, and owned copies at shutdown are removed. Raw analyzer payloads are transient;
+run status, bounded logs, images, and validation/application receipts remain available.
+
+Native previews run only on explicit requests and use the `CONTENT_TOOLS_PREVIEW` game harness. The
+runner owns compilation, daemon, and direct DreamSeeker process trees, bounded logs, readiness,
+cancellation, and shutdown. Sessions use private runtime/configuration and reject remote clients and
+Topic requests before ordinary game startup. BYOND may listen on all interfaces; the application gate
+is not an OS network sandbox. A private directory is not a security sandbox for edited DM. The engine
+can also use its existing BYOND login. The humanoid test map exercises outfit/job equipping and hooks;
+it does not emulate round scheduling, saved preferences, player loadouts, or special role body creation.
+
+```powershell
+./tools/testing/run-python-suites.ps1
 python -m ruff check .
 python -m pyright
 npm --prefix webapp/frontend run gen:api
 npm --prefix webapp/frontend run typecheck
 npm --prefix webapp/frontend test -- --run
 npm --prefix webapp/frontend run build
-node --check webapp/web/app.js
-node --check tools/lore_editor/web/app.js
-node --check tools/content_graph/web/graph.js
-node --test webapp/web/tests/app.test.js tools/lore_editor/web/tests/app.test.js tools/content_graph/web/tests/graph.test.js
+# Until the rollback window closes, retain its syntax and unit gate.
+$legacyRoots = @('webapp/web', 'tools/lore_editor/web', 'tools/content_graph/web')
+$legacyScripts = foreach ($root in $legacyRoots) { Get-ChildItem -Recurse -File $root -Filter '*.js' | Where-Object { $_.FullName -notlike '*\vendor\*' -and $_.FullName -notlike '*\tests\*' } }
+$legacyScripts | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $($_.FullName)" } }
+$legacyTests = Get-ChildItem -Recurse -File webapp/web/tests,tools/lore_editor/web/tests,tools/content_graph/web/tests -Filter '*.test.js'
+node --test @($legacyTests.FullName)
 python tools/lore_editor/cli.py generate --repo-root .
 python tools/lore_editor/cli.py validate --repo-root . --check-generated
 git diff --check

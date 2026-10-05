@@ -1,0 +1,285 @@
+{
+  "tool": "generated-strip-v4",
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/empty-confused/empty-confused__d0__f0.png",
+      "sha256": "ac57fec34bd935222649b40678513be283fb5b5ee10f864e1ea3f87598b1fe1f",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/empty-confused.png",
+      "sourceSha256": "a739ddcd748feeb9691d8a2d08030185e27fcffec6653359172c5594c15e657a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/empty-confused/empty-confused__d0__f1.png",
+      "sha256": "7a443e9028e30582f64e7d17f58442ac990f10017931939638df5683b8bf9625",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/empty-confused.png",
+      "sourceSha256": "a739ddcd748feeb9691d8a2d08030185e27fcffec6653359172c5594c15e657a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/empty-confused/empty-confused__d0__f2.png",
+      "sha256": "cabec3e1879bc9bdea6046758aa8eb64c3bc263c4e6b64fdc2bf4de237eaba8c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/empty-confused.png",
+      "sourceSha256": "a739ddcd748feeb9691d8a2d08030185e27fcffec6653359172c5594c15e657a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/empty-confused/empty-confused__d0__f3.png",
+      "sha256": "784982cd046d51db786efaeb65fcfb5d63132319bc3a9a44faf340634f0327ae",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/empty-confused.png",
+      "sourceSha256": "a739ddcd748feeb9691d8a2d08030185e27fcffec6653359172c5594c15e657a"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f0.png",
+      "sha256": "19cc836edc6d0a0caa2cdd54b9578e9f0136c17016f10673fc8ece44c75d64aa",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/error-anxious.png",
+      "sourceSha256": "28bdc7a995532bbab1b903644a9a06e8d8e32c2f601e9eb54ba810173d2d7abf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f1.png",
+      "sha256": "72ba68c7f01cb40f5a822de4ce7dfcdc08ecdd8cccaa034a766df84f2ff5241e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/error-anxious.png",
+      "sourceSha256": "28bdc7a995532bbab1b903644a9a06e8d8e32c2f601e9eb54ba810173d2d7abf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f2.png",
+      "sha256": "cf68eb4b44a27b10cac0f58f720ecfe39d3920cfe31662945d0f98e5c18d62a1",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/error-anxious.png",
+      "sourceSha256": "28bdc7a995532bbab1b903644a9a06e8d8e32c2f601e9eb54ba810173d2d7abf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f3.png",
+      "sha256": "be59272dad5d2984a875132df078b66aec772664cd956be315740b803d30edb4",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/error-anxious.png",
+      "sourceSha256": "28bdc7a995532bbab1b903644a9a06e8d8e32c2f601e9eb54ba810173d2d7abf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/error-anxious/error-anxious__d0__f4.png",
+      "sha256": "b2a82cbcad88cb0e0628aadef037cafafc443ed12d1c3846797c023a851a0af1",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/error-anxious.png",
+      "sourceSha256": "28bdc7a995532bbab1b903644a9a06e8d8e32c2f601e9eb54ba810173d2d7abf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-proud/feedback-success-proud__d0__f0.png",
+      "sha256": "a388d7802159f2631cc2d11d0a5b30e26496bad6dba4e6f81993316c11e47e6f",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-proud.png",
+      "sourceSha256": "88bd4a1856abb47bdff34114ee859898d88fc41a1d8df8da408089e63db676f9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-proud/feedback-success-proud__d0__f1.png",
+      "sha256": "ffd336dedc2840a2fbae06d59a7d206a4a7d3178d45c74d0037a1372c86d5fda",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-proud.png",
+      "sourceSha256": "88bd4a1856abb47bdff34114ee859898d88fc41a1d8df8da408089e63db676f9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-proud/feedback-success-proud__d0__f2.png",
+      "sha256": "bb6fa9cb9072ec4e3b74bde6f1b4d055721966a1e6b15b00dfa36664d713ee28",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-proud.png",
+      "sourceSha256": "88bd4a1856abb47bdff34114ee859898d88fc41a1d8df8da408089e63db676f9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-proud/feedback-success-proud__d0__f3.png",
+      "sha256": "d5dd54b5127d4470e303f58138e4887dc3237b9c1c741f17bdda5d06b5134683",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-proud.png",
+      "sourceSha256": "88bd4a1856abb47bdff34114ee859898d88fc41a1d8df8da408089e63db676f9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-wag/feedback-success-wag__d0__f0.png",
+      "sha256": "0dba2c718e530a0750028fecff753162a6ea4fd737d10dd611379c8c100f901c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-wag.png",
+      "sourceSha256": "59f1d33ad9fde9da722197ffebe6d729e9667cfcc898d68c169c01bd08d8bc11"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-wag/feedback-success-wag__d0__f1.png",
+      "sha256": "f0694dad416a918bb079896b4da4b7ed8c48ee24933ee7f8524e16a33c9df0b4",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-wag.png",
+      "sourceSha256": "59f1d33ad9fde9da722197ffebe6d729e9667cfcc898d68c169c01bd08d8bc11"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-wag/feedback-success-wag__d0__f2.png",
+      "sha256": "ef427ca4a55ba8b2792416ff6d758e74fca9c292343d932db65efbb2d11adaee",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-wag.png",
+      "sourceSha256": "59f1d33ad9fde9da722197ffebe6d729e9667cfcc898d68c169c01bd08d8bc11"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-wag/feedback-success-wag__d0__f3.png",
+      "sha256": "a7cab965909372b8f148e884e94916d13cf377d7eb3e1271f7ff1a518b72aa4c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-wag.png",
+      "sourceSha256": "59f1d33ad9fde9da722197ffebe6d729e9667cfcc898d68c169c01bd08d8bc11"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-success-wag/feedback-success-wag__d0__f4.png",
+      "sha256": "844e83f58fe11cae7fe4b84288f1972f515322cad3c06f07a3acdba465df71b9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-success-wag.png",
+      "sourceSha256": "59f1d33ad9fde9da722197ffebe6d729e9667cfcc898d68c169c01bd08d8bc11"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-warning-alert/feedback-warning-alert__d0__f0.png",
+      "sha256": "2b27f957e4a2fbea508932e612d46f1231b3f08dff363b4e754b56e4ed040b20",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-warning-alert.png",
+      "sourceSha256": "2db7c4d53cc360f3c3e6f9be73120982045b9ddee407fbcdc815f628d7555d62"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-warning-alert/feedback-warning-alert__d0__f1.png",
+      "sha256": "4ba1d274a5f5c133d654cb20d970e0aad15db96807af84eee388b0507240cbf4",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-warning-alert.png",
+      "sourceSha256": "2db7c4d53cc360f3c3e6f9be73120982045b9ddee407fbcdc815f628d7555d62"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-warning-alert/feedback-warning-alert__d0__f2.png",
+      "sha256": "522052f4ae60e08b105379b9d80b86f5369a8da5f706ea06c7bc70776eea9aed",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-warning-alert.png",
+      "sourceSha256": "2db7c4d53cc360f3c3e6f9be73120982045b9ddee407fbcdc815f628d7555d62"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-warning-alert/feedback-warning-alert__d0__f3.png",
+      "sha256": "6c2de239d2aaf646d03635608a7ab368211aabfcc1845653ae70af56bec1426e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-warning-alert.png",
+      "sourceSha256": "2db7c4d53cc360f3c3e6f9be73120982045b9ddee407fbcdc815f628d7555d62"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-working-focus/feedback-working-focus__d0__f0.png",
+      "sha256": "79cd473e966abb3194f008dde6fb4609a1e30f0e4e5f1431a7245b5b3cbb43ba",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-working-focus.png",
+      "sourceSha256": "1a23fd6424337805a4ac7f0147130dfdd51dda659c6bcea553967d2281d73dfa"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-working-focus/feedback-working-focus__d0__f1.png",
+      "sha256": "c0b0cba7b9faf176a980cebe1cf2a2c6b4eabbf23324ced782507a7a18f32294",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-working-focus.png",
+      "sourceSha256": "1a23fd6424337805a4ac7f0147130dfdd51dda659c6bcea553967d2281d73dfa"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-working-focus/feedback-working-focus__d0__f2.png",
+      "sha256": "11f8553b9709ad008202392f2fbcce73c77501ffc9cfe6a374aebd2ce08f0177",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-working-focus.png",
+      "sourceSha256": "1a23fd6424337805a4ac7f0147130dfdd51dda659c6bcea553967d2281d73dfa"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/feedback-working-focus/feedback-working-focus__d0__f3.png",
+      "sha256": "d6e4b3c60b6c1bc5f88c461e70272d793301668468f8680e821a8956bd0590b1",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/feedback-working-focus.png",
+      "sourceSha256": "1a23fd6424337805a4ac7f0147130dfdd51dda659c6bcea553967d2281d73dfa"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/fetch-dig/fetch-dig__d0__f0.png",
+      "sha256": "e872542ae1edbd115d9b7b5cb38c9899291b4858210da5e6ac80f7faf97d4a72",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/fetch-dig.png",
+      "sourceSha256": "aff3fabf997d3c7e79d8fba847f8f084997be8753288eb9805353f363e7114e8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/fetch-dig/fetch-dig__d0__f1.png",
+      "sha256": "3a0557e86c2dbed4717b3fc27eb18daac42a835533c846f09b119e9f0232a554",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/fetch-dig.png",
+      "sourceSha256": "aff3fabf997d3c7e79d8fba847f8f084997be8753288eb9805353f363e7114e8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/fetch-dig/fetch-dig__d0__f2.png",
+      "sha256": "90fb80dadd671eb801200e92f0c2e3fa70b53e98e4c946e5a795424bae9599f6",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/fetch-dig.png",
+      "sourceSha256": "aff3fabf997d3c7e79d8fba847f8f084997be8753288eb9805353f363e7114e8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/fetch-dig/fetch-dig__d0__f3.png",
+      "sha256": "cb5c1f15e8dc76cf8bb62f0864b75f52af64b349545995cca26f2d72aa9f2b01",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/fetch-dig.png",
+      "sourceSha256": "aff3fabf997d3c7e79d8fba847f8f084997be8753288eb9805353f363e7114e8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/fetch-dig/fetch-dig__d0__f4.png",
+      "sha256": "12b64c68e78eb9c28ff4a80fced5ca550c9e461bc62ab82c6e53a1f0bedfc186",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/fetch-dig.png",
+      "sourceSha256": "aff3fabf997d3c7e79d8fba847f8f084997be8753288eb9805353f363e7114e8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/fetch-dig/fetch-dig__d0__f5.png",
+      "sha256": "e9549ba7ce57928a0c1dcc3cff83a67bed57042ecf46ee77b71127b9fb97c2f3",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/fetch-dig.png",
+      "sourceSha256": "aff3fabf997d3c7e79d8fba847f8f084997be8753288eb9805353f363e7114e8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/reconnect-pant/reconnect-pant__d0__f0.png",
+      "sha256": "43ff4e0506a5325d196930b63902b00aae2da212725ed6b05723b6ed22fb4d9d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/reconnect-pant.png",
+      "sourceSha256": "1c901e2e287a66795d13be7a42c05ef86dd3ff1ef35fb906cff2b7967fc7878e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/reconnect-pant/reconnect-pant__d0__f1.png",
+      "sha256": "df185dd20c5df54b372b71251e08e0314b497ffc4fb5f16beca31fd25f73aa27",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/reconnect-pant.png",
+      "sourceSha256": "1c901e2e287a66795d13be7a42c05ef86dd3ff1ef35fb906cff2b7967fc7878e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/reconnect-pant/reconnect-pant__d0__f2.png",
+      "sha256": "9af3e755b0999cff31bdcb0275582957d21e588ff3681dabf74cff0720e402b8",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/reconnect-pant.png",
+      "sourceSha256": "1c901e2e287a66795d13be7a42c05ef86dd3ff1ef35fb906cff2b7967fc7878e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/reconnect-pant/reconnect-pant__d0__f3.png",
+      "sha256": "9aac8ab397232d3224b2ae36f6ef9f2c0363f20da001ad1922310b8c9777bed2",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/reconnect-pant.png",
+      "sourceSha256": "1c901e2e287a66795d13be7a42c05ef86dd3ff1ef35fb906cff2b7967fc7878e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/search-sniff/search-sniff__d0__f0.png",
+      "sha256": "31694dd7332f8dbc29c5574f5ee320633e2217767ae3d433dc236ca20306a46c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/search-sniff.png",
+      "sourceSha256": "914e46897c8cbf081bb86fd8edab65d4555e1014747e8689fb05ee2044574052"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/search-sniff/search-sniff__d0__f1.png",
+      "sha256": "28f2b704fb6442674553d8e2a767e9bb4b13d69ab0a4c01cfd5ee3423802195c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/search-sniff.png",
+      "sourceSha256": "914e46897c8cbf081bb86fd8edab65d4555e1014747e8689fb05ee2044574052"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/search-sniff/search-sniff__d0__f2.png",
+      "sha256": "f342eddea67efc288852bb3c36a16242618b0adf55eca074954c785ff3d086f9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/search-sniff.png",
+      "sourceSha256": "914e46897c8cbf081bb86fd8edab65d4555e1014747e8689fb05ee2044574052"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/search-sniff/search-sniff__d0__f3.png",
+      "sha256": "5c01071a9f8db2d401025fad65de3c06d92eb12605a6df778b62ba9ac13cb6eb",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/search-sniff.png",
+      "sourceSha256": "914e46897c8cbf081bb86fd8edab65d4555e1014747e8689fb05ee2044574052"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/search-sniff/search-sniff__d0__f4.png",
+      "sha256": "b67b2706720e0a1ad1cc7017ba718edded1390b2076ee13ea80590afd5b3f4e6",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/search-sniff.png",
+      "sourceSha256": "914e46897c8cbf081bb86fd8edab65d4555e1014747e8689fb05ee2044574052"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f0.png",
+      "sha256": "6f540ca7e9ebbf22a39a2b81397ae8a5e3e3d92e57f39493598da6095fdf2e1e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/tool-growl.png",
+      "sourceSha256": "6ca712e31ab48c94cf486d6e32086759bc39478ff16d010a23bfa33c31f311ed"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f1.png",
+      "sha256": "d9ecaf95fae10721e52c2424fdaa03e583a92fd0e40d4a7a7cd5029db0a86a2f",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/tool-growl.png",
+      "sourceSha256": "6ca712e31ab48c94cf486d6e32086759bc39478ff16d010a23bfa33c31f311ed"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f2.png",
+      "sha256": "8b68b3c9385fb50a6ad0c0cdd6f9ba768bb639333b30f6415959e809450edce2",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/tool-growl.png",
+      "sourceSha256": "6ca712e31ab48c94cf486d6e32086759bc39478ff16d010a23bfa33c31f311ed"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f3.png",
+      "sha256": "6e9f5644640764f7ab1e628c52f253a5ab5b57e04c8480da4ccf55529768d1c4",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/tool-growl.png",
+      "sourceSha256": "6ca712e31ab48c94cf486d6e32086759bc39478ff16d010a23bfa33c31f311ed"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/tool-growl/tool-growl__d0__f4.png",
+      "sha256": "de949c3f4617b0785678190be70d91c5b4d30f1d382f3b1378da4a98f13a3ab2",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/tool-growl.png",
+      "sourceSha256": "6ca712e31ab48c94cf486d6e32086759bc39478ff16d010a23bfa33c31f311ed"
+    }
+  ]
+}

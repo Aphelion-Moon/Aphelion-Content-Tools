@@ -1,7 +1,7 @@
 import { For, Show, createResource, createSignal } from 'solid-js';
 import Card, { cardStyles } from '~/components/Card';
 import { api } from '~/lib/api';
-import { announceError, announceSuccess } from '~/lib/notify';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import type { components } from '~/lib/api-schema';
 import styles from './FileManagement.module.css';
 
@@ -33,12 +33,13 @@ export default function ExportPanel() {
 				`Prepared stage ${result.stage}. Review the manifest below, then Apply to write it into ` +
 					`Meridian-Rift.\n\n${JSON.stringify(result.manifest, null, 2)}`,
 			);
-			announceSuccess(`Prepared export stage ${result.stage}.`, 'file-management');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'file-management', summary: `Prepared export stage ${result.stage}.` });
 			setChosenStage('');
 			await refetch();
 		} catch (error) {
-			setOutput(error instanceof Error ? error.message : String(error));
-			announceError(error, 'file-management');
+			const message = error instanceof Error ? error.message : String(error);
+			setOutput(message);
+			reportParsec({ type: 'mutation', phase: 'failed', tool: 'file-management', summary: 'Could not prepare the export stage.', technicalDetail: message });
 		} finally {
 			setBusy(false);
 		}
@@ -48,6 +49,7 @@ export default function ExportPanel() {
 		const stage = selected();
 		if (!stage) {
 			setOutput('Prepare an export before applying one.');
+			reportParsec({ type: 'validation', phase: 'blocked', tool: 'file-management', summary: 'Prepare an export before applying one.' });
 			return;
 		}
 		setBusy(true);
@@ -62,11 +64,11 @@ export default function ExportPanel() {
 				`Applied ${result.artifact}.\n` +
 					`Review the game diff under Meridian-Rift, then commit it locally.\n${desktopNote}`,
 			);
-			announceSuccess(`Applied ${result.artifact}.`, 'file-management');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'file-management', summary: `Applied ${result.artifact}.` });
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			setOutput(message);
-			announceError(error, 'file-management');
+			reportParsec({ type: 'mutation', phase: 'failed', tool: 'file-management', summary: 'Could not apply the export stage.', technicalDetail: message });
 		} finally {
 			setBusy(false);
 		}

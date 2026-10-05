@@ -1,0 +1,34 @@
+{
+  "tool": "portalrabbit-effect-envelope-v1",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/effect-station-alert.png",
+  "sourceSha256": "5fbd7ee1148f58c625bcf66f0b6a4946cd751a3c3d38d61cf5e66a26687b67a5",
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "envelope": [
+    33,
+    33,
+    63,
+    63
+  ],
+  "clipScale": 0.39473684210526316,
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-station-alert/effect-station-alert__d0__f0.png",
+      "sha256": "b54ae576d0d8264ea9e932b24087e5a6aa18f5b314f482a6a81fa7398402e1f3"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-station-alert/effect-station-alert__d0__f1.png",
+      "sha256": "1cea78a58e3c419ca982e6e70306e137b4b74636ed77b51d10f3bebab400d004"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-station-alert/effect-station-alert__d0__f2.png",
+      "sha256": "d5c3fd91a6eed138221721bdb6ab7b24acf6578e1576ae5953b45dbc9cf35ee7"
+    }
+  ]
+}

@@ -1,0 +1,323 @@
+{
+  "version": 1,
+  "reviewedAt": "2026-10-04",
+  "reviewArtifacts": {
+    "retention": "Generated review images are disposable and are not kept in the source tree.",
+    "motionGenerator": "tools/parsec_assets/build_motion_review.py",
+    "characterSheetGenerator": "tools/parsec_assets/build_character_reference.py"
+  },
+  "reasonCodes": {
+    "clean-motion": "Native, 4x nearest-neighbor, authored-motion, and reduced-motion review found a coherent silhouette with no unexplained residue.",
+    "manual-repair-organic": "A manual enlarged audit rejected the prior clip; replacement generation matched the newer organic quality bar, received a deterministic dark silhouette boundary, and passed native, 4x, authored-motion, reduced-motion, and structural review.",
+    "directional-locomotion": "All directions were reviewed separately; perspective changes are intentional and motion remains coherent.",
+    "intentional-pose-range": "Occupied-height variation is explained by the authored action rather than scale drift.",
+    "intentional-separated-landing-dust": "Detached components are the reviewed landing-dust effect below the actor.",
+    "intentional-separated-effect": "Detached components are the reviewed effect itself rather than actor residue.",
+    "exact-ss13-effect": "Frames preserve the reviewed SS13 source effect and its intentional separated pixels.",
+    "quarantined-detached-tail-pixels": "The original frame family contains detached tail or motion pixels that read as broken at 4x.",
+    "icon-state-review-20260909": "Replacement strip reviewed at native and 4x scale for anatomy, eye laterality, silhouette, and readable state. Accepted source artwork is recorded in source/generated/review-20260909/generation.json; exact current pixel edits are recorded in source/touchups/2026-09-09/manifest.json.",
+    "hd-regeneration-20261004": "Regenerated from a shared cute furry-stylized character reference; PortalRabbit pixel conversion; inspected for anatomy, eye color, full contours, and consistent pose scale."
+  },
+  "clips": {
+    "core-idle-seated": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-idle-standing": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-idle-sniff": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-idle-scratch": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-idle-yawn": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-idle-pant": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-look-cursor": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-walk-cardinal": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-walk-diagonal": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "core-return-home": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "search-sniff": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "fetch-dig": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "feedback-working-focus": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "feedback-success-wag": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "feedback-success-proud": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "feedback-warning-alert": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "error-anxious": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "empty-confused": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "tool-growl": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "reconnect-pant": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-pat-soft": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-pat-delighted": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-nose-lick": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-scruff-calm": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-scruff-playful": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-scruff-pout": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-release-drop": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-release-toss": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-landing-bounce": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "touch-landing-recover": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-ball-ready": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-ball-chase": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-ball-retrieve": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-ball-refuse": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-tug-grip": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-tug-pull": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-tug-win": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-tug-tumble": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-brush-content": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-brush-impatient": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-treat-accept": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "toy-whistle-recall": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "habitat-bed-approach": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "habitat-bed-lie-down": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "habitat-bed-sleep": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "habitat-bed-timeout-pout": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "habitat-cage-enter": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "habitat-cage-open-idle": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "habitat-cage-latched-pout": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "habitat-cage-release": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "intrusive-cursor-stalk": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "intrusive-cursor-pounce": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "intrusive-loiter": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "intrusive-demand-attention": {
+      "status": "accepted",
+      "reason": "hd-regeneration-20261004",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "intrusive-zoomies": {
+      "status": "accepted",
+      "reason": "intentional-pose-range",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "effect-hearts": {
+      "status": "accepted",
+      "reason": "intentional-separated-effect",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "effect-station-alert": {
+      "status": "accepted",
+      "reason": "intentional-separated-effect",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "effect-scent-trail": {
+      "status": "accepted",
+      "reason": "intentional-separated-effect",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "effect-radio-ping": {
+      "status": "accepted",
+      "reason": "intentional-separated-effect",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    },
+    "effect-dust-landing": {
+      "status": "accepted",
+      "reason": "intentional-separated-effect",
+      "generation": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/manifest.json"
+    }
+  }
+}

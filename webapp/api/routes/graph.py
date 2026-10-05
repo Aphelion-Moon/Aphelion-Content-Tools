@@ -5,11 +5,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from tools.content_graph.graph import read_graph_cache
-from tools.content_graph.marker_edit import apply_marker_label_edit
+from tools.content_graph.marker_edit import prepare_marker_label_edit
 from tools.content_graph.queries import edits_for_core_file, modules_missing_readme, unresolved_markers
 
 from ..deps import AppContext, context
 from ..models import (
+	GameChangeApplyRequest,
+	GameChangeReceipt,
 	GraphEditsResponse,
 	GraphModulesResponse,
 	GraphResponse,
@@ -78,16 +80,16 @@ def read_unresolved(ctx: Ctx) -> object:
 
 @router.post("/markers/edit", response_model=MarkerEditResponse)
 def edit_marker(payload: MarkerEditRequest, ctx: Ctx) -> object:
-	"""Rewrite one marker label in a game-repository core file.
-
-	`expected_line` is checked against the file's current content first, so an edit computed against a
-	stale scan fails loudly instead of overwriting whatever now occupies that line number.
-	"""
-	apply_marker_label_edit(
-		ctx.game_repo_root,
+	"""Prepare a reviewable marker change without writing to the game checkout."""
+	return prepare_marker_label_edit(
+		ctx.game_changes,
 		payload.core_file,
 		payload.line_number,
 		payload.expected_line,
 		payload.new_label,
 	)
-	return {"edited": True, "core_file": payload.core_file, "line_number": payload.line_number}
+
+
+@router.post('/markers/apply', response_model=GameChangeReceipt)
+def apply_marker(payload: GameChangeApplyRequest, ctx: Ctx) -> object:
+	return ctx.game_changes.apply(payload.stage_id)

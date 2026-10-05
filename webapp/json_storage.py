@@ -4,6 +4,8 @@ import json
 import os
 import re
 import tempfile
+from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 RECORD_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -31,4 +33,23 @@ def atomic_write(path: Path, content: bytes) -> None:
 	except Exception:
 		if temporary_path.exists():
 			temporary_path.unlink()
+		raise
+
+
+@contextmanager
+def rollback_files(paths: Iterable[Path]) -> Iterator[None]:
+	"""Restore a bounded set of files on failure, including files newly created in the operation.
+
+	Callers own path validation and the appropriate write lock. This provides exception rollback;
+	immutable generations with a pointer swap are required for concurrent-reader publication.
+	"""
+	previous = {path: path.read_bytes() if path.exists() else None for path in paths}
+	try:
+		yield
+	except Exception:
+		for path, content in previous.items():
+			if content is None:
+				path.unlink(missing_ok=True)
+			else:
+				atomic_write(path, content)
 		raise

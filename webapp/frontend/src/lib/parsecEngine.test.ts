@@ -6,6 +6,7 @@ import {
 	TWERK_CLICK_THRESHOLD,
 	TWERK_WINDOW_MS,
 	advancePatrol,
+	clampBalloonAnchor,
 	nextFrameIndex,
 	prefersReducedMotion,
 	registerPat,
@@ -48,6 +49,15 @@ describe('resolveState', () => {
 		expect(resolveState('dancing')).toBe('idle');
 		expect(resolveState('')).toBe('idle');
 	});
+
+	it('maps requested action animations to deliberate core-sheet fallbacks', () => {
+		expect(resolveState('search')).toBe('working');
+		expect(resolveState('fetch')).toBe('working');
+		expect(resolveState('pant')).toBe('idle');
+		expect(resolveState('anxious')).toBe('idle');
+		expect(resolveState('confused')).toBe('idle');
+		expect(resolveState('growl')).toBe('idle');
+	});
 });
 
 describe('nextFrameIndex', () => {
@@ -75,6 +85,13 @@ describe('advancePatrol', () => {
 
 	it('stays put when the box is too narrow to patrol', () => {
 		expect(advancePatrol({ x: 0, direction: 1, maxX: 0, speed: 4 })).toEqual({ x: 0, direction: 1 });
+	});
+});
+
+describe('balloon anchor', () => {
+	it('centres on the sprite and clamps the tail away from both stage corners', () => {
+		expect(clampBalloonAnchor(0, 240, 72)).toBe(36);
+		expect(clampBalloonAnchor(230, 240, 72)).toBe(222);
 	});
 });
 
@@ -109,8 +126,6 @@ describe('registerPat', () => {
 
 describe('prefersReducedMotion', () => {
 	it('animates by default, ignoring the OS setting', () => {
-		// Deliberate: she is a small boxed sprite, and the Windows "Show animations" toggle maps to this
-		// media query for reasons unrelated to a vestibular accommodation.
 		expect(prefersReducedMotion('animate')).toBe(false);
 	});
 
@@ -118,11 +133,11 @@ describe('prefersReducedMotion', () => {
 		expect(prefersReducedMotion('reduce')).toBe(true);
 	});
 
-	it('defers to the OS only when following the system', () => {
+	it('ignores system animation suppression for an older follow-system preference', () => {
 		const original = window.matchMedia;
 		window.matchMedia = ((): MediaQueryList => ({ matches: true }) as MediaQueryList) as typeof window.matchMedia;
 		try {
-			expect(prefersReducedMotion('follow-system')).toBe(true);
+			expect(prefersReducedMotion('follow-system')).toBe(false);
 		} finally {
 			window.matchMedia = original;
 		}

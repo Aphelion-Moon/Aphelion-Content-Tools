@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "toy-ball-refuse",
+  "clipScale": 0.672,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-refuse/toy-ball-refuse__d0__f0.png",
+      "sha256": "44c61705b009a9dacbdcd9ab020a30068d75e84d979a3dc1a9c79e5092a339dc"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-refuse/toy-ball-refuse__d0__f1.png",
+      "sha256": "f9beb3b1e9ed7f6c8ce8218d9a2b5743db4fb61db1bc71854f382882892a25ab"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-refuse/toy-ball-refuse__d0__f2.png",
+      "sha256": "ab8f38d28df3a7db9058406dc41f55ca3cd552d6620fc106f5b236dae21b6479"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-refuse/toy-ball-refuse__d0__f3.png",
+      "sha256": "8ebfdc133980a74de5c20be51be16822ded293de7aebd0eb17f16d99ac9cdc76"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-refuse.png",
+  "sourceSha256": "96d8595b3cfcc66a96562234018aa4454327b4bd60a43019a1bb76d198010154",
+  "tool": "generated-strip-v4"
+}

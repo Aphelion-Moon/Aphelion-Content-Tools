@@ -1,20 +1,29 @@
-.box {
+.stage {
 	position: relative;
-	height: 72px;
 	overflow: hidden;
-	background: rgba(13, 3, 27, 0.55);
+	background: var(--bg-0);
 	border: 1px solid var(--border);
-	border-radius: 0.4rem;
-	cursor: pointer;
-	/* Rapid pats read as double/triple-clicks, which would otherwise select the box's text. */
+	border-radius: var(--radius) var(--radius) 0 0;
 	user-select: none;
 	-webkit-user-select: none;
+}
+
+.stagePatTarget {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	border-radius: inherit;
+	background: transparent;
+	cursor: pointer;
 }
 
 .sprite {
 	position: absolute;
 	left: 0;
-	/* Clears the box's 6.4px border-radius: any lower and her feet clip into the rounded corner when
+	/* Clears the box's border-radius: any lower and her feet clip into the rounded corner when
 	   she is flush against the left or right wall. */
 	bottom: 8px;
 	width: 72px;
@@ -24,27 +33,37 @@
 	pointer-events: none;
 }
 
-.bubble {
-	position: absolute;
-	left: 0.4rem;
-	right: 0.4rem;
-	top: 0.35rem;
-	z-index: 2;
-	padding: 0.3rem 0.45rem;
-	background: rgba(13, 3, 27, 0.96);
-	border: 1px solid var(--border);
-	border-radius: 0.4rem;
+.invitation {
+	display: grid;
+	gap: 0.35rem;
+	padding: 0.55rem;
+	border-inline: 1px solid var(--border);
+	background: var(--bg-1);
+}
+
+.invitation p {
+	margin: 0 0 0.2rem;
+	font-size: 0.78rem;
+}
+
+.invitation button {
+	width: 100%;
+	padding: 0.38rem;
 	font-size: 0.72rem;
-	line-height: 1.25;
+}
+
+.roamingActor {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 0;
+	height: 0;
 	pointer-events: none;
-	overflow-wrap: anywhere;
 }
 
-.bubbleSuccess {
-	border-color: var(--ok);
-}
-
-.bubbleError {
-	border-color: var(--danger);
-	color: var(--danger);
+.interactionViewport {
+	position: fixed;
+	inset: 0;
+	z-index: 41;
+	pointer-events: none;
 }

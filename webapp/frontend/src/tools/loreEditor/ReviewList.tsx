@@ -66,6 +66,12 @@ export default function ReviewList(props: ReviewListProps) {
 
 	onMount(() => props.feed.reload());
 
+	const selectWithKeyboard = (event: KeyboardEvent, entry: ReviewEntry) => {
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		event.preventDefault();
+		props.onSelect(entry);
+	};
+
 	return (
 		<>
 			<div ref={scroller} class={styles.scroller} role="listbox" aria-label="Lore catalog entries">
@@ -80,9 +86,10 @@ export default function ReviewList(props: ReviewListProps) {
 										type="button"
 										role="option"
 										aria-selected={props.selectedId === current().id}
-										class={cx(styles.row, props.selectedId === current().id && styles.rowSelected)}
+											class={cx(styles.row, props.selectedId === current().id && styles.rowSelected)}
 											style={{ height: `${item.size}px`, transform: `translateY(${item.start}px)` }}
 											onClick={() => props.onSelect(current())}
+											onKeyDown={(event) => selectWithKeyboard(event, current())}
 										>
 											<span class={styles.rowTitle}>
 												<Show when={current().approved}>
@@ -115,8 +122,8 @@ export default function ReviewList(props: ReviewListProps) {
 					<Show when={props.feed.isExhausted() && props.feed.entries().length > 0}> · all loaded</Show>
 				</span>
 				<Show when={!props.feed.isExhausted()}>
-					<button type="button" disabled={props.feed.loading()} onClick={() => props.feed.loadMore()}>
-						Load {PAGE_SIZE} more
+					<button type="button" aria-label={`Load ${PAGE_SIZE} more`} disabled={props.feed.loading()} onClick={() => props.feed.loadMore()}>
+						Load more
 					</button>
 				</Show>
 			</div>

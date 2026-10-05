@@ -71,6 +71,20 @@ class StoreUnavailable(ApiError):
 	code = "store_unavailable"
 
 
+class CollaborationUnavailable(ApiError):
+	"""The configured AphelionDMM service cannot serve a bounded request."""
+
+	status = HTTPStatus.SERVICE_UNAVAILABLE
+	code = "collaboration_unavailable"
+
+
+class ProtocolIncompatible(ApiError):
+	"""The service is reachable but does not support this adapter's protocol version."""
+
+	status = HTTPStatus.CONFLICT
+	code = "protocol_incompatible"
+
+
 def error_body(code: str, message: str) -> dict[str, str]:
 	# `error` is kept as the message field for compatibility with the existing frontend, which reads
 	# payload.error; `code` is the new machine-readable half.

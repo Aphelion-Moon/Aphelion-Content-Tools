@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from webapp.manifest_base import (
 	MANIFEST_FORMAT_VERSION,
@@ -15,6 +16,8 @@ from webapp.manifest_base import (
 
 __all__ = ["MANIFEST_FORMAT_VERSION", "sha256_bytes", "CatalogManifest", "ExportManifest"]
 
+CatalogSourceProvenance = Literal["unverified", "release-seed"]
+
 
 @dataclass(frozen=True)
 class CatalogManifest:
@@ -23,6 +26,7 @@ class CatalogManifest:
 	generated_at: str
 	target_count: int
 	format_version: int = MANIFEST_FORMAT_VERSION
+	source_provenance: CatalogSourceProvenance = "unverified"
 
 	def to_dict(self) -> dict[str, object]:
 		return {
@@ -31,6 +35,7 @@ class CatalogManifest:
 			"game_repo_revision": self.game_repo_revision,
 			"generated_at": self.generated_at,
 			"target_count": self.target_count,
+			"source_provenance": self.source_provenance,
 		}
 
 	@classmethod
@@ -42,11 +47,15 @@ class CatalogManifest:
 		target_count = payload.get("target_count")
 		if not isinstance(target_count, int) or target_count < 0:
 			raise ValueError("Catalog manifest target_count must be a non-negative integer.")
+		provenance = payload.get("source_provenance", "unverified")
+		if provenance not in ("unverified", "release-seed"):
+			raise ValueError("Unsupported catalog source provenance.")
 		return cls(
 			snapshot_sha256=_required_string(payload, "snapshot_sha256"),
 			game_repo_revision=_required_string(payload, "game_repo_revision"),
 			generated_at=_required_string(payload, "generated_at"),
 			target_count=target_count,
+			source_provenance="release-seed" if provenance == "release-seed" else "unverified",
 		)
 
 

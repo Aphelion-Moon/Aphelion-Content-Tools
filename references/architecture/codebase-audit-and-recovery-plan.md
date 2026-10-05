@@ -114,9 +114,10 @@ Commit operations should accept only validated, selected paths under owned conte
 
 ### P1: SPA feature parity and contract gaps
 
-#### Lore Editor is a catalog browser, not a port
+#### Resolved: Lore Editor authoring parity and workspace restoration
 
-The new page provides filters, paging, selection, and record details. It does not yet provide the legacy application's authoring capabilities:
+The audit originally found that the new page provided filters, paging, selection, and record details
+but lacked the legacy application's authoring capabilities. Those missing capabilities were:
 
 - create and edit overrides;
 - validate, save, and delete entries;
@@ -126,7 +127,9 @@ The new page provides filters, paging, selection, and record details. It does no
 - icon file/state editing and preview;
 - opening the corresponding definition.
 
-The legacy launcher still starts the legacy application. Cutover must wait for explicit parity acceptance, not just component presence.
+The authoring capabilities and launcher cutover are now implemented. The legacy files remain during an
+extended comparison window because their organization and visual details are still useful while the SPA
+pages receive writer-facing layout and polish acceptance.
 
 #### Content Graph is not integrated
 
@@ -521,6 +524,30 @@ implemented and component/API verified. The explicit inventory is
 `references/architecture/lore-editor-spa-parity-matrix.md`. The real-browser and launcher rows remain
 open and are intentionally deferred to Task 4.4 rather than claimed as a passed writer-workflow gate.
 
+**Workspace restoration 2026-08-24:** The SPA shell and shared contracts remain unchanged. Within the
+Lore route, the virtualized catalog queue and the authoring surface now occupy persistent,
+independently scrolling panes; Review and Group Configuration remain tabs in the right pane; the four
+legacy sort choices remain available; and page-level reviewer identity persists locally while review
+records continue to store explicit attribution. The production artifact was rebuilt and exercised through
+the real Windows launcher at desktop and narrow widths. Queue/editor coexistence, independent scrolling,
+keyboard selection, responsive stacking, reviewer persistence, and context-boosted shared search passed.
+Destructive browser confirmation remains pending for disposable data and action-time approval.
+
+**Cross-page polish pass 2026-08-24:** A real-launcher audit covered Home, File Management, Parsec,
+Lore Editor, and Content Graph at desktop and narrow widths. The global `button { width: 100% }`
+default was the source of repeated oversized-action regressions; buttons are now content-sized unless
+their owning interaction explicitly requests full width. Home uses a responsive overview grid with a
+compact database metric layout, Parsec preview actions wrap as a named control group, and Content
+Graph keeps its complete visibility filter set collapsed until requested. File Management already
+scoped its action sizing and retained its ordered repository workflow, so it required no structural
+rewrite in this pass.
+
+**Loading feedback correction 2026-08-24:** Selected Lore records no longer suspend to the route-level
+fallback and replace the entire workspace. A selected-record boundary keeps the queue, filters, tabs,
+and shell mounted while a shared accessible progress indicator occupies only the authoring body. The
+same indicator is the standard initial lazy-route fallback, and discrete loads announce through Parsec;
+continuous filter requests retain quiet inline status.
+
 #### Task 4.3: Implement Content Graph deliberately
 
 **Files:** `tools/content_graph/`; `webapp/api/routes/graph.py`; `webapp/frontend/src/tools/contentGraph/`; dependency manifests; unit/component/E2E tests.
@@ -590,6 +617,12 @@ active runs after route navigation. Each behavior has component coverage.
 - Prove that no child or grandchild process survives forced and normal shutdown.
 
 **Gate:** a documented go/no-go decision with measurements. Reconsider embedding or worker architecture if the bundle is not viable.
+
+**Spike result 2026-08-24:** The native sidecar is viable at 465.85 MiB with a 3.068-second cold start,
+offline hybrid search, DMI preview, and verified normal/forced process-tree shutdown. Tauri integration is
+a no-go until clean-checkout catalog activation stops recomputing 20,881 vectors on every writer's
+machine. Measurements and the required precomputed catalog-projection follow-up are recorded in
+[windows-sidecar-packaging-spike.md](windows-sidecar-packaging-spike.md).
 
 #### Task 5.2: Add Tauri only after the spike passes
 

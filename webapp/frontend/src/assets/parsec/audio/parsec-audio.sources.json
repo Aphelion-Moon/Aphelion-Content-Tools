@@ -1,0 +1,98 @@
+[
+  {
+    "authored_volume": 0.45,
+    "channel": "alert",
+    "cooldown_ms": 800,
+    "id": "radio-alert",
+    "output": "radio-alert.ogg",
+    "output_sha256": "d2580a30c8ec86c4ee54eca6b2e1d50a5fb07cc893703d627ee4d069605e88cc",
+    "path": "sound/items/radio/radio_receive.ogg",
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "d2580a30c8ec86c4ee54eca6b2e1d50a5fb07cc893703d627ee4d069605e88cc",
+    "transform": "exact-copy-v1"
+  },
+  {
+    "authored_volume": 0.35,
+    "channel": "rare-idle",
+    "cooldown_ms": 45000,
+    "id": "rare-idle",
+    "output": "rare-idle.ogg",
+    "output_sha256": "6812c247aaa9f230d9f863fa39a05b7133879811aca73f59e7db19b0cc5140e1",
+    "path": "modular_nova/modules/emotes/sound/voice/dgrowl.ogg",
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "6812c247aaa9f230d9f863fa39a05b7133879811aca73f59e7db19b0cc5140e1",
+    "transform": "exact-copy-v1"
+  },
+  {
+    "authored_volume": 0.35,
+    "channel": "effect",
+    "cooldown_ms": 1500,
+    "id": "toy-brush",
+    "output": "toy-brush.ogg",
+    "output_sha256": "050067e4ea0166eaf9d6ad8942f444e8a28626866c36e05876d06c1cf81eda0e",
+    "path": "modular_nova/modules/hairbrush/sounds/brush.ogg",
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "050067e4ea0166eaf9d6ad8942f444e8a28626866c36e05876d06c1cf81eda0e",
+    "transform": "exact-copy-v1"
+  },
+  {
+    "authored_volume": 0.35,
+    "channel": "effect",
+    "cooldown_ms": 600,
+    "id": "toy-handling",
+    "output": "toy-handling.ogg",
+    "output_sha256": "0de003f1c8c9c54513b95c96ce9340eee3b65a2267efb1ed589ef7b4f9796844",
+    "path": "sound/items/handling/toolbox/toolbox_pickup.ogg",
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "0de003f1c8c9c54513b95c96ce9340eee3b65a2267efb1ed589ef7b4f9796844",
+    "transform": "exact-copy-v1"
+  },
+  {
+    "authored_volume": 0.55,
+    "channel": "effect",
+    "cooldown_ms": 900,
+    "id": "toy-squeak",
+    "output": "toy-squeak.ogg",
+    "output_sha256": "5cb7dbab5a01285f4aea9f287aed9497ca5e6393140041e0cf64ff1b54c8007d",
+    "path": "sound/items/toy_squeak/toysqueak1.ogg",
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "5cb7dbab5a01285f4aea9f287aed9497ca5e6393140041e0cf64ff1b54c8007d",
+    "transform": "exact-copy-v1"
+  },
+  {
+    "authored_volume": 0.5,
+    "channel": "effect",
+    "cooldown_ms": 3000,
+    "id": "toy-whistle",
+    "output": "toy-whistle.ogg",
+    "output_sha256": "cff9705d18ce9556763a8c41aeecd72279e38465a3dfaeac56f8d214fce1b557",
+    "path": "sound/items/whistle/whistle.ogg",
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "cff9705d18ce9556763a8c41aeecd72279e38465a3dfaeac56f8d214fce1b557",
+    "transform": "exact-copy-v1"
+  },
+  {
+    "authored_volume": 0.75,
+    "channel": "voice",
+    "cooldown_ms": 2000,
+    "id": "voice-bark",
+    "output": "voice-bark.ogg",
+    "output_sha256": "ca9e2a5e7b0b5cb168b2abbed19cac2ba603c623166b6fd977e5c2330081da4b",
+    "path": "modular_nova/modules/emotes/sound/voice/bark1.ogg",
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "ca9e2a5e7b0b5cb168b2abbed19cac2ba603c623166b6fd977e5c2330081da4b",
+    "transform": "exact-copy-v1"
+  },
+  {
+    "authored_volume": 0.6,
+    "channel": "voice",
+    "cooldown_ms": 2500,
+    "id": "voice-growl",
+    "output": "voice-growl.ogg",
+    "output_sha256": "10a6ed88ea5bdf205f740c030ca29feff93a1d56dacb8a494b12ce2c402d7c1f",
+    "path": "sound/mobs/non-humanoids/dog/growl1.ogg",
+    "source_revision": "df0fb67eae69497be39e1dfc7f618f3d7964d3d5",
+    "source_sha256": "10a6ed88ea5bdf205f740c030ca29feff93a1d56dacb8a494b12ce2c402d7c1f",
+    "transform": "exact-copy-v1"
+  }
+]

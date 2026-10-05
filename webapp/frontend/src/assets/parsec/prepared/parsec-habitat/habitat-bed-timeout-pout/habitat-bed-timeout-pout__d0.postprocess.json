@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "habitat-bed-timeout-pout",
+  "clipScale": 0.6885245901639344,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-timeout-pout/habitat-bed-timeout-pout__d0__f0.png",
+      "sha256": "64d2dfa007c7d5339a68b7010a7479785ebe8b47c78212d1a67c351d5b358714"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-timeout-pout/habitat-bed-timeout-pout__d0__f1.png",
+      "sha256": "a9206ab1819d1b7aedc959a1e39a3152d4b9cf3f075570bf3516679570aa8ee9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-timeout-pout/habitat-bed-timeout-pout__d0__f2.png",
+      "sha256": "0710265f6fb091fa7982b4330cf38b26bf37c011e178d9adf825d7a0e340bda9"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-timeout-pout/habitat-bed-timeout-pout__d0__f3.png",
+      "sha256": "8c967083dc2fadb11e1acaeb840f3b0411c9a24ebe92fedbdd407fa55aab7b7e"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-timeout-pout.png",
+  "sourceSha256": "8422b65c87b88ac136a2860474000c1701131b6f8eecd967abd70783cca34c3d",
+  "tool": "generated-strip-v4"
+}

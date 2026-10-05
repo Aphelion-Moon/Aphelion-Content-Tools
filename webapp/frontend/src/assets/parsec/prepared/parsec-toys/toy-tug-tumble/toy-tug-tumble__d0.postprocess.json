@@ -1,0 +1,47 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "toy-tug-tumble",
+  "clipScale": 0.717948717948718,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f0.png",
+      "sha256": "a5f006ca15268d1c656c8446d52ab2454934529e7486dec0d6a13200c46cf2b5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f1.png",
+      "sha256": "7a6630bc5ab9d03bd26b4140a0f6405e71f9ef5b3b69e8a78ebded0ae6e706fb"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f2.png",
+      "sha256": "4cc3c2c0a6b1ce6df7e10df9cf2e053c799d8dba799026b29b4cd7e4b21bbb62"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f3.png",
+      "sha256": "6b2e94dbfb2890d48c134b11040cbf781fc60326474dac9a16e039fc104dd9ef"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f4.png",
+      "sha256": "7b5b0630e44a3fe17dd1edc91af69fd1f2e31114958481a380487e65716c799a"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-tumble.png",
+  "sourceSha256": "7ca38dc70e3872f6284b2ea982362c16fa8639356c393667442678ec7106e9cf",
+  "tool": "generated-strip-v4"
+}

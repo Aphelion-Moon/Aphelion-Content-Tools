@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "captured_on": "2026-08-27",
+  "repository_paths_included": false,
+  "active_projection": {
+    "generation_id": "b57b8105df57-afceb7b9a6a2",
+    "content_revision": "b57b8105df57639239b4fba9c30d9961100647bc0984040b510aacc9e5b2e2a1",
+    "reported_current": true
+  },
+  "game_revisions": {
+    "catalog_and_graph": "c34175cab324ce34c768e698a0c7c6c488691f89",
+    "selected_checkout": "1623a76079a6617598498eaf7f5778f8564ed314"
+  },
+  "row_counts": {
+    "catalog_targets": 20881,
+    "graph_nodes": 30331,
+    "graph_edges": 31375,
+    "unresolved_markers": 2027,
+    "groups": 8,
+    "overrides": 0,
+    "reviews": 0,
+    "assignments": 0,
+    "references": 0
+  },
+  "search_probes": [
+    {
+      "query": "/datum/component",
+      "result": "catalog prose, paths, filenames, or unresolved marker text; no defining datum"
+    },
+    {
+      "query": "Initialize",
+      "result": "no defining proc result"
+    },
+    {
+      "query": "typecacheof",
+      "result": "no defining proc result"
+    },
+    {
+      "query": "custom outfit",
+      "result": "no defining datum or proc result"
+    }
+  ],
+  "performance": {
+    "cold_search_latency_ms": null,
+    "warm_search_latency_ms": null,
+    "graph_payload_bytes": null,
+    "reason": "Not measured during the read-only audit; M1 instrumentation must establish reproducible budgets."
+  },
+  "launcher": {
+    "status": "not_run",
+    "reason": "The read-only audit did not exercise the real launcher."
+  },
+  "store_status": {
+    "command": "python -m webapp.store.cli status --repo-root .",
+    "outcome": "Reported projection current despite stale game-derived manifests."
+  }
+}

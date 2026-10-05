@@ -80,7 +80,7 @@ def _get_icon_state(dmi: Dmi, requested_state: str):
 		raise
 
 
-def render_icon_preview(repo_root: Path, relative_file: str, state: str) -> bytes:
+def render_icon_preview(repo_root: Path, relative_file: str, state: str, *, direction: int = 2, frame: int = 0) -> bytes:
 	icon_path = _resolve_icon_path(repo_root, relative_file)
 	try:
 		dmi = Dmi.from_file(icon_path)
@@ -92,7 +92,9 @@ def render_icon_preview(repo_root: Path, relative_file: str, state: str) -> byte
 
 	if not icon_state.frames:
 		raise ValueError(f"Icon state '{state}' has no frames in {relative_file}.")
+	if direction not in (1, 2, 4, 8, 5, 6, 9, 10) or not 0 <= frame < icon_state.framecount:
+		raise ValueError('Icon direction or animation frame is invalid.')
 
 	output = BytesIO()
-	icon_state.frames[0].save(output, format="PNG")
+	icon_state.get_frame(frame=frame, dir=direction).save(output, format="PNG")
 	return output.getvalue()

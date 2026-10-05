@@ -14,7 +14,8 @@ import styles from './StoreStatus.module.css';
  */
 export default function StoreStatus() {
 	const navigate = useNavigate();
-	const running = () => appState.activeRuns.length > 0;
+	const definitionRun = () => appState.definitionRuns.find((run) => run.status === 'running' || run.status === 'queued' || run.operation === 'interactive' && run.status === 'ready');
+	const running = () => appState.activeRuns.length > 0 || Boolean(definitionRun());
 	const firstRun = () => appState.activeRuns[0];
 
 	return (
@@ -32,9 +33,9 @@ export default function StoreStatus() {
 			<button
 				type="button"
 				class={cx(styles.pill, running() ? styles.running : styles.idle)}
-				onClick={() => navigate('/file-management')}
+				onClick={() => navigate(definitionRun() ? '/outfit-editor' : '/file-management')}
 			>
-				<Show when={firstRun()} fallback={<>Idle</>}>
+				<Show when={firstRun()} fallback={<>{definitionRun() ? `Authoring: ${definitionRun()!.operation}` : 'Idle'}</>}>
 					{(run) => (
 						<>
 							● {run().tool_label ?? run().tool_id} — <Elapsed since={run().queued_at} />

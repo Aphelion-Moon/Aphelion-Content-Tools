@@ -1,7 +1,9 @@
 import { For, Show, createEffect, createResource, createSignal, onCleanup } from 'solid-js';
 import Card, { cardStyles } from '~/components/Card';
 import { api } from '~/lib/api';
-import { announceError, announceSuccess } from '~/lib/notify';
+import { createAsyncScope } from '~/lib/asyncScope';
+import { waitForToolRun } from '~/lib/toolRuns';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import { appState } from '~/store/appStore';
 import { formatBytes } from '~/lib/format';
 import type { components } from '~/lib/api-schema';
@@ -14,11 +16,11 @@ interface ToolList {
 	readonly tools: readonly ToolSummary[];
 }
 
-// Which panel each tool's button belongs to. "refresh-validate" is the one pipeline step most people
-// want; its individual halves sit under the advanced disclosure rather than competing with it at the
-// same level.
+// Release loading is the writer recovery path. Native probe and generated-output operations stay
+// under the advanced disclosure because they require a configured game build environment.
 const GROUPS: Record<string, string> = {
-	'refresh-validate': 'catalog',
+	'catalog-reload': 'catalog',
+	'refresh-validate': 'catalog-advanced',
 	'catalog-refresh': 'catalog-advanced',
 	validate: 'catalog-advanced',
 	generate: 'catalog-advanced',
@@ -27,78 +29,95 @@ const GROUPS: Record<string, string> = {
 	'optimize-store': 'maintenance',
 };
 
-const POLL_MS = 750;
-
 export default function ToolRunner() {
 	const [tools] = createResource(() => api.get<ToolList>('/api/tools'));
 	const [output, setOutput] = createSignal('');
 	const [logPath, setLogPath] = createSignal('');
 	const [activeRunId, setActiveRunId] = createSignal<string | null>(null);
 	const [stopping, setStopping] = createSignal(false);
+	const [starting, setStarting] = createSignal(false);
+	const requests = createAsyncScope();
 
-	let pollTimer: ReturnType<typeof setTimeout> | undefined;
+	const observer = new AbortController();
 	const attachedRunIds = new Set<string>();
-	onCleanup(() => clearTimeout(pollTimer));
+	onCleanup(() => { requests.dispose(); observer.abort(); });
 
 	const inGroup = (group: string) =>
 		(tools()?.tools ?? []).filter((tool) => (GROUPS[tool.id] ?? 'catalog') === group);
 
 	async function poll(runId: string): Promise<void> {
+		const isCurrent = requests.capture();
 		try {
-			const run = await api.get<ToolRun>(`/api/tools/runs/${encodeURIComponent(runId)}`);
-			setOutput(run.output || '');
-			setLogPath(run.log_path ?? '');
+			const run = await waitForToolRun(runId, {
+				signal: observer.signal,
+				onUpdate: (progress) => { setOutput(progress.output || ''); setLogPath(progress.log_path ?? ''); },
+			});
+			if (!isCurrent()) return;
 
-			if (run.status === 'queued' || run.status === 'running') {
-				pollTimer = setTimeout(() => void poll(runId), POLL_MS);
-				return;
+			setActiveRunId(null);
+			setStopping(false);
+			if (run.status === 'succeeded') {
+				reportParsec({ type: 'job', phase: 'completed', tool: 'file-management', summary: `${run.tool_id} completed successfully.`, dedupeKey: `tool-run:${runId}` });
+			} else if (run.status === 'failed') {
+				const message = run.output || `${run.tool_id} failed.`;
+				reportParsec({ type: 'job', phase: 'failed', tool: 'file-management', summary: `${run.tool_id} failed.`, technicalDetail: message, dedupeKey: `tool-run:${runId}` });
 			}
-
-			setActiveRunId(null);
-			setStopping(false);
-			if (run.status === 'succeeded') announceSuccess(`${run.tool_id} completed successfully.`, 'file-management');
-			else if (run.status === 'failed') announceError(new Error(`${run.tool_id} failed.`), 'file-management');
 		} catch (error) {
-			setOutput(error instanceof Error ? error.message : String(error));
+			if (!isCurrent()) return;
+			const message = error instanceof Error ? error.message : String(error);
+			setOutput(message);
 			setActiveRunId(null);
 			setStopping(false);
+			reportParsec({ type: 'job', phase: 'failed', tool: 'file-management', summary: 'Could not read the tool run.', technicalDetail: message, dedupeKey: `tool-run:${runId}` });
 		}
 	}
 
 	createEffect(() => {
 		const repositoryRun = appState.activeRuns[0];
-		if (!repositoryRun || activeRunId() !== null || attachedRunIds.has(repositoryRun.run_id)) return;
+		if (!repositoryRun || starting() || activeRunId() !== null || attachedRunIds.has(repositoryRun.run_id)) return;
 		attachedRunIds.add(repositoryRun.run_id);
 		setActiveRunId(repositoryRun.run_id);
 		void poll(repositoryRun.run_id);
 	});
 
 	async function runTool(toolId: string): Promise<void> {
+		if (starting() || activeRunId() !== null) return;
+		requests.invalidate();
+		const isCurrent = requests.capture();
+		setStarting(true);
 		setOutput(`Starting ${toolId}…`);
 		setLogPath('');
 		try {
 			const run = await api.post<ToolRun>(`/api/tools/${encodeURIComponent(toolId)}`);
+			if (!isCurrent()) return;
+			attachedRunIds.add(run.run_id);
 			setActiveRunId(run.run_id);
+			reportParsec({ type: 'job', phase: 'started', tool: 'file-management', summary: `Running ${toolId}.`, dedupeKey: `tool-run:${run.run_id}` });
 			await poll(run.run_id);
 		} catch (error) {
-			setOutput(error instanceof Error ? error.message : String(error));
-			announceError(error, 'file-management');
-		}
+			if (!isCurrent()) return;
+			const message = error instanceof Error ? error.message : String(error);
+			setOutput(message);
+			reportParsec({ type: 'job', phase: 'failed', tool: 'file-management', summary: `Could not start ${toolId}.`, technicalDetail: message });
+		} finally { if (isCurrent()) setStarting(false); }
 	}
 
 	async function stopRun(): Promise<void> {
+		const isCurrent = requests.capture();
 		const runId = activeRunId();
 		if (!runId) return;
 		setStopping(true);
 		try {
 			await api.post(`/api/tools/runs/${encodeURIComponent(runId)}/stop`);
 		} catch (error) {
-			announceError(error, 'file-management');
+			if (!isCurrent()) return;
+			const message = error instanceof Error ? error.message : String(error);
+			reportParsec({ type: 'job', phase: 'failed', tool: 'file-management', summary: 'Could not stop the tool run.', technicalDetail: message });
 			setStopping(false);
 		}
 	}
 
-	const busy = () => activeRunId() !== null;
+	const busy = () => starting() || activeRunId() !== null;
 
 	return (
 		<Card eyebrow="Repository operations" heading="Database and Git">
@@ -110,7 +129,7 @@ export default function ToolRunner() {
 
 			<ToolGroup
 				title="1. Catalog & validation"
-				blurb="Run after pulling game-repo changes, or after hand-editing override JSON outside the Lore Editor."
+				blurb="Load the release catalog supplied by your maintainer. Advanced actions rebuild local authoring data or validate content."
 				tools={inGroup('catalog')}
 				advanced={inGroup('catalog-advanced')}
 				busy={busy()}
@@ -140,7 +159,7 @@ export default function ToolRunner() {
 				)}
 			</Show>
 
-			<Show when={busy()}>
+			<Show when={activeRunId() !== null}>
 				<div class={styles.stopRow}>
 					<button type="button" disabled={stopping()} onClick={() => void stopRun()}>
 						{stopping() ? 'Stopping…' : 'Stop'}
@@ -183,7 +202,7 @@ function ToolGroup(props: {
 			</div>
 			<Show when={props.advanced?.length}>
 				<details class={styles.advanced}>
-					<summary>Run an individual step instead</summary>
+					<summary>Advanced catalog actions</summary>
 					<div class={styles.toolList}>
 						<For each={props.advanced}>
 							{(tool) => (

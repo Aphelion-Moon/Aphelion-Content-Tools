@@ -115,6 +115,23 @@ class WorkerExecutionTests(unittest.TestCase):
 			self._wait_until_finished(run["run_id"])
 		self.assertNotIn("--game-repo", captured[1])
 
+	def test_release_catalog_job_passes_the_selected_game_checkout_to_the_cli(self) -> None:
+		from webapp.tool_registry import load_tool_registry
+
+		definition = next(item for item in load_tool_registry() if item.id == "catalog-reload")
+		game_root = self.repo_root / "selected-game"
+		captured = []
+
+		def fake_main(argv):
+			captured.append(argv)
+			return 0
+
+		with patch.object(store_worker, "_load_cli_main", return_value=fake_main):
+			run = self.worker.start(definition, game_root)
+			current = self._wait_until_finished(run["run_id"])
+		self.assertEqual(current["status"], "succeeded")
+		self.assertEqual(captured, [["catalog-reload", "--repo-root", str(self.repo_root), "--game-repo", str(game_root)]])
+
 	def test_stopping_a_running_job_marks_it_stopped_not_failed_or_succeeded(self) -> None:
 		def fake_main(argv: list[str]) -> int:
 			for i in range(50):

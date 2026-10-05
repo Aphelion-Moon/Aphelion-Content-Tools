@@ -13,6 +13,108 @@ $requirementsPath = Join-Path $resolvedRepositoryRoot "tools\lore_editor\require
 $runtimeManifestPath = Join-Path $resolvedRepositoryRoot "tools\launcher\runtime_manifest.json"
 $runtimeManifest = Get-Content -LiteralPath $runtimeManifestPath -Raw | ConvertFrom-Json
 
+if (-not ("AphelionContentToolsJob" -as [type])) {
+	Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+public static class AphelionContentToolsJob
+{
+	private const int JobObjectExtendedLimitInformation = 9;
+	private const uint JobObjectLimitKillOnJobClose = 0x2000;
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct IoCounters
+	{
+		public ulong ReadOperationCount;
+		public ulong WriteOperationCount;
+		public ulong OtherOperationCount;
+		public ulong ReadTransferCount;
+		public ulong WriteTransferCount;
+		public ulong OtherTransferCount;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct BasicLimitInformation
+	{
+		public long PerProcessUserTimeLimit;
+		public long PerJobUserTimeLimit;
+		public uint LimitFlags;
+		public UIntPtr MinimumWorkingSetSize;
+		public UIntPtr MaximumWorkingSetSize;
+		public uint ActiveProcessLimit;
+		public UIntPtr Affinity;
+		public uint PriorityClass;
+		public uint SchedulingClass;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct ExtendedLimitInformation
+	{
+		public BasicLimitInformation BasicLimitInformation;
+		public IoCounters IoInfo;
+		public UIntPtr ProcessMemoryLimit;
+		public UIntPtr JobMemoryLimit;
+		public UIntPtr PeakProcessMemoryUsed;
+		public UIntPtr PeakJobMemoryUsed;
+	}
+
+	[DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+	private static extern IntPtr CreateJobObject(IntPtr attributes, string name);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static extern bool SetInformationJobObject(IntPtr job, int infoClass, IntPtr info, uint length);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static extern bool CloseHandle(IntPtr handle);
+
+	public static IntPtr CreateKillOnCloseJob()
+	{
+		IntPtr job = CreateJobObject(IntPtr.Zero, null);
+		if (job == IntPtr.Zero) throw new Win32Exception(Marshal.GetLastWin32Error());
+		var limits = new ExtendedLimitInformation();
+		limits.BasicLimitInformation.LimitFlags = JobObjectLimitKillOnJobClose;
+		IntPtr buffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ExtendedLimitInformation)));
+		try
+		{
+			Marshal.StructureToPtr(limits, buffer, false);
+			if (!SetInformationJobObject(job, JobObjectExtendedLimitInformation, buffer, (uint)Marshal.SizeOf(typeof(ExtendedLimitInformation))))
+			{
+				throw new Win32Exception(Marshal.GetLastWin32Error());
+			}
+			return job;
+		}
+		catch
+		{
+			CloseHandle(job);
+			throw;
+		}
+		finally
+		{
+			Marshal.FreeHGlobal(buffer);
+		}
+	}
+
+	public static void Assign(IntPtr job, IntPtr process)
+	{
+		if (!AssignProcessToJobObject(job, process)) throw new Win32Exception(Marshal.GetLastWin32Error());
+	}
+
+	public static void Close(IntPtr job)
+	{
+		if (job != IntPtr.Zero) CloseHandle(job);
+	}
+}
+'@
+}
+
 function Test-PythonRuntime {
 	param([string] $PythonPath)
 	if (-not (Test-Path -LiteralPath $PythonPath -PathType Leaf)) {
@@ -192,26 +294,54 @@ $startInfo.Arguments = ($arguments | ForEach-Object { ConvertTo-EscapedArgument 
 $startInfo.WorkingDirectory = $resolvedRepositoryRoot
 $startInfo.UseShellExecute = $false
 $startInfo.RedirectStandardOutput = $true
-$startInfo.RedirectStandardError = $true
+$startInfo.RedirectStandardError = $false
 $server = New-Object System.Diagnostics.Process
 $server.StartInfo = $startInfo
-$null = $server.Start()
-$url = $null
-while (-not $server.HasExited -and -not $url) {
-	if (-not $server.StandardOutput.EndOfStream) {
-		$line = $server.StandardOutput.ReadLine()
-		if ($line -like "LORE_EDITOR_URL=*") { $url = $line.Substring("LORE_EDITOR_URL=".Length) }
-		else { Write-Host $line }
+$jobHandle = [IntPtr]::Zero
+$jobAssigned = $false
+try {
+	$jobHandle = [AphelionContentToolsJob]::CreateKillOnCloseJob()
+	$null = $server.Start()
+	[AphelionContentToolsJob]::Assign($jobHandle, $server.Handle)
+	$jobAssigned = $true
+	$url = $null
+	while (-not $server.HasExited -and -not $url) {
+		if (-not $server.StandardOutput.EndOfStream) {
+			$line = $server.StandardOutput.ReadLine()
+			if ($line -like "LORE_EDITOR_URL=*") { $url = $line.Substring("LORE_EDITOR_URL=".Length) }
+			else { Write-Host $line }
+		}
+		else { Start-Sleep -Milliseconds 100 }
 	}
-	else { Start-Sleep -Milliseconds 100 }
+	if (-not $url) {
+		throw "Aphelion Content Tools could not start its local server. See the server diagnostics above."
+	}
+	Start-Process $url
+	Write-Host "Aphelion Content Tools is running at $url. Close this window to stop it."
+	while (-not $server.HasExited) {
+		if (-not $server.StandardOutput.EndOfStream) { Write-Host $server.StandardOutput.ReadLine() }
+		else { Start-Sleep -Milliseconds 250 }
+	}
 }
-if (-not $url) {
-	$errorOutput = $server.StandardError.ReadToEnd()
-	throw "Aphelion Content Tools could not start its local server. $errorOutput"
-}
-Start-Process $url
-Write-Host "Aphelion Content Tools is running at $url. Close this window to stop it."
-while (-not $server.HasExited) {
-	if (-not $server.StandardOutput.EndOfStream) { Write-Host $server.StandardOutput.ReadLine() }
-	else { Start-Sleep -Milliseconds 250 }
+finally {
+	if ($server) {
+		try {
+			if (-not $server.HasExited) {
+				try { $null = $server.CloseMainWindow() } catch { }
+				if (-not $server.WaitForExit(5000)) {
+					$server.Kill()
+					$server.WaitForExit()
+				}
+			}
+			else {
+				$server.WaitForExit()
+			}
+		}
+		catch {
+			# The launcher is already unwinding; avoid masking the startup or runtime error.
+		}
+		if ($jobHandle -ne [IntPtr]::Zero) { [AphelionContentToolsJob]::Close($jobHandle) }
+		elseif ($jobAssigned -and -not $server.HasExited) { $server.Kill() }
+		$server.Dispose()
+	}
 }

@@ -1,0 +1,41 @@
+.surface {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.object {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	min-height: 44px;
+	position: absolute;
+	transform: translate(-50%, -50%);
+	min-width: 2.6rem;
+	padding: 0.35rem;
+	border: 2px solid var(--border);
+	border-radius: 999px;
+	background: var(--bg-0);
+	color: var(--text);
+	font: 700 0.6rem/1 monospace;
+	touch-action: none;
+	pointer-events: auto;
+}
+
+.object:focus-visible, .close:focus-visible {
+	outline: 2px solid var(--ok);
+	outline-offset: 2px;
+}
+
+.close {
+	position: absolute;
+	top: 2.2rem;
+	right: 0.2rem;
+	width: 1.35rem;
+	height: 1.35rem;
+	padding: 0;
+	font-size: 0.8rem;
+	line-height: 1;
+	pointer-events: auto;
+}

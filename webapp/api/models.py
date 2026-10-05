@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # The single definition of every shape crossing the HTTP boundary.
 #
@@ -57,6 +57,25 @@ class ProjectionWriteState(BaseModel):
 	content_revision: str | None = None
 
 
+class DatasetHealth(BaseModel):
+	kind: str
+	required: bool
+	state: Literal["current", "stale", "missing", "failed"]
+	current: bool
+	source_revision: str | None = None
+	selected_revision: str | None = None
+	schema_version: int | None = None
+	content_sha256: str | None = None
+	reason: str | None = None
+
+
+class WorkspaceHealth(BaseModel):
+	current: bool
+	reason: str | None = None
+	selected_game_revision: str | None = None
+	datasets: list[DatasetHealth]
+
+
 class StoreHealth(BaseModel):
 	tables: dict[str, int] = Field(description="Row count per table.")
 	total_rows: int
@@ -67,6 +86,7 @@ class StoreHealth(BaseModel):
 	)
 	semantic_search: SemanticSearchHealth
 	projection: ProjectionHealth
+	workspace: WorkspaceHealth
 
 
 class SelectedSearchContext(BaseModel):
@@ -76,6 +96,7 @@ class SelectedSearchContext(BaseModel):
 	type_path: str | None = None
 	groups: list[str] = Field(default_factory=list)
 	module: str | None = None
+	catalog_id: str | None = None
 
 
 class SearchScope(BaseModel):
@@ -102,6 +123,7 @@ class SearchNavigation(BaseModel):
 	record_kind: str
 	record_id: str
 	type_path: str | None = None
+	catalog_id: str | None = None
 
 
 class SearchResult(BaseModel):
@@ -343,6 +365,8 @@ class GraphManifestModel(BaseModel):
 	file_count: int
 	directory_count: int
 	reference_count: int
+	source_sha256: str | None = None
+	source_observation: str | None = None
 
 
 class GraphResponse(BaseModel):
@@ -395,9 +419,22 @@ class MarkerEditRequest(BaseModel):
 
 
 class MarkerEditResponse(BaseModel):
-	edited: bool
-	core_file: str
-	line_number: int
+	stage_id: str
+	base_revision: str
+	preview: str
+	paths: list[str]
+
+
+class GameChangeApplyRequest(BaseModel):
+	stage_id: str = Field(min_length=1, max_length=128)
+
+
+class GameChangeReceipt(BaseModel):
+	stage_id: str
+	base_revision: str
+	paths: list[str]
+	sha256: dict[str, str]
+	refresh_warning: str | None = None
 
 
 # ---- Lore editor ----------------------------------------------------------------------------------
@@ -643,13 +680,79 @@ class ApplyExportResponse(BaseModel):
 	github_desktop_error: str | None = None
 
 
+# ---- AphelionDMM collaboration -------------------------------------------------------------------
+
+
+class CollaborationCapabilitiesResponse(BaseModel):
+	configured: bool
+	version: bool
+	session_access: bool = False
+	join: bool = False
+	checkpoint: bool = False
+	reason: str
+
+
+class CollaborationVersionResponse(BaseModel):
+	build: str
+	revision: str
+	protocol_versions: list[int]
+	schema_versions: list[int]
+	compatible: bool
+
+
+class CollaborationSessionResponse(BaseModel):
+	session_id: str
+	document_id: str
+	protocol_version: int
+	schema_version: int
+	revision: int
+	map_hash: RecordHash
+
+
+class CollaborationJoinRequest(BaseModel):
+	model_config = ConfigDict(extra="forbid")
+
+	role: Literal["viewer", "editor"]
+	display_name: str = Field(min_length=1, max_length=128)
+
+
+class CollaborationJoinResponse(BaseModel):
+	token: str = Field(min_length=1, max_length=128)
+	actor_id: str
+	role: Literal["viewer", "editor"]
+	expires_at: str
+
+
+class CollaborationCheckpointRequest(BaseModel):
+	model_config = ConfigDict(extra="forbid")
+
+	revision: int = Field(ge=0)
+	map_hash: RecordHash
+	idempotency_key: str = Field(min_length=1, max_length=128)
+
+	@field_validator("idempotency_key")
+	@classmethod
+	def validate_idempotency_key(cls, value: str) -> str:
+		if not value.strip() or len(value.encode("utf-8")) > 128:
+			raise ValueError("Idempotency key must be nonblank and at most 128 UTF-8 bytes.")
+		return value
+
+
+class CollaborationCheckpointResponse(BaseModel):
+	checkpoint_id: str
+	revision: int = Field(ge=0)
+	map_hash: RecordHash
+	status: Literal["pending", "accepted", "rejected"]
+
+
 # ---- References -----------------------------------------------------------------------------------
 
-ReferenceTool = Literal["lore-editor", "graph", "file-management"]
-ReferenceKind = Literal["catalog_target", "graph_node", "file"]
+ReferenceTool = Literal["lore-editor", "graph", "file-management", "job-editor", "outfit-editor"]
+ReferenceKind = Literal["catalog_target", "graph_node", "file", "definition"]
 
 
 class Reference(BaseModel):
+	catalog_id: str | None = None
 	id: str
 	tool: ReferenceTool
 	kind: ReferenceKind
@@ -665,6 +768,7 @@ class ReferenceListResponse(BaseModel):
 
 
 class AddReferenceRequest(BaseModel):
+	catalog_id: str | None = Field(default=None, max_length=128)
 	tool: ReferenceTool
 	kind: ReferenceKind
 	key: str = Field(min_length=1)
@@ -680,7 +784,33 @@ class DeleteResponse(BaseModel):
 
 # ---- Live updates ---------------------------------------------------------------------------------
 
-LiveMessageType = Literal["health", "active_runs"]
+class ProjectionRevisionResponse(BaseModel):
+	schema_version: int
+	content_revision: str
+	embedding_model_id: str
+	state: Literal["current", "stale"]
+
+
+class GameSourceRevisionResponse(BaseModel):
+	worktree_id: str
+	head: str
+	dirty: bool | None = None
+	graph_observation: str | None = None
+
+
+class WorkspaceRevisionResponse(BaseModel):
+	worktree_id: str
+	branch: str
+	head: str
+	content_revision: str
+	projection_revision: ProjectionRevisionResponse | None
+	projection_generation_id: str | None
+	game_source: GameSourceRevisionResponse | None
+	definition_revision: str | None = None
+	definition_catalog_id: str | None = None
+
+
+LiveMessageType = Literal["health", "active_runs", "workspace_revision", "definition_runs"]
 
 
 class LiveMessage(BaseModel):
@@ -691,4 +821,4 @@ class LiveMessage(BaseModel):
 	"""
 
 	type: LiveMessageType
-	data: dict[str, object] | list[dict[str, object]]
+	data: dict[str, object] | list[dict[str, object]] | None

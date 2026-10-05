@@ -3,7 +3,7 @@ import axe from 'axe-core';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { api } from '~/lib/api';
-import { appState } from '~/store/appStore';
+import { appState, setWorkspaceRevision } from '~/store/appStore';
 import SharedReferences, { contextFromReference, referenceRoute } from './SharedReferences';
 
 const reference = {
@@ -23,6 +23,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 	document.body.replaceChildren();
+	setWorkspaceRevision(null);
 });
 
 describe('shared references', () => {
@@ -61,6 +62,30 @@ describe('shared references', () => {
 
 		const accessibility = await axe.run(host, { rules: { 'color-contrast': { enabled: false } } });
 		expect(accessibility.violations).toEqual([]);
+		dispose();
+	});
+
+	it('does not repopulate references from a request started before a workspace revision change', async () => {
+		let resolveOld!: (value: unknown) => void;
+		let resolveCurrent!: (value: unknown) => void;
+		vi.spyOn(api, 'get')
+			.mockReturnValueOnce(new Promise((done) => { resolveOld = done; }))
+			.mockReturnValueOnce(new Promise((done) => { resolveCurrent = done; }));
+		setWorkspaceRevision({ worktree_id: 'worktree', branch: 'main', head: 'head-1', content_revision: 'content-1', projection_revision: null, projection_generation_id: null, game_source: null });
+		const host = document.createElement('div');
+		document.body.append(host);
+		const dispose = render(
+			() => <Router><Route path="*" component={() => <SharedReferences />} /></Router>,
+			host,
+		);
+		await settle();
+		setWorkspaceRevision({ worktree_id: 'worktree', branch: 'main', head: 'head-2', content_revision: 'content-2', projection_revision: null, projection_generation_id: null, game_source: null });
+		resolveOld({ references: [reference] });
+		await settle();
+
+		expect(host.querySelector('button[title="/obj/item/radio"]')).toBeNull();
+		expect(host.textContent).toContain('Workspace changed. Refreshing references');
+		resolveCurrent({ references: [] });
 		dispose();
 	});
 });

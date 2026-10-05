@@ -1,0 +1,38 @@
+{
+  "tool": "portalrabbit-effect-envelope-v1",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/effect-dust-landing.png",
+  "sourceSha256": "75a0b6ced6cdac5a27759d912aadeadbb88de4517cccbd3d0271874ee2181ee9",
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "envelope": [
+    3,
+    80,
+    93,
+    89
+  ],
+  "clipScale": 0.3103448275862069,
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-dust-landing/effect-dust-landing__d0__f0.png",
+      "sha256": "f77352fc28eedcec9aacb99168562a009f037614201f11ef46a9360e24f22960"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-dust-landing/effect-dust-landing__d0__f1.png",
+      "sha256": "6c47b3682c66b208640bd53c6aa742552b973d69f5c9d7b347b696f6ad2bcc03"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-dust-landing/effect-dust-landing__d0__f2.png",
+      "sha256": "9b23df673d1db6f388e8a92ff520af38184ba48902bdd3213e7d5ac5a3717dad"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-effects/effect-dust-landing/effect-dust-landing__d0__f3.png",
+      "sha256": "7b10871803957f228ec434dd71aa555b5c653f4003dc95d14ee0dd0cd95c086e"
+    }
+  ]
+}

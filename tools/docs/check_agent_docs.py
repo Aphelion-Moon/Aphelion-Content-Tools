@@ -19,6 +19,7 @@ REQUIRED_FILES = (
 	"references/development/export-safety.md",
 	"references/development/verification.md",
 	"references/development/meridian-integration.md",
+	"references/development/platform-lifecycle-and-integrations.md",
 )
 
 REQUIRED_TEXT = {
@@ -28,13 +29,17 @@ REQUIRED_TEXT = {
 		"references/development/README.md",
 		"tools/lore_editor/content/",
 		"GitHub Desktop",
+		"Every derived dataset",
+		"revision-bound",
+		"staged change-set standard",
 	),
 	"references/maintainer-guide.md": (
 		"Normative status",
-		"Target architecture: FastAPI and the Solid SPA",
+		"Shipped architecture: FastAPI and the Solid SPA",
 		"Legacy pages are transitional and must not receive new product behavior",
 		"Pydantic models are the canonical HTTP schema",
 		"tools/lore_editor/content/ is canonical authored source",
+		"platform life-cycle and integration guidance",
 	),
 	"references/development/backend-and-schema.md": (
 		"Pydantic owns the HTTP schema",
@@ -84,6 +89,8 @@ REQUIRED_TEXT = {
 		"python -m ruff check .",
 		"python -m pyright",
 		"python -m unittest discover",
+		"Do not rerun monolithic",
+		"bounded suite runner",
 		"npm --prefix webapp/frontend run gen:api",
 		"npm --prefix webapp/frontend test -- --run",
 		"npm --prefix webapp/frontend run typecheck",
@@ -97,6 +104,16 @@ REQUIRED_TEXT = {
 		"Meridian-MCP owns",
 		"PowerShell owns",
 		"credentials never enter the browser",
+	),
+	"references/development/platform-lifecycle-and-integrations.md": (
+		"Workspace currentness",
+		"Immutable build and activation",
+		"Search capabilities",
+		"Shared context and references",
+		"Tool and capability registration",
+		"Game-repository changes",
+		"Local and remote security boundary",
+		"per-launch local session credential",
 	),
 }
 
@@ -163,6 +180,22 @@ def check_repository(root: Path) -> list[str]:
 			error = _local_link_error(path, match.group(1).strip().strip("<>"))
 			if error:
 				errors.append(error)
+
+	ci_path = root / ".github" / "workflows" / "ci.yml"
+	if ci_path.is_file():
+		ci_text = ci_path.read_text(encoding="utf-8")
+		if "python -m unittest discover" in ci_text:
+			errors.append("CI must not run monolithic Python unittest discovery")
+		if "tools/testing/run-python-suites.ps1" not in ci_text:
+			errors.append("CI must run the bounded Python suite runner")
+	for relative in (
+		"tools/testing/python-suites.json",
+		"tools/testing/run-python-suites.ps1",
+		"tools/testing/suite_process.py",
+		"tools/testing/suites.py",
+	):
+		if not (root / relative).is_file():
+			errors.append(f"missing bounded Python test infrastructure: {relative}")
 	return errors
 
 

@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from webapp.api import create_app
+from webapp.capabilities import CAPABILITIES
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -26,6 +27,8 @@ def main(argv: list[str] | None = None) -> int:
 
 	args.output.parent.mkdir(parents=True, exist_ok=True)
 	args.output.write_text(json.dumps(schema, indent=2) + "\n", encoding="utf-8")
+	capabilities = Path(__file__).parent / 'frontend/src/lib/tool-capabilities.json'
+	capabilities.write_text(json.dumps([item.model_dump() for item in CAPABILITIES], indent=2) + '\n', encoding='utf-8')
 	print(f"wrote {args.output} ({len(schema['paths'])} paths)", file=sys.stderr)
 	return 0
 

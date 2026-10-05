@@ -1,7 +1,7 @@
 import { Show, createSignal } from 'solid-js';
 import { api } from '~/lib/api';
 import type { components } from '~/lib/api-schema';
-import { announceError } from '~/lib/notify';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import styles from './OpenFileActions.module.css';
 
 type RepositoryName = 'tool' | 'game';
@@ -20,8 +20,9 @@ export default function OpenFileActions(props: {
 			await action();
 			setError('');
 		} catch (caught) {
-			setError(caught instanceof Error ? caught.message : String(caught));
-			announceError(caught, 'open-file');
+			const message = caught instanceof Error ? caught.message : String(caught);
+			setError(message);
+			reportParsec({ type: 'fetch', phase: 'failed', tool: 'open-file', summary: 'Could not open that file location.', technicalDetail: message });
 		}
 	}
 

@@ -5,7 +5,11 @@
 // for this use case -- she is confined to a small container rather than chasing the cursor, and her
 // state is driven by job status and app events rather than cursor proximity.
 //
-// Artwork: cropped and repacked from "Husky Sprites" (opengameart.org/content/husky-sprites), CC0.
+// Artwork: regenerated Parsec frames converted with PortalRabbit; see the Parsec asset register.
+
+import { coreFallbackManifest } from '~/assets/parsec/manifest.v1';
+import { resolveClip } from './parsec/assets';
+import { loadCompanionProfile, saveCompanionProfile } from './parsec/profile';
 
 export const CELL_WIDTH = 72;
 export const CELL_HEIGHT = 51;
@@ -45,7 +49,18 @@ export const FRAME_SETS = {
 export type ParsecState = keyof typeof FRAME_SETS;
 
 export function resolveState(state: string): ParsecState {
-	return state in FRAME_SETS ? (state as ParsecState) : 'idle';
+	if (state in FRAME_SETS) return state as ParsecState;
+	let clip = resolveClip(state, coreFallbackManifest);
+	const visited = new Set<string>();
+	while (clip.fallback && !visited.has(clip.id)) {
+		visited.add(clip.id);
+		const fallback = coreFallbackManifest.clips[clip.fallback];
+		if (!fallback) break;
+		clip = fallback;
+	}
+	const legacyState = Object.entries(coreFallbackManifest.legacyStates)
+		.find(([, clipId]) => clipId === clip.id)?.[0];
+	return legacyState && legacyState in FRAME_SETS ? legacyState as ParsecState : 'idle';
 }
 
 export function nextFrameIndex(frameIndex: number, frameCount: number): number {
@@ -68,6 +83,14 @@ export function advancePatrol(
 	return { x: next, direction: state.direction };
 }
 
+/** Centre a speech-balloon tail on Parsec while keeping it clear of the stage corners. */
+export function clampBalloonAnchor(spriteLeft: number, stageWidth: number, spriteWidth: number): number {
+	const cornerMargin = 18;
+	const centred = spriteLeft + spriteWidth / 2;
+	const maximum = Math.max(cornerMargin, stageWidth - cornerMargin);
+	return Math.min(maximum, Math.max(cornerMargin, centred));
+}
+
 /**
  * Whether enough rapid pats have landed to trigger the hidden reaction.
  *
@@ -83,46 +106,28 @@ export function registerPat(
 	return { timestamps: recent, reaction: 'happy' };
 }
 
-const REDUCED_MOTION_KEY = 'aphelion-parsec-reduced-motion-override';
-
-export type MotionPreference = 'animate' | 'follow-system' | 'reduce';
+export type MotionPreference = 'animate' | 'reduce';
 
 export function readMotionPreference(): MotionPreference {
-	try {
-		const stored = window.localStorage.getItem(REDUCED_MOTION_KEY);
-		if (stored === 'reduce' || stored === 'follow-system') return stored;
-	} catch {
-		// Storage disabled; fall through to the default.
-	}
-	return 'animate';
+	return loadCompanionProfile().settings.motion;
 }
 
 export function writeMotionPreference(preference: MotionPreference): void {
 	try {
-		if (preference === 'animate') window.localStorage.removeItem(REDUCED_MOTION_KEY);
-		else window.localStorage.setItem(REDUCED_MOTION_KEY, preference);
+		const profile = loadCompanionProfile();
+		saveCompanionProfile(window.localStorage, {
+			...profile,
+			settings: { ...profile.settings, motion: preference },
+		});
 	} catch {
 		// Not persisting a preference is not worth surfacing an error for.
 	}
 }
 
 /**
- * Whether to hold still.
- *
- * Defaults to animating regardless of the OS setting. She is a small sprite fully confined to her own
- * box, not the large-scale motion `prefers-reduced-motion` exists to guard against, and that setting is
- * commonly on for unrelated reasons -- on Windows, Settings > Ease of Access > Display > "Show
- * animations in Windows" maps straight to it, which left her looking frozen for most people. Anyone who
- * does want her still can choose "Always reduce motion" explicitly.
+ * Only Parsec's explicit in-app preference reduces motion. System animation suppression and older
+ * follow-system preferences never stop her animation or change her handling physics.
  */
-export function prefersReducedMotion(preference: MotionPreference = readMotionPreference()): boolean {
-	if (preference === 'reduce') return true;
-	if (preference === 'follow-system') {
-		return (
-			typeof window !== 'undefined' &&
-			typeof window.matchMedia === 'function' &&
-			window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		);
-	}
-	return false;
+export function prefersReducedMotion(preference: MotionPreference | 'follow-system' = readMotionPreference()): boolean {
+	return preference === 'reduce';
 }

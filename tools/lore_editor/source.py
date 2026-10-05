@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from webapp.store import db
+from webapp.store.lifecycle import with_projection_read
 from webapp.store.schema import decode, table
 
 from .model import (
@@ -122,32 +123,35 @@ def make_lore_entry(source_path: Path, raw_entry: object) -> LoreEntry:
     )
 
 
-def load_catalog_targets(repo_root: Path) -> tuple[CatalogTarget, ...]:
-    rows = db.all_rows(table(repo_root, "catalog_targets"))
-    targets = tuple(make_catalog_target(decode(row)) for row in rows)
-    return tuple(sorted(targets, key=lambda target: target.type_path or ""))
+def load_catalog_targets(repo_root: Path, *, store_dir: Path | None = None) -> tuple[CatalogTarget, ...]:
+	rows = db.all_rows(table(repo_root, "catalog_targets", store_dir=store_dir))
+	targets = tuple(make_catalog_target(decode(row)) for row in rows)
+	return tuple(sorted(targets, key=lambda target: target.type_path or ""))
 
 
+@with_projection_read
 def load_corpus(repo_root: Path) -> LoreCorpus:
-    targets = load_catalog_targets(repo_root)
-    override_directory = repo_root.resolve() / CONTENT_ROOT / "overrides"
-    if override_directory.is_dir():
-        entries = tuple(
-            make_lore_entry(source_path_for_group(str(payload.get("id", "")).partition(".")[0]), payload)
-            for payload in (read_record(path) for path in sorted(override_directory.rglob("*.json")))
-        )
-    else:
-        override_rows = db.all_rows(table(repo_root, "overrides"))
-        entries = tuple(
-            make_lore_entry(source_path_for_group(row["group"]), decode(row))
-            for row in override_rows
-        )
-    # Deterministic order regardless of the store's own row order -- several validation/generation code
-    # paths (duplicate-id/duplicate-field-ownership messages, generated DM ordering) depend on a stable
-    # entry order, the same way the old per-file JSON store's alphabetical file listing was implicitly
-    # stable.
-    entries = tuple(sorted(entries, key=lambda entry: (entry.source_path.as_posix(), entry.entry_id or "")))
-    return LoreCorpus(targets=targets, entries=entries)
+	resolved_root = repo_root.resolve()
+	pinned_store = db.store_path(resolved_root)
+	targets = load_catalog_targets(resolved_root, store_dir=pinned_store)
+	override_directory = resolved_root / CONTENT_ROOT / "overrides"
+	if override_directory.is_dir():
+		entries = tuple(
+			make_lore_entry(source_path_for_group(str(payload.get("id", "")).partition(".")[0]), payload)
+			for payload in (read_record(path) for path in sorted(override_directory.rglob("*.json")))
+		)
+	else:
+		override_rows = db.all_rows(table(resolved_root, "overrides", store_dir=pinned_store))
+		entries = tuple(
+			make_lore_entry(source_path_for_group(row["group"]), decode(row))
+			for row in override_rows
+		)
+	# Deterministic order regardless of the store's own row order -- several validation/generation code
+	# paths (duplicate-id/duplicate-field-ownership messages, generated DM ordering) depend on a stable
+	# entry order, the same way the old per-file JSON store's alphabetical file listing was implicitly
+	# stable.
+	entries = tuple(sorted(entries, key=lambda entry: (entry.source_path.as_posix(), entry.entry_id or "")))
+	return LoreCorpus(targets=targets, entries=entries)
 
 
 def list_entity_groups(repo_root: Path) -> list[str]:

@@ -1,0 +1,47 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "touch-nose-lick",
+  "clipScale": 0.6942148760330579,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-nose-lick/touch-nose-lick__d0__f0.png",
+      "sha256": "99380016a7421ca6003154b2fa5310ae53fdd5ab59f29ac0cfe895330871451b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-nose-lick/touch-nose-lick__d0__f1.png",
+      "sha256": "1830a08f2459d863969e78d298a2e0d19fbe33d9c4c3c3480bacc510d11c7fb3"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-nose-lick/touch-nose-lick__d0__f2.png",
+      "sha256": "da3dee10fda604ccdf6867f79224848da422178de749c7b0b3e7bf8b77807139"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-nose-lick/touch-nose-lick__d0__f3.png",
+      "sha256": "5bbad8130b4e7e7fa7424e2c85b98d97ebb785289327bfd4c2593b8e7a946fe4"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-touch/touch-nose-lick/touch-nose-lick__d0__f4.png",
+      "sha256": "7f7d489a58be493d04e44ce8347107968d8e7acc54b3a03a619746c8fb8539c4"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/touch-nose-lick.png",
+  "sourceSha256": "95afe0f2f1b51209fd224b08ed9146ae13bf83d51d180088c30afd4ae469a406",
+  "tool": "generated-strip-v4"
+}

@@ -1,0 +1,43 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "reconnect-pant",
+  "clipScale": 0.717948717948718,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/reconnect-pant/reconnect-pant__d0__f0.png",
+      "sha256": "43ff4e0506a5325d196930b63902b00aae2da212725ed6b05723b6ed22fb4d9d"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/reconnect-pant/reconnect-pant__d0__f1.png",
+      "sha256": "df185dd20c5df54b372b71251e08e0314b497ffc4fb5f16beca31fd25f73aa27"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/reconnect-pant/reconnect-pant__d0__f2.png",
+      "sha256": "9af3e755b0999cff31bdcb0275582957d21e588ff3681dabf74cff0720e402b8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-feedback/reconnect-pant/reconnect-pant__d0__f3.png",
+      "sha256": "9aac8ab397232d3224b2ae36f6ef9f2c0363f20da001ad1922310b8c9777bed2"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/reconnect-pant.png",
+  "sourceSha256": "1c901e2e287a66795d13be7a42c05ef86dd3ff1ef35fb906cff2b7967fc7878e",
+  "tool": "generated-strip-v4"
+}

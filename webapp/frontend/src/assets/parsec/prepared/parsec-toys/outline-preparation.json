@@ -1,0 +1,363 @@
+{
+  "tool": "generated-strip-v4",
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f0.png",
+      "sha256": "5ff337f3c36d7d3f69ebaaccc92a42eafff79a874441e782c272e2493e37d72e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-chase.png",
+      "sourceSha256": "8d530701d3ea2bb4565a518285917785ede39c43fa89db03a6a0261c602eb51e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f1.png",
+      "sha256": "cb7fffc0531cc48f231e83d144dc782d03b12f94d2432e0f02fdb2bd357c2fdb",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-chase.png",
+      "sourceSha256": "8d530701d3ea2bb4565a518285917785ede39c43fa89db03a6a0261c602eb51e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f2.png",
+      "sha256": "dd6885f3a947c9b54f77ccc5d4a601955b7b78e1d94731edb0d49c64de716365",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-chase.png",
+      "sourceSha256": "8d530701d3ea2bb4565a518285917785ede39c43fa89db03a6a0261c602eb51e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f3.png",
+      "sha256": "60fd12271c895c629bc3c8b44ed600da4cdfd469cea386d96a30311729e6d7a9",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-chase.png",
+      "sourceSha256": "8d530701d3ea2bb4565a518285917785ede39c43fa89db03a6a0261c602eb51e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f4.png",
+      "sha256": "f5e89356eadf277e2ed31e43f4ab66b9e4f48152f6bc96826fe75e96d5ee562a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-chase.png",
+      "sourceSha256": "8d530701d3ea2bb4565a518285917785ede39c43fa89db03a6a0261c602eb51e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-chase/toy-ball-chase__d0__f5.png",
+      "sha256": "c447af0df0c6421deab1f7336c8175ffaf0a937c63f96d1c552b134ce0f2b58d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-chase.png",
+      "sourceSha256": "8d530701d3ea2bb4565a518285917785ede39c43fa89db03a6a0261c602eb51e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-ready/toy-ball-ready__d0__f0.png",
+      "sha256": "91215437ca445e86d29441cc6dc8aa517e7316d0027077f403b2ec52104df596",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-ready.png",
+      "sourceSha256": "f6e0a6cede960ae77b60d7809debaa4c96d2de6749d263de7fc8a6d394979591"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-ready/toy-ball-ready__d0__f1.png",
+      "sha256": "ed279ad8776cfd7c8719649ce9e2f1f34977ce1d0c1912f0bf3b4b0dd5308a10",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-ready.png",
+      "sourceSha256": "f6e0a6cede960ae77b60d7809debaa4c96d2de6749d263de7fc8a6d394979591"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-ready/toy-ball-ready__d0__f2.png",
+      "sha256": "3bf7b92d72ff3d81aa2d52029fd18a5d61d4f95eeb50f67cbbfae6fdbfe1e648",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-ready.png",
+      "sourceSha256": "f6e0a6cede960ae77b60d7809debaa4c96d2de6749d263de7fc8a6d394979591"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-ready/toy-ball-ready__d0__f3.png",
+      "sha256": "0ecfbef494cb4a1c831c944d45db200fa983e2d39ac86c397f8abb98a7c2cd7c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-ready.png",
+      "sourceSha256": "f6e0a6cede960ae77b60d7809debaa4c96d2de6749d263de7fc8a6d394979591"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-refuse/toy-ball-refuse__d0__f0.png",
+      "sha256": "44c61705b009a9dacbdcd9ab020a30068d75e84d979a3dc1a9c79e5092a339dc",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-refuse.png",
+      "sourceSha256": "96d8595b3cfcc66a96562234018aa4454327b4bd60a43019a1bb76d198010154"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-refuse/toy-ball-refuse__d0__f1.png",
+      "sha256": "f9beb3b1e9ed7f6c8ce8218d9a2b5743db4fb61db1bc71854f382882892a25ab",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-refuse.png",
+      "sourceSha256": "96d8595b3cfcc66a96562234018aa4454327b4bd60a43019a1bb76d198010154"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-refuse/toy-ball-refuse__d0__f2.png",
+      "sha256": "ab8f38d28df3a7db9058406dc41f55ca3cd552d6620fc106f5b236dae21b6479",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-refuse.png",
+      "sourceSha256": "96d8595b3cfcc66a96562234018aa4454327b4bd60a43019a1bb76d198010154"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-refuse/toy-ball-refuse__d0__f3.png",
+      "sha256": "8ebfdc133980a74de5c20be51be16822ded293de7aebd0eb17f16d99ac9cdc76",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-refuse.png",
+      "sourceSha256": "96d8595b3cfcc66a96562234018aa4454327b4bd60a43019a1bb76d198010154"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f0.png",
+      "sha256": "7dfd86806a6af354a7cd4bd73475878f9eae1632cbf45e2d8216d81f529dfa46",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-retrieve.png",
+      "sourceSha256": "47e6f7d4f75de4a14a0d9b2d7bc1100d01a934f5139810df94f481c3486c3b7e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f1.png",
+      "sha256": "72abbaa867dc45610eaef6c07b45200e028f00c5ecd36fc9fff8708263d322b7",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-retrieve.png",
+      "sourceSha256": "47e6f7d4f75de4a14a0d9b2d7bc1100d01a934f5139810df94f481c3486c3b7e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f2.png",
+      "sha256": "5773bd8ecfa4edb349e3d75ba05a0ba40e0566d074cf5ff13eeddb3b7744b1cb",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-retrieve.png",
+      "sourceSha256": "47e6f7d4f75de4a14a0d9b2d7bc1100d01a934f5139810df94f481c3486c3b7e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f3.png",
+      "sha256": "3bb2408f111018ccd9e4fb0accc04d5f815b4c3ccfeb78199d62db0975043301",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-retrieve.png",
+      "sourceSha256": "47e6f7d4f75de4a14a0d9b2d7bc1100d01a934f5139810df94f481c3486c3b7e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f4.png",
+      "sha256": "cea73aadd727fdcbf6cd5ea387735ef3bf62cbed6ac8af12158949f933fc34bb",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-retrieve.png",
+      "sourceSha256": "47e6f7d4f75de4a14a0d9b2d7bc1100d01a934f5139810df94f481c3486c3b7e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-ball-retrieve/toy-ball-retrieve__d0__f5.png",
+      "sha256": "8559ce702016d2ca149d848153c782914f630b1f8b515c6924526ccc9edfb045",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-ball-retrieve.png",
+      "sourceSha256": "47e6f7d4f75de4a14a0d9b2d7bc1100d01a934f5139810df94f481c3486c3b7e"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-content/toy-brush-content__d0__f0.png",
+      "sha256": "29c3479b8b4c0f3917d866b97abf9d8b121864c68042935c43c004be8d4fd316",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-content.png",
+      "sourceSha256": "fcba0fc47d776c924c9ca662886058d808a8c352599c67b5590182042821ff84"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-content/toy-brush-content__d0__f1.png",
+      "sha256": "e6299c924ecd534f5c4bc1b1e4aa49679a5b07ee533ac24567d2164fe16782ac",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-content.png",
+      "sourceSha256": "fcba0fc47d776c924c9ca662886058d808a8c352599c67b5590182042821ff84"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-content/toy-brush-content__d0__f2.png",
+      "sha256": "f1a6e8231a5853a45075a734534cfc187d41e72f6e577806855b7c14758e52fa",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-content.png",
+      "sourceSha256": "fcba0fc47d776c924c9ca662886058d808a8c352599c67b5590182042821ff84"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-content/toy-brush-content__d0__f3.png",
+      "sha256": "54e0c4b01fe89e5b9253c2106a1b26fbfcaf70181883fc3dc66ba53a2d6330d3",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-content.png",
+      "sourceSha256": "fcba0fc47d776c924c9ca662886058d808a8c352599c67b5590182042821ff84"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-content/toy-brush-content__d0__f4.png",
+      "sha256": "e3dfdcea47006ae95a0d6b2661eacd9c75b733654d805e7d883157515c2918a4",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-content.png",
+      "sourceSha256": "fcba0fc47d776c924c9ca662886058d808a8c352599c67b5590182042821ff84"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-impatient/toy-brush-impatient__d0__f0.png",
+      "sha256": "e5ec0890a3929c529864a6878ec68aca37181d4b9c3de0af3ae7cd0960e5cdf0",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-impatient.png",
+      "sourceSha256": "a928b2921ced4cc62552d2d98ca2bc98477b96aefeec3db24435e69bb29e22b8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-impatient/toy-brush-impatient__d0__f1.png",
+      "sha256": "253170485bfa592f7456a4af93a0a1ff2441b0a138941f298a8f1adcbf5c576f",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-impatient.png",
+      "sourceSha256": "a928b2921ced4cc62552d2d98ca2bc98477b96aefeec3db24435e69bb29e22b8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-impatient/toy-brush-impatient__d0__f2.png",
+      "sha256": "0cf71d09e78c5a71f9d333682d14c5a0f7f44d83e00f4d00a51b480b30d68b4a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-impatient.png",
+      "sourceSha256": "a928b2921ced4cc62552d2d98ca2bc98477b96aefeec3db24435e69bb29e22b8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-brush-impatient/toy-brush-impatient__d0__f3.png",
+      "sha256": "d62da443a60eaa16ffa36afa334b012047f800f1ef7df05dd1a65f746b2aadce",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-brush-impatient.png",
+      "sourceSha256": "a928b2921ced4cc62552d2d98ca2bc98477b96aefeec3db24435e69bb29e22b8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-treat-accept/toy-treat-accept__d0__f0.png",
+      "sha256": "00046ba25e2b6a54199b9849537bd0ffe19902144ae2a1e4ac0339416be87b69",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-treat-accept.png",
+      "sourceSha256": "20ca7b1410269dbe37fee40a1a9b311821368591958253557922271ccc0f5544"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-treat-accept/toy-treat-accept__d0__f1.png",
+      "sha256": "9cd111aff23c2ef8a23761772a7afabd44776d583bf0a8a6fdb8244c332b51c2",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-treat-accept.png",
+      "sourceSha256": "20ca7b1410269dbe37fee40a1a9b311821368591958253557922271ccc0f5544"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-treat-accept/toy-treat-accept__d0__f2.png",
+      "sha256": "18d1990a52c467d49873297a69edd5fd8030eee02d7ae196ea0eef22d039dbf6",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-treat-accept.png",
+      "sourceSha256": "20ca7b1410269dbe37fee40a1a9b311821368591958253557922271ccc0f5544"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-treat-accept/toy-treat-accept__d0__f3.png",
+      "sha256": "101f821a330af883dd142912526ba2564bdac821a6885c54180edf02eadab9ba",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-treat-accept.png",
+      "sourceSha256": "20ca7b1410269dbe37fee40a1a9b311821368591958253557922271ccc0f5544"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-treat-accept/toy-treat-accept__d0__f4.png",
+      "sha256": "ae5ce06575c0bb9713c0929c97babaa4414489bbec6bcc00f387a0de1d4a9b3e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-treat-accept.png",
+      "sourceSha256": "20ca7b1410269dbe37fee40a1a9b311821368591958253557922271ccc0f5544"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-grip/toy-tug-grip__d0__f0.png",
+      "sha256": "d8857c2dd7fc579fafc08df2ad44dc2265d41461dc438f2f01da83c35619f56a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-grip.png",
+      "sourceSha256": "1be2a8340b42dec08d96492ce58e41d084473560c5e0a9b18402d653af04d237"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-grip/toy-tug-grip__d0__f1.png",
+      "sha256": "47a495a7803fdb19d9dbf10ef9c1efe8e4b6e0e52213dfeb5d8c3d5bc14f89e5",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-grip.png",
+      "sourceSha256": "1be2a8340b42dec08d96492ce58e41d084473560c5e0a9b18402d653af04d237"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-grip/toy-tug-grip__d0__f2.png",
+      "sha256": "97162b026dbf7a84123fb4f9c6654f11a0b306c34a882e18527a0a323b87ac03",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-grip.png",
+      "sourceSha256": "1be2a8340b42dec08d96492ce58e41d084473560c5e0a9b18402d653af04d237"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-grip/toy-tug-grip__d0__f3.png",
+      "sha256": "6d632fc33e1daa5caaee6a8be6a300fbcf117d426dbaa5542e3199f58bdaba9a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-grip.png",
+      "sourceSha256": "1be2a8340b42dec08d96492ce58e41d084473560c5e0a9b18402d653af04d237"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-pull/toy-tug-pull__d0__f0.png",
+      "sha256": "7144566fba544db9857c7f284b351ac5e029f54659102801ecf6b369d6a3ae49",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-pull.png",
+      "sourceSha256": "8799e9a238ca725f0085be713fb73078c87f956a627c1f7f89b630c79f28b26b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-pull/toy-tug-pull__d0__f1.png",
+      "sha256": "20acb3183ea5ada6c745277906c50754547cd0f087ae6d51dc08ca01cfeabb2d",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-pull.png",
+      "sourceSha256": "8799e9a238ca725f0085be713fb73078c87f956a627c1f7f89b630c79f28b26b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-pull/toy-tug-pull__d0__f2.png",
+      "sha256": "8a42aec59354bf8cac4a467d0f72b7ad7b59b7ffbda1d49bffffe0b3a8deaf63",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-pull.png",
+      "sourceSha256": "8799e9a238ca725f0085be713fb73078c87f956a627c1f7f89b630c79f28b26b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-pull/toy-tug-pull__d0__f3.png",
+      "sha256": "617d949c78a6bde0f9614c8a35050e01bb0ab0199ee0833f680e840635a3b330",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-pull.png",
+      "sourceSha256": "8799e9a238ca725f0085be713fb73078c87f956a627c1f7f89b630c79f28b26b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-pull/toy-tug-pull__d0__f4.png",
+      "sha256": "e598f1e4f551adcdba0045346848f498f21492a043bfa30bbc42ddba526bd672",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-pull.png",
+      "sourceSha256": "8799e9a238ca725f0085be713fb73078c87f956a627c1f7f89b630c79f28b26b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-pull/toy-tug-pull__d0__f5.png",
+      "sha256": "022f9418562e041b9da34495d1e438beb8a8ba45be6d3e49e86b52bdc13da247",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-pull.png",
+      "sourceSha256": "8799e9a238ca725f0085be713fb73078c87f956a627c1f7f89b630c79f28b26b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f0.png",
+      "sha256": "a5f006ca15268d1c656c8446d52ab2454934529e7486dec0d6a13200c46cf2b5",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-tumble.png",
+      "sourceSha256": "7ca38dc70e3872f6284b2ea982362c16fa8639356c393667442678ec7106e9cf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f1.png",
+      "sha256": "7a6630bc5ab9d03bd26b4140a0f6405e71f9ef5b3b69e8a78ebded0ae6e706fb",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-tumble.png",
+      "sourceSha256": "7ca38dc70e3872f6284b2ea982362c16fa8639356c393667442678ec7106e9cf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f2.png",
+      "sha256": "4cc3c2c0a6b1ce6df7e10df9cf2e053c799d8dba799026b29b4cd7e4b21bbb62",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-tumble.png",
+      "sourceSha256": "7ca38dc70e3872f6284b2ea982362c16fa8639356c393667442678ec7106e9cf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f3.png",
+      "sha256": "6b2e94dbfb2890d48c134b11040cbf781fc60326474dac9a16e039fc104dd9ef",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-tumble.png",
+      "sourceSha256": "7ca38dc70e3872f6284b2ea982362c16fa8639356c393667442678ec7106e9cf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-tumble/toy-tug-tumble__d0__f4.png",
+      "sha256": "7b5b0630e44a3fe17dd1edc91af69fd1f2e31114958481a380487e65716c799a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-tumble.png",
+      "sourceSha256": "7ca38dc70e3872f6284b2ea982362c16fa8639356c393667442678ec7106e9cf"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-win/toy-tug-win__d0__f0.png",
+      "sha256": "8ba524a97f9372e10c16bdf1df6ea2714fbfdeb680f907e7c9240aa73144856e",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-win.png",
+      "sourceSha256": "44f6d0c5b6b82c6f4b7e0c70f4658a37ef37cfae7ccc46eba68f2114152359ac"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-win/toy-tug-win__d0__f1.png",
+      "sha256": "bb62f829cb66c8622d163bb3564c69605b68bf50595b2afbc663a1a9c70f4c39",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-win.png",
+      "sourceSha256": "44f6d0c5b6b82c6f4b7e0c70f4658a37ef37cfae7ccc46eba68f2114152359ac"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-win/toy-tug-win__d0__f2.png",
+      "sha256": "2b7b65a15cfdfb58f75ab518cc1ec4eac80dfdf7bb7ec69918f546e063b6f043",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-win.png",
+      "sourceSha256": "44f6d0c5b6b82c6f4b7e0c70f4658a37ef37cfae7ccc46eba68f2114152359ac"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-win/toy-tug-win__d0__f3.png",
+      "sha256": "64e16d8db8d1f2520512fed7dfd72b679caef5d197cb445febff2c0cf54ba9ec",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-win.png",
+      "sourceSha256": "44f6d0c5b6b82c6f4b7e0c70f4658a37ef37cfae7ccc46eba68f2114152359ac"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-tug-win/toy-tug-win__d0__f4.png",
+      "sha256": "4d506b0aa1fe6a81113e7a6d00d40a20abc1f610344a57cd2ef5aa4310685273",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-tug-win.png",
+      "sourceSha256": "44f6d0c5b6b82c6f4b7e0c70f4658a37ef37cfae7ccc46eba68f2114152359ac"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f0.png",
+      "sha256": "8e69cc7b2fe74cc281856c1fe357cfadfec08afe01143bfa9f2af8f969e5219b",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-whistle-recall.png",
+      "sourceSha256": "4c4a7834325ae7f44686b8f3a8e5d269b4eb6b773481874723fa3208c7c493c8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f1.png",
+      "sha256": "0ba1ac27a8d42f809938803e279c7b97250a33098272f45c80241dc9b0af850a",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-whistle-recall.png",
+      "sourceSha256": "4c4a7834325ae7f44686b8f3a8e5d269b4eb6b773481874723fa3208c7c493c8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f2.png",
+      "sha256": "f8924e5f9a0711d2900bf3a5aa80370df8edd58e774958ceb6225e1623ca7352",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-whistle-recall.png",
+      "sourceSha256": "4c4a7834325ae7f44686b8f3a8e5d269b4eb6b773481874723fa3208c7c493c8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f3.png",
+      "sha256": "ca0a27adb6591fb10141aa3dc9df28da55ce5581cc314c4925fb301aeb9802c4",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-whistle-recall.png",
+      "sourceSha256": "4c4a7834325ae7f44686b8f3a8e5d269b4eb6b773481874723fa3208c7c493c8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-toys/toy-whistle-recall/toy-whistle-recall__d0__f4.png",
+      "sha256": "c90dddf09310b3d016a3c678f2d8200079eb41042eecb0f0423d5eecc729c07c",
+      "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/toy-whistle-recall.png",
+      "sourceSha256": "4c4a7834325ae7f44686b8f3a8e5d269b4eb6b773481874723fa3208c7c493c8"
+    }
+  ]
+}

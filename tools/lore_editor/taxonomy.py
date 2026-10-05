@@ -6,6 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from webapp.store import db
+from webapp.store.lifecycle import read_projection
 from webapp.store.schema import decode, table
 
 from .model import (
@@ -82,19 +83,24 @@ def _group_payload(group: GroupRecord) -> dict[str, object]:
 	}
 
 
-def load_groups(repo_root: Path) -> GroupConfig:
+def load_groups(repo_root: Path, *, store_dir: Path | None = None) -> GroupConfig:
+	with read_projection(repo_root, store_dir=store_dir) as pinned:
+		return _load_groups(repo_root, pinned.path)
+
+
+def _load_groups(repo_root: Path, pinned_store: Path) -> GroupConfig:
 	resolved_root = repo_root.resolve()
 	group_directory = resolved_root / CONTENT_ROOT / "groups"
 	if group_directory.is_dir():
 		group_payloads = [read_record(path) for path in sorted(group_directory.rglob("*.json"))]
 	else:
-		group_payloads = [decode(row) for row in db.all_rows(table(resolved_root, "groups"))]
+		group_payloads = [decode(row) for row in db.all_rows(table(resolved_root, "groups", store_dir=pinned_store))]
 	groups = tuple(sorted((_group_from_raw(payload) for payload in group_payloads), key=lambda group: group.id))
 	assignment_directory = resolved_root / CONTENT_ROOT / "assignments"
 	if assignment_directory.is_dir():
 		assignment_payloads = [read_record(path) for path in sorted(assignment_directory.rglob("*.json"))]
 	else:
-		assignment_payloads = [decode(row) for row in db.all_rows(table(resolved_root, "assignments"))]
+		assignment_payloads = [decode(row) for row in db.all_rows(table(resolved_root, "assignments", store_dir=pinned_store))]
 	assignments: dict[str, tuple[str, ...]] = {}
 	group_ids = {group.id for group in groups}
 	for record in assignment_payloads:

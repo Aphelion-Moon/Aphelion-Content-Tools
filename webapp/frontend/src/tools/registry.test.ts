@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { TOOLS, toolByRoute } from './registry';
+import capabilities from '~/lib/tool-capabilities.json';
 
 // These tests exist to protect the property the rewrite was for: a tool is defined in exactly one place.
 // If someone reintroduces a parallel list (a second nav array, a hand-kept search index), keeping these
 // green requires deriving it from TOOLS -- which is the point.
 
 describe('tool registry', () => {
+	it('matches the generated backend capability routes', () => {
+		expect(TOOLS.map(({ id, route }) => ({ id, route }))).toEqual(capabilities.map(({ id, route }) => ({ id, route })));
+	});
 	it('gives every tool a unique id and route', () => {
 		expect(new Set(TOOLS.map((tool) => tool.id)).size).toBe(TOOLS.length);
 		expect(new Set(TOOLS.map((tool) => tool.route)).size).toBe(TOOLS.length);
@@ -33,6 +37,8 @@ describe('tool registry', () => {
 			'file-management',
 			'parsec',
 			'lore-editor',
+			'outfit-editor',
+			'job-editor',
 			'graph',
 		]);
 	});

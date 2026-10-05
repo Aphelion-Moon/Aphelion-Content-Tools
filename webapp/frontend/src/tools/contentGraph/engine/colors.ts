@@ -1,38 +1,38 @@
 import type { EdgeRelation, GraphEdge, GraphNode, NodeKind } from './types';
 
 const KIND_COLORS: Record<NodeKind, string | Record<string, string>> = {
-	module: { nova: '#55d6ff', aphelion: '#52f0b0' },
-	master_file: '#f2a9dd',
-	core_file: '#d16aff',
-	directory: '#8f6fae',
-	file: '#6c5a82',
+	module: { nova: '#56d4dc', aphelion: '#7bc86f' },
+	master_file: '#c06bb4',
+	core_file: '#e5c25b',
+	directory: '#a89f90',
+	file: '#8f887c',
 };
 
 const EDGE_COLORS: Record<EdgeRelation, string | Record<string, string>> = {
-	master_files_mirror: 'rgba(198, 169, 212, .5)',
+	master_files_mirror: 'rgba(168, 159, 144, .5)',
 	marker_edit: {
-		addition: 'rgba(82, 240, 176, .65)',
-		removal: 'rgba(240, 120, 120, .65)',
-		change: 'rgba(242, 169, 221, .75)',
-		unspecified: 'rgba(198, 169, 212, .55)',
+		addition: 'rgba(123, 200, 111, .65)',
+		removal: 'rgba(217, 95, 76, .65)',
+		change: 'rgba(192, 107, 180, .75)',
+		unspecified: 'rgba(168, 159, 144, .55)',
 	},
-	contains: 'rgba(140, 120, 170, .28)',
-	module_reference: 'rgba(255, 196, 92, .6)',
-	core_reference: 'rgba(255, 148, 92, .6)',
+	contains: 'rgba(143, 136, 124, .28)',
+	module_reference: 'rgba(229, 194, 91, .6)',
+	core_reference: 'rgba(224, 134, 63, .6)',
 };
 
-export const SELECTED_NODE_COLOR = '#fff7ff';
+export const SELECTED_NODE_COLOR = '#ece5d8';
 
 /**
  * Hop-distance tiers for ego view: brightest at the ego node, progressively dimmer outward, clamped to
  * the last tier beyond its length.
  */
-const EGO_TIER_COLORS = ['#fff7ff', '#55d6ff', '#9614d0', '#6c5a82', '#4a3f57'] as const;
+const EGO_TIER_COLORS = ['#ece5d8', '#56d4dc', '#7bc86f', '#8f887c', '#5c574e'] as const;
 
 export function nodeColor(node: GraphNode): string {
 	const entry = KIND_COLORS[node.kind];
 	if (typeof entry === 'string') return entry;
-	return entry[node.owner ?? 'nova'] ?? entry['nova'] ?? '#6c5a82';
+	return entry[node.owner ?? 'nova'] ?? entry['nova'] ?? '#8f887c';
 }
 
 export function edgeColor(edge: GraphEdge): string {

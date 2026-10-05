@@ -43,7 +43,7 @@ export class SigmaGraphRenderer {
 			labelDensity: 0.12,
 			labelGridCellSize: 160,
 			labelRenderedSizeThreshold: 8,
-			labelColor: { color: '#f8eaff' },
+			labelColor: { color: getComputedStyle(container).getPropertyValue('--text').trim() || '#ece5d8' },
 			minEdgeThickness: 0.35,
 			minCameraRatio: 0.02,
 			maxCameraRatio: 12,

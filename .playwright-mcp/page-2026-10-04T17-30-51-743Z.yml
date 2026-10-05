@@ -1,0 +1,231 @@
+- generic [ref=e1]:
+  - navigation "Main navigation" [ref=e2]:
+    - link "Home" [ref=e3] [cursor=pointer]:
+      - /url: /
+    - link "Free pixel art assets" [ref=e4] [cursor=pointer]:
+      - /url: /free-pixel-art-assets
+    - link "Contact" [ref=e5] [cursor=pointer]:
+      - /url: /contact
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - link "Pixel Rabbit home" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - img "Pixel Rabbit — Pixel art converter and editor" [ref=e9]
+      - paragraph [ref=e10]: Only on portalrabbit.com
+    - generic [ref=e11]:
+      - heading "Image & GIF to pixel art" [level=1] [ref=e12]
+      - paragraph [ref=e13]: Free online converter and pixel editor.
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - complementary [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: Source
+          - button "Choose image, GIF, or video" [ref=e19] [cursor=pointer]
+          - button "Paste image" [ref=e20] [cursor=pointer]
+          - status [ref=e21]: "Paste: ⌘V / Ctrl+V"
+        - generic [ref=e22]:
+          - generic [ref=e23]: Mode
+          - generic [ref=e24]:
+            - button [ref=e25] [cursor=pointer]:
+              - strong [ref=e26]: Recommended pixelation
+            - button [active] [ref=e27] [cursor=pointer]:
+              - strong [ref=e28]: Grid Artist
+            - button [ref=e29] [cursor=pointer]:
+              - strong [ref=e30]: Faithful pixelation
+            - button [ref=e31] [cursor=pointer]:
+              - strong [ref=e32]: Artist · no outlines
+          - generic [ref=e228]:
+            - checkbox "Use source colors" [checked] [ref=e229]
+            - text: Use source colors
+          - paragraph [ref=e230]: Keep source hues.
+          - generic [ref=e231]:
+            - generic [ref=e232]: Drawing grid
+            - combobox "Drawing grid" [ref=e233]:
+              - option "32 px longest edge"
+              - option "40 px longest edge"
+              - option "48 px longest edge"
+              - option "64 px longest edge"
+              - option "80 px longest edge"
+              - option "96 px longest edge"
+              - option "128 px longest edge"
+              - option "Source resolution · native grid"
+              - option "160 px longest edge" [selected]
+              - option "192 px longest edge"
+              - option "256 px longest edge"
+              - option "320 px longest edge"
+              - option "384 px longest edge"
+              - option "480 px longest edge"
+            - generic [ref=e234]:
+              - generic [ref=e235]: Composition
+              - combobox "Composition" [ref=e236]:
+                - option "Match source frame · no crop" [selected]
+            - generic [ref=e237]:
+              - generic [ref=e238]: Source sampling
+              - combobox "Source sampling" [ref=e239]:
+                - option "Exact pixels · existing pixel art" [selected]
+                - option "Ink-preserving · thin dark lines"
+                - option "Crisp shapes · clean color boundaries"
+                - option "Area coverage · softer detail"
+              - generic [ref=e240]: Grid colors
+              - combobox "Grid colors" [ref=e241]:
+                - option "2 colors · two-tone"
+                - option "4 colors"
+                - option "6 colors"
+                - option "8 colors"
+                - option "12 colors · recommended" [selected]
+                - option "16 colors · detailed"
+                - option "24 colors · rich detail"
+                - option "32 colors · source-rich"
+                - option "64 colors · extended"
+                - option "128 colors"
+                - option "256 colors · maximum"
+            - generic [ref=e242]:
+              - generic [ref=e243]: Symmetry
+              - combobox "Symmetry" [ref=e244]:
+                - option "Off · keep the full image" [selected]
+                - option "Mirror left half → right"
+                - option "Mirror right half → left"
+            - generic [ref=e245]:
+              - checkbox "Show grid" [ref=e246]
+              - text: Show grid
+            - button "Convert" [ref=e247] [cursor=pointer]
+            - paragraph [ref=e248]: Grid size sets the longest edge.
+      - generic [ref=e38]:
+        - paragraph [ref=e39]: REFERENCE READY
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - text: Zoom
+            - combobox "Zoom" [ref=e42]:
+              - option "Fit" [selected]
+              - option "1×"
+              - option "2×"
+              - option "4×"
+              - option "8×"
+              - option "16×"
+          - button "Fit image" [ref=e43] [cursor=pointer]
+          - button "Edit pixels · layers & frames" [ref=e44] [cursor=pointer]
+          - button "Open project" [ref=e45] [cursor=pointer]
+          - button "Clean noise" [ref=e46]
+        - complementary [ref=e249]:
+          - group [ref=e250]:
+            - generic "Theme palettes" [ref=e251]
+          - generic [ref=e252]:
+            - button "Create custom palette" [ref=e253] [cursor=pointer]
+            - generic "Applied custom colors"
+        - generic [ref=e52]:
+          - button "Reset" [ref=e53] [cursor=pointer]
+          - button "Animate landscape ✷" [ref=e54] [cursor=pointer]
+          - button "Sprite sheet → GIF" [ref=e55] [cursor=pointer]
+          - button "Download PNG ↓" [ref=e56] [cursor=pointer]
+    - region [ref=e61]:
+      - heading "Check out our free pixel art assets" [level=2] [ref=e62]
+      - generic [ref=e63]:
+        - 'link "Browse free pixel art assets: Daisy rabbit" [ref=e64] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Daisy rabbit" [ref=e66]
+          - generic [ref=e67]: Daisy rabbit
+        - 'link "Browse free pixel art assets: Clover rabbit" [ref=e68] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Clover rabbit" [ref=e70]
+          - generic [ref=e71]: Clover rabbit
+        - 'link "Browse free pixel art assets: Peach rabbit" [ref=e72] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Peach rabbit" [ref=e74]
+          - generic [ref=e75]: Peach rabbit
+        - 'link "Browse free pixel art assets: Bluebell rabbit" [ref=e76] [cursor=pointer]':
+          - /url: /free-pixel-art-assets
+          - img "Bluebell rabbit" [ref=e78]
+          - generic [ref=e79]: Bluebell rabbit
+    - region [ref=e80]:
+      - heading "Made with Pixel Rabbit" [level=2] [ref=e81]
+      - generic [ref=e82]:
+        - figure "Drag to compare" [ref=e83]:
+          - generic [ref=e84]:
+            - img "Abstract faces — pixel art" [ref=e85]
+            - img "Abstract faces — original" [ref=e86]
+            - generic: Before
+            - generic: After
+            - generic: ↔
+            - slider "Compare abstract faces before and after" [ref=e87]: "50"
+        - figure "Drag to compare" [ref=e89]:
+          - generic [ref=e90]:
+            - img "Top hat — pixel art" [ref=e91]
+            - img "Top hat — original" [ref=e92]
+            - generic: Before
+            - generic: After
+            - generic: ↔
+            - slider "Compare top hat before and after" [ref=e93]: "50"
+      - generic "Latest pixel art examples" [ref=e95]:
+        - figure [ref=e96]:
+          - 'button "Enlarge: Yellow duck resting on a capybara" [ref=e97]':
+            - img "Yellow duck resting on a capybara" [ref=e98]
+        - figure [ref=e99]:
+          - 'button "Enlarge: Gray rabbit with tall ears" [ref=e100]':
+            - img "Gray rabbit with tall ears" [ref=e101]
+      - generic "Pixel art examples" [ref=e102]:
+        - figure [ref=e103]:
+          - 'button "Enlarge: Character with a turquoise mechanical arm" [ref=e104]':
+            - img "Character with a turquoise mechanical arm" [ref=e105]
+        - figure [ref=e106]:
+          - 'button "Enlarge: Portrait in coral, cream and violet" [ref=e107]':
+            - img "Portrait in coral, cream and violet" [ref=e108]
+        - figure [ref=e109]:
+          - 'button "Enlarge: Knight with a thorn-crowned helmet" [ref=e110]':
+            - img "Knight with a thorn-crowned helmet" [ref=e111]
+        - figure [ref=e112]:
+          - 'button "Enlarge: Portrait with a bouquet of roses" [ref=e113]':
+            - img "Portrait with a bouquet of roses" [ref=e114]
+        - figure [ref=e115]:
+          - 'button "Enlarge: Close-up portrait in sage and mauve" [ref=e116]':
+            - img "Close-up portrait in sage and mauve" [ref=e117]
+        - figure [ref=e118]:
+          - 'button "Enlarge: Mountain stream beneath a blue sky" [ref=e119]':
+            - img "Mountain stream beneath a blue sky" [ref=e120]
+        - figure [ref=e121]:
+          - 'button "Enlarge: Dark-haired character against a violet background" [ref=e122]':
+            - img "Dark-haired character against a violet background" [ref=e123]
+        - figure [ref=e124]:
+          - 'button "Enlarge: Portrait framed by warm orange flowers" [ref=e125]':
+            - img "Portrait framed by warm orange flowers" [ref=e126]
+        - figure [ref=e127]:
+          - 'button "Enlarge: Astronaut with blue hair" [ref=e128]':
+            - img "Astronaut with blue hair" [ref=e129]
+        - figure [ref=e130]:
+          - 'button "Enlarge: Masked character in a muted palette" [ref=e131]':
+            - img "Masked character in a muted palette" [ref=e132]
+        - figure [ref=e133]:
+          - 'button "Enlarge: Blue elf against an orange background" [ref=e134]':
+            - img "Blue elf against an orange background" [ref=e135]
+        - figure [ref=e136]:
+          - 'button "Enlarge: High-contrast pink and black portrait" [ref=e137]':
+            - img "High-contrast pink and black portrait" [ref=e138]
+        - figure [ref=e139]:
+          - 'button "Enlarge: Ivory and red katana" [ref=e140]':
+            - img "Ivory and red katana" [ref=e141]
+        - figure [ref=e142]:
+          - 'button "Enlarge: Golden-haired character in a blue cloak" [ref=e143]':
+            - img "Golden-haired character in a blue cloak" [ref=e144]
+        - figure [ref=e145]:
+          - 'button "Enlarge: Expressive monochrome character" [ref=e146]':
+            - img "Expressive monochrome character" [ref=e147]
+        - figure [ref=e148]:
+          - 'button "Enlarge: Portrait in orange and midnight blue" [ref=e149]':
+            - img "Portrait in orange and midnight blue" [ref=e150]
+      - region [ref=e151]:
+        - generic [ref=e152]:
+          - heading "In motion" [level=3] [ref=e153]
+          - button "Pause animations" [ref=e154] [cursor=pointer]
+        - generic [ref=e155]:
+          - figure [ref=e156]:
+            - generic "The Blue Lantern pixel art animation" [ref=e157]
+          - figure [ref=e158]:
+            - generic "Little Lagoon pixel art animation" [ref=e159]
+          - figure [ref=e160]:
+            - generic "Gilded Arena pixel art animation" [ref=e161]
+  - contentinfo [ref=e162]:
+    - generic [ref=e163]: Pixel Rabbit
+    - navigation "Privacy" [ref=e164]:
+      - link "Privacy" [ref=e165] [cursor=pointer]:
+        - /url: /privacy.html
+      - link "Privacy & cookie settings" [ref=e166] [cursor=pointer]:
+        - /url: /privacy.html

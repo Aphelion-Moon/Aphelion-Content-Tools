@@ -70,10 +70,12 @@ The launcher serves the tracked production SPA through the FastAPI backend. Cont
 frontend run `npm --prefix webapp/frontend run build`; CI rebuilds the artifact and rejects drift, while
 writers do not need Node installed.
 
-The catalog is distributed as an optional versioned, hash-verified release seed and can be rebuilt from
-the selected Meridian-Rift checkout. Catalog snapshots and LanceDB generations are caches, not normal
-pull-request content. The game repository only receives generated artifacts through explicit export
-workflows; never hand-edit a generated file.
+The catalog-seed protocol is versioned and hash verified, and a local rebuild from the selected
+Meridian-Rift checkout remains the fallback. No release seed manifest is currently published, so a
+clean checkout uses that slower local fallback; the measured first-run limitation is tracked in the
+[Windows packaging spike](references/architecture/windows-sidecar-packaging-spike.md). Catalog snapshots
+and LanceDB generations are caches, not normal pull-request content. The game repository only receives
+generated artifacts through explicit export workflows; never hand-edit a generated file.
 
 ## Contributing
 

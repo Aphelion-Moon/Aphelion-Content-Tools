@@ -1,0 +1,34 @@
+{
+  "crop": [
+    15,
+    166,
+    2129,
+    551
+  ],
+  "destination": "webapp/frontend/src/assets/parsec/source/references/habitat-bed-approach.reference.png",
+  "minimumMargin": 16,
+  "occupiedBounds": [
+    31,
+    182,
+    2113,
+    535
+  ],
+  "outputSha256": "9f35ecdce6448adf278d037bb812475810b619824fec4a57fe808b69091cb99f",
+  "outputSize": [
+    2114,
+    385
+  ],
+  "retainedMargin": [
+    16,
+    16,
+    16,
+    16
+  ],
+  "source": "webapp/frontend/src/assets/parsec/source/generated/habitat-bed-approach.imagegen.png",
+  "sourceSha256": "5da338190cd153daa30ac096a0b6878c5edb553243e988524b321ee14b198f77",
+  "sourceSize": [
+    2172,
+    724
+  ],
+  "tool": "manual-reference-trim-v1"
+}

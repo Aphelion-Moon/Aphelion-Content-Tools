@@ -1,0 +1,47 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "habitat-bed-lie-down",
+  "clipScale": 0.7433628318584071,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f0.png",
+      "sha256": "8b5d1c734f90f2e918d8b434f7c6fb0bbf709f1e821cbd976418ce30425de7a5"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f1.png",
+      "sha256": "661cbe8d72ac372947e202d2f87e784194dd26ef800740f8c5e4bb1e58e9e3bb"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f2.png",
+      "sha256": "54a61e44be27488eb50a0d2516f771eb00b90d8f317ca14b500e95ea0ec7f3a2"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f3.png",
+      "sha256": "a265d09da4587afb829adbbeb33f36e3beb9ad1afc019e22ac1a7d4d8a04a709"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-habitat/habitat-bed-lie-down/habitat-bed-lie-down__d0__f4.png",
+      "sha256": "3302036d37d8d66dbda45a6487b193a6731882079f1c274e25600cbac673448e"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    84,
+    84
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/habitat-bed-lie-down.png",
+  "sourceSha256": "7fc4ce25f8eaab5653eb9e373abe253b0ccae21d0e9b5b20b7b22aff95ad710d",
+  "tool": "generated-strip-v4"
+}

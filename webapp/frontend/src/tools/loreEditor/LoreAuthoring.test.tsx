@@ -43,6 +43,32 @@ afterEach(() => {
 });
 
 describe('Lore Editor authoring controls', () => {
+	it('keeps assignment checkboxes content-sized beside their labels', async () => {
+		vi.spyOn(api, 'get').mockResolvedValue({
+			groups: [{
+				id: 'items',
+				label: 'Items',
+				color: '#9614d0',
+				count: 1,
+				keywords: [],
+				type_path_prefixes: [],
+				keyword_scope: [],
+				record_hash: HASH,
+			}],
+			assignments: {},
+			assignment_record_hashes: {},
+			counts: {},
+		});
+		const host = document.createElement('div');
+		document.body.append(host);
+		const dispose = render(() => <ReviewActions entry={entry} reviewerName="Zoe" onDirtyChange={vi.fn()} onReload={vi.fn()} />, host);
+		await settle();
+
+		const checkbox = host.querySelector<HTMLInputElement>('fieldset input[type="checkbox"]')!;
+		expect(checkbox.className).toMatch(/compactCheckbox/);
+		dispose();
+	});
+
 	it('validates and saves an override with its expected record hash', async () => {
 		vi.spyOn(api, 'get').mockImplementation((path: string) => Promise.resolve(
 			path.startsWith('/api/lore/definition') ? { path: null, line: null }
@@ -120,15 +146,15 @@ describe('Lore Editor authoring controls', () => {
 		}));
 		const host = document.createElement('div');
 		document.body.append(host);
-		const dispose = render(() => <ReviewActions entry={entry} onDirtyChange={vi.fn()} onReload={vi.fn()} />, host);
+		const dispose = render(() => <ReviewActions entry={entry} reviewerName="Zoe" onDirtyChange={vi.fn()} onReload={vi.fn()} />, host);
 		await settle();
-		const reviewer = [...host.querySelectorAll('label')].find((label) => label.textContent?.includes('Reviewer'))!
-			.querySelector<HTMLInputElement>('input')!;
-		reviewer.value = 'Zoe';
-		reviewer.dispatchEvent(new InputEvent('input', { bubbles: true }));
 		[...host.querySelectorAll('button')].find((button) => button.textContent === 'Needs attention')!.click();
 		await settle();
 
+		expect(api.put).toHaveBeenCalledWith('/api/reviews/%2Fobj%2Fitem%2Fradio', expect.objectContaining({
+			status: 'needs-attention',
+			reviewed_by: 'Zoe',
+		}));
 		expect(host.querySelector('[role="alertdialog"]')?.textContent).toContain('Other writer');
 		expect(host.querySelector('[role="alertdialog"]')?.textContent).toContain('Mine');
 		expect(document.activeElement).toBe(host.querySelector('#record-conflict-title'));
@@ -140,7 +166,7 @@ describe('Lore Editor authoring controls', () => {
 		const dirty = vi.fn();
 		const host = document.createElement('div');
 		document.body.append(host);
-		const dispose = render(() => <ReviewActions entry={entry} onDirtyChange={dirty} onReload={vi.fn()} />, host);
+		const dispose = render(() => <ReviewActions entry={entry} reviewerName="Zoe" onDirtyChange={dirty} onReload={vi.fn()} />, host);
 		await settle();
 
 		const notes = [...host.querySelectorAll('label')].find((label) => label.textContent?.includes('Review notes'))!
@@ -160,7 +186,7 @@ describe('Lore Editor authoring controls', () => {
 		});
 		const host = document.createElement('div');
 		document.body.append(host);
-		const dispose = render(() => <GroupManager />, host);
+		const dispose = render(() => <GroupManager onDirtyChange={vi.fn()} />, host);
 		await settle();
 		[...host.querySelectorAll('button')].find((button) => button.textContent === 'New group')!.click();
 		const inputs = host.querySelectorAll<HTMLInputElement>('form input');

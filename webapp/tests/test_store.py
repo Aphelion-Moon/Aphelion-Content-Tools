@@ -10,9 +10,12 @@ from unittest.mock import patch
 
 import pyarrow as pa
 
+from tools.lore_editor.records import atomic_write_record, record_path
+from tools.lore_editor.tests.store_helpers import legacy_table
 from webapp.store import db, search
 from webapp.store.embeddings import EmbeddingStatus
-from webapp.store.schema import decode, encode, table
+from webapp.store.generations import staged_projection
+from webapp.store.schema import CATALOG_TARGETS_SCHEMA, decode, encode, table
 from webapp.store.search import SearchContext
 
 
@@ -47,7 +50,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual({row["id"] for row in table.search().to_list()}, {"initial", "external"})
 
 	def test_upsert_then_get_and_list(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		db.upsert_rows(targets, "id", [
 			{"id": "/obj/item/radio", "type_path": "/obj/item/radio", "raw_json": encode({"type_path": "/obj/item/radio", "label": "Radio"}), "text": "Radio radio device"},
 		])
@@ -56,7 +59,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual(decode(row)["label"], "Radio")
 		self.assertEqual(len(db.all_rows(targets)), 1)
 
-	def test_opening_a_legacy_table_adds_projection_hash_columns(self) -> None:
+	def test_schema_upgrade_happens_in_a_stage_without_modifying_the_source(self) -> None:
 		connection = db.connect(self.repo_root)
 		connection.create_table(
 			"catalog_targets",
@@ -72,11 +75,17 @@ class StoreTests(unittest.TestCase):
 
 		opened = table(self.repo_root, "catalog_targets")
 
-		self.assertIn("record_hash", opened.schema.names)
-		self.assertIn("embedding_hash", opened.schema.names)
+		self.assertNotIn("record_hash", opened.schema.names)
+		self.assertNotIn("embedding_hash", opened.schema.names)
+		with staged_projection(self.repo_root, content_revision="migration", changed_tables=()):
+			pass
+		upgraded = table(self.repo_root, "catalog_targets")
+		self.assertIn("record_hash", upgraded.schema.names)
+		self.assertIn("embedding_hash", upgraded.schema.names)
+		self.assertNotIn("record_hash", connection.open_table("catalog_targets").schema.names)
 
 	def test_upsert_is_an_update_when_the_key_already_exists(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		db.upsert_rows(targets, "id", [
 			{"id": "a", "type_path": "/a", "raw_json": encode({"label": "Old"}), "text": "old"},
 		])
@@ -88,7 +97,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual(decode(row)["label"], "New")
 
 	def test_replace_all_rows_clears_and_rewrites(self) -> None:
-		nodes = table(self.repo_root, "graph_nodes")
+		nodes = legacy_table(self.repo_root, "graph_nodes")
 		db.replace_all_rows(nodes, [
 			{"id": "n1", "kind": "module", "path": "modular_aphelion/modules/x", "raw_json": encode({"id": "n1"}), "text": "n1"},
 		])
@@ -100,7 +109,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual([row["id"] for row in rows], ["n2"])
 
 	def test_delete_removes_a_row(self) -> None:
-		overrides = table(self.repo_root, "overrides")
+		overrides = legacy_table(self.repo_root, "overrides")
 		db.upsert_rows(overrides, "id", [
 			{"id": "o1", "type_path": "/obj/item/radio", "group": "items", "raw_json": encode({"id": "o1"}), "text": "radio override"},
 		])
@@ -108,7 +117,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual(db.all_rows(overrides), [])
 
 	def test_delete_row_by_key_treats_predicate_text_as_data(self) -> None:
-		overrides = table(self.repo_root, "overrides")
+		overrides = legacy_table(self.repo_root, "overrides")
 		db.upsert_rows(overrides, "id", [
 			{"id": "items.radio", "type_path": "/obj/item/radio", "group": "items", "raw_json": encode({"id": "items.radio"}), "text": "radio override"},
 			{"id": "items.megaphone", "type_path": "/obj/item/megaphone", "group": "items", "raw_json": encode({"id": "items.megaphone"}), "text": "megaphone override"},
@@ -122,7 +131,7 @@ class StoreTests(unittest.TestCase):
 		)
 
 	def test_search_finds_keyword_matches_across_requested_tables(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		db.upsert_rows(targets, "id", [
 			{"id": "/obj/item/radio", "type_path": "/obj/item/radio", "raw_json": encode({"label": "Radio"}), "text": "Radio a device used to project your voice"},
 			{"id": "/obj/item/megaphone", "type_path": "/obj/item/megaphone", "raw_json": encode({"label": "Megaphone"}), "text": "Megaphone a loud voice projector"},
@@ -138,8 +147,37 @@ class StoreTests(unittest.TestCase):
 		report = search.search(self.repo_root, "   ")
 		self.assertEqual(report.results, ())
 
+	def test_search_pins_all_table_reads_to_one_store_generation(self) -> None:
+		class EmptyQuery:
+			def limit(self, _limit):
+				return self
+
+			def to_list(self):
+				return []
+
+		class RecordingTable:
+			def search(self, _query, *, query_type):
+				return EmptyQuery()
+
+		pinned_store = self.repo_root / "webapp" / "store" / "projections" / "pinned"
+		store_dirs = []
+
+		def fake_table(_repo_root, _name, *, store_dir=None):
+			store_dirs.append(store_dir)
+			return RecordingTable()
+
+		with (
+			patch("webapp.store.search.store_path", return_value=pinned_store) as store_path_spy,
+			patch("webapp.store.search.table", side_effect=fake_table),
+			patch("webapp.store.search.embedding_status", return_value=EmbeddingStatus(False, "test-model", "offline")),
+		):
+			search.search(self.repo_root, "radio", tables=["catalog_targets", "groups"])
+
+		store_path_spy.assert_called_once_with(self.repo_root)
+		self.assertEqual(store_dirs, [pinned_store, pinned_store])
+
 	def test_search_applies_one_global_limit_and_embeds_the_query_once(self) -> None:
-		def fake_channels(_repo_root, name, _query, _limit, _query_vector):
+		def fake_channels(_repo_root, name, _query, _limit, _query_vector, **_kwargs):
 			rows = [
 				{"id": f"{name}-{index}", "raw_json": encode({"id": f"{name}-{index}", "label": "Radio"}), "_score": 10 - index, "_distance": index / 10}
 				for index in range(6)
@@ -201,7 +239,7 @@ class StoreTests(unittest.TestCase):
 			],
 		}
 
-		def fake_channels(_repo_root, name, _query, _limit, _query_vector):
+		def fake_channels(_repo_root, name, _query, _limit, _query_vector, **_kwargs):
 			return rows[name], []
 
 		with (
@@ -270,7 +308,7 @@ class StoreTests(unittest.TestCase):
 		embed_spy.assert_not_called()
 
 	def test_sync_snapshot_only_embeds_new_or_changed_rows(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		db.sync_snapshot(targets, "id", [
 			{"id": "a", "type_path": "/a", "raw_json": encode({"label": "A"}), "text": "alpha"},
 			{"id": "b", "type_path": "/b", "raw_json": encode({"label": "B"}), "text": "bravo"},
@@ -291,7 +329,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual(rows["b"]["label"], "B2")
 
 	def test_sync_snapshot_updates_complete_records_without_reembedding_unchanged_text(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		db.sync_snapshot(targets, "id", [{
 			"id": "a",
 			"type_path": "/a",
@@ -312,7 +350,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual(decode(row)["field_profile"], "new")
 
 	def test_sync_snapshot_reembeds_when_the_embedding_model_changes(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		row = {"id": "a", "type_path": "/a", "raw_json": encode({"label": "A"}), "text": "alpha"}
 		db.sync_snapshot(targets, "id", [row])
 
@@ -327,7 +365,7 @@ class StoreTests(unittest.TestCase):
 		from webapp.store.cli import rebuild_embeddings
 		from webapp.store.embeddings import EmbeddingUnavailableError
 
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		db.upsert_rows(targets, "id", [
 			{"id": "a", "type_path": "/a", "raw_json": encode({"label": "A"}), "text": "alpha"},
 		])
@@ -341,8 +379,101 @@ class StoreTests(unittest.TestCase):
 
 		self.assertEqual(db.get_row_by_key(targets, "id", "a")["vector"], original_vector)
 
+	def test_rebuild_embeddings_reconciles_external_canonical_changes_before_staging(self) -> None:
+		from webapp.store import cli as store_cli
+
+		atomic_write_record(record_path(self.repo_root, "group", "items"), {
+			"id": "items",
+			"label": "Items",
+			"color": "#fff",
+			"keywords": [],
+			"type_path_prefixes": [],
+		})
+		with (
+			patch.object(store_cli, "embeddings_available", return_value=True),
+			patch.object(store_cli, "with_embeddings", side_effect=lambda rows: [
+				{**row, "vector": [0.0] * 384} for row in rows
+			]),
+		):
+			store_cli.rebuild_embeddings(self.repo_root)
+
+		self.assertIsNotNone(db.get_row_by_key(table(self.repo_root, "groups"), "id", "items"))
+
+	def test_rebuild_embeddings_reads_and_updates_one_bounded_chunk_at_a_time(self) -> None:
+		from webapp.store import cli as store_cli
+
+		rows = [
+			{"id": str(index), "type_path": f"/{index}", "raw_json": encode({}), "text": f"item {index}"}
+			for index in range(5)
+		]
+
+		class FakeQuery:
+			def __init__(self, owner) -> None:
+				self.owner = owner
+				self.columns = None
+				self.predicate = None
+
+			def select(self, columns):
+				self.columns = columns
+				return self
+
+			def where(self, predicate):
+				self.predicate = predicate
+				return self
+
+			def to_list(self):
+				if self.columns == ["id"]:
+					return [{"id": row["id"]} for row in rows]
+				if self.predicate is None:
+					raise AssertionError("Rebuild loaded every full row in one query.")
+				return self.owner.pending_chunks.pop(0)
+
+		class FakeMerge:
+			def when_matched_update_all(self):
+				return self
+
+			def when_not_matched_insert_all(self):
+				return self
+
+			def execute(self, values):
+				self.values = values
+
+		class FakeTable:
+			def __init__(self) -> None:
+				self.pending_chunks = [rows[:2], rows[2:4], rows[4:]]
+				self.schema = type("Schema", (), {"names": [*rows[0], "vector"]})()
+				self.merges = []
+
+			def search(self):
+				return FakeQuery(self)
+
+			def merge_insert(self, key):
+				merge = FakeMerge()
+				self.merges.append(merge)
+				return merge
+
+		targets = FakeTable()
+		progress = []
+		with (
+			patch.object(store_cli, "TABLE_SCHEMAS", {"catalog_targets": CATALOG_TARGETS_SCHEMA}),
+			patch("webapp.store.schema.TABLE_SCHEMAS", {"catalog_targets": CATALOG_TARGETS_SCHEMA}),
+			patch.object(store_cli, "KEYWORD_ONLY_TABLES", frozenset()),
+			patch.object(store_cli, "SYNC_CHUNK_SIZE", 2),
+			patch.object(store_cli, "writable_table", return_value=targets),
+			patch.object(store_cli, "embeddings_available", return_value=True),
+			patch.object(store_cli, "with_embeddings", side_effect=lambda values: [{**value, "vector": []} for value in values]),
+		):
+			counts = store_cli.rebuild_embeddings(
+				self.repo_root,
+				on_progress=lambda name, done, total: progress.append((name, done, total)),
+			)
+
+		self.assertEqual(counts, {"catalog_targets": 5})
+		self.assertEqual(progress, [("catalog_targets", 2, 5), ("catalog_targets", 4, 5), ("catalog_targets", 5, 5)])
+		self.assertEqual([len(merge.values) for merge in targets.merges], [2, 2, 1])
+
 	def test_sync_snapshot_deletes_rows_absent_from_the_new_snapshot(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		db.sync_snapshot(targets, "id", [
 			{"id": "a", "type_path": "/a", "raw_json": encode({}), "text": "alpha"},
 			{"id": "b", "type_path": "/b", "raw_json": encode({}), "text": "bravo"},
@@ -353,7 +484,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual([row["id"] for row in db.all_rows(targets)], ["a"])
 
 	def test_sync_snapshot_treats_stale_ids_as_data(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		malicious_id = "missing') OR true OR id IN ('a"
 		initial_rows = [
 			{"id": "a", "type_path": "/a", "raw_json": encode({}), "text": "alpha"},
@@ -367,7 +498,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual({row["id"] for row in db.all_rows(targets)}, {"a", "b"})
 
 	def test_sync_snapshot_chunks_and_reports_progress(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		rows = [
 			{"id": str(i), "type_path": f"/{i}", "raw_json": encode({}), "text": f"item {i}"}
 			for i in range(5)
@@ -379,7 +510,7 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual(len(db.all_rows(targets)), 5)
 
 	def test_sync_snapshot_skips_embedding_entirely_when_nothing_changed(self) -> None:
-		targets = table(self.repo_root, "catalog_targets")
+		targets = legacy_table(self.repo_root, "catalog_targets")
 		db.sync_snapshot(targets, "id", [
 			{"id": "a", "type_path": "/a", "raw_json": encode({}), "text": "alpha"},
 		])
@@ -390,7 +521,7 @@ class StoreTests(unittest.TestCase):
 			embed_spy.assert_not_called()
 
 	def test_sync_snapshot_can_store_keyword_only_rows_without_embedding(self) -> None:
-		nodes = table(self.repo_root, "graph_nodes")
+		nodes = legacy_table(self.repo_root, "graph_nodes")
 		with patch("webapp.store.db.embed_texts", side_effect=AssertionError("embedding should be skipped")):
 			db.sync_snapshot(nodes, "id", [{
 				"id": "file:code/radio.dm",
@@ -406,10 +537,9 @@ class StoreTests(unittest.TestCase):
 	def test_optimize_all_tables_calls_optimize_once_per_table(self) -> None:
 		from webapp.store.schema import TABLE_SCHEMAS
 
-		# Seed one table so `get_or_create_table` has already created every table by the time optimize
-		# runs (it creates any table it hasn't seen yet, same as every other store entry point).
+		# Create explicit writable fixtures before the maintenance operation stages them.
 		for name in TABLE_SCHEMAS:
-			table(self.repo_root, name)
+			legacy_table(self.repo_root, name)
 
 		with patch("lancedb.table.LanceTable.optimize") as optimize_spy:
 			names = db.optimize_all_tables(self.repo_root)
@@ -417,11 +547,29 @@ class StoreTests(unittest.TestCase):
 		self.assertEqual(names, list(TABLE_SCHEMAS))
 		self.assertEqual(optimize_spy.call_count, len(TABLE_SCHEMAS))
 
+	def test_optimize_all_tables_reconciles_external_canonical_changes_before_staging(self) -> None:
+		from webapp.store.schema import TABLE_SCHEMAS
+
+		atomic_write_record(record_path(self.repo_root, "group", "items"), {
+			"id": "items",
+			"label": "Items",
+			"color": "#fff",
+			"keywords": [],
+			"type_path_prefixes": [],
+		})
+		for name in TABLE_SCHEMAS:
+			legacy_table(self.repo_root, name)
+
+		with patch("lancedb.table.LanceTable.optimize"):
+			db.optimize_all_tables(self.repo_root)
+
+		self.assertIsNotNone(db.get_row_by_key(table(self.repo_root, "groups"), "id", "items"))
+
 	def test_optimize_all_tables_reports_progress_per_table(self) -> None:
 		from webapp.store.schema import TABLE_SCHEMAS
 
 		for name in TABLE_SCHEMAS:
-			table(self.repo_root, name)
+			legacy_table(self.repo_root, name)
 
 		progress_calls = []
 		with patch("lancedb.table.Table.optimize"):

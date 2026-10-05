@@ -20,6 +20,20 @@ def write_dmi(path: Path, *states: str) -> None:
 
 
 class IconPreviewTests(unittest.TestCase):
+	def test_direction_and_animation_frame_are_selected_independently(self) -> None:
+		from tools.lore_editor.icon_preview import render_icon_preview
+		with tempfile.TemporaryDirectory() as temporary:
+			root = Path(temporary)
+			(root / 'icons').mkdir()
+			dmi = Dmi(32, 32)
+			state = dmi.state('test', dirs=4)
+			for index in range(8):
+				state.frame(Image.new('RGBA', (32, 32), (index * 30, 0, 0, 255)))
+			dmi.to_file(root / 'icons/test.dmi')
+			image = Image.open(io.BytesIO(render_icon_preview(root, 'icons/test.dmi', 'test', direction=4, frame=1)))
+			self.assertEqual(image.getpixel((0, 0)), (180, 0, 0, 255))
+			with self.assertRaises(ValueError):
+				render_icon_preview(root, 'icons/test.dmi', 'test', frame=2)
 	def test_preview_renders_first_frame_from_module_icon(self) -> None:
 		from tools.lore_editor.icon_preview import render_icon_preview
 

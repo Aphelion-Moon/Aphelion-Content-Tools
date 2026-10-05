@@ -6,8 +6,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from fastapi.testclient import TestClient
-
 from tools.lore_editor.reconcile import materialize_legacy_records, reconcile_projection, scan_canonical_records
 from tools.lore_editor.records import atomic_write_record, record_path
 from tools.lore_editor.taxonomy import load_groups, load_reviews
@@ -17,6 +15,7 @@ from webapp.store import db
 from webapp.store.db import store_path
 from webapp.store.metadata import backup_projection, projection_status, restore_projection
 from webapp.store.schema import decode, table
+from webapp.tests.http_client import TestClient
 
 
 class ReconcileProjectionTests(unittest.TestCase):
@@ -171,6 +170,24 @@ class ReconcileProjectionTests(unittest.TestCase):
 		self.assertEqual(store_path(self.repo_root), first_path)
 		stored = db.get_row_by_key(table(self.repo_root, "groups"), "id", "items")
 		self.assertEqual(decode(stored)["label"], "Items")
+
+	def test_invalid_active_generation_id_falls_back_to_the_previous_projection(self) -> None:
+		path = record_path(self.repo_root, "group", "items")
+		original = {"id": "items", "label": "Items", "color": "#fff", "keywords": [], "type_path_prefixes": []}
+		atomic_write_record(path, original)
+		reconcile_projection(self.repo_root)
+		first_path = store_path(self.repo_root)
+		atomic_write_record(path, {**original, "label": "Second generation"})
+		reconcile_projection(self.repo_root)
+		second_path = store_path(self.repo_root)
+		self.assertNotEqual(first_path, second_path)
+
+		active_pointer = self.repo_root / "webapp" / "store" / "active-projection.json"
+		payload = json.loads(active_pointer.read_text(encoding="utf-8"))
+		payload["generation_id"] = "invalid/path"
+		active_pointer.write_text(json.dumps(payload), encoding="utf-8")
+
+		self.assertEqual(store_path(self.repo_root), first_path)
 
 	def test_backup_and_restore_are_labeled_projection_snapshots(self) -> None:
 		path = record_path(self.repo_root, "group", "items")

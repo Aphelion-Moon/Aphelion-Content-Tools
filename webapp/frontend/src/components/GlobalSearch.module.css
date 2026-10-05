@@ -1,8 +1,9 @@
 .wrapper {
 	position: relative;
-	display: flex;
-	flex-direction: column;
-	gap: 0.35rem;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 10rem;
+	gap: .5rem;
+	min-width: 0;
 }
 
 .label {
@@ -13,6 +14,7 @@
 }
 
 .scopeLabel {
+	min-width: 0;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -22,6 +24,7 @@
 }
 
 .scopeLabel select {
+	width: 100%;
 	min-width: 0;
 	font-size: 0.72rem;
 }
@@ -33,9 +36,9 @@
 	max-height: 22rem;
 	overflow-y: auto;
 	padding: 0.35rem;
-	background: rgba(13, 3, 27, 0.96);
+	background: var(--bg-0);
 	border: 1px solid var(--border);
-	border-radius: 0.5rem;
+	border-radius: var(--radius);
 }
 
 .sectionHeading {
@@ -55,18 +58,18 @@
 	text-align: left;
 	background: transparent;
 	border: none;
-	border-radius: 0.35rem;
+	border-radius: var(--radius);
 	padding: 0.4rem 0.45rem;
 	color: inherit;
 	font-size: 0.82rem;
 }
 
 .result:hover {
-	background: rgba(102, 0, 148, 0.45);
+	background: var(--bg-2);
 }
 
 .resultActive {
-	background: rgba(102, 0, 148, 0.62);
+	background: var(--bg-2);
 	outline: 2px solid var(--plasma);
 	outline-offset: -2px;
 }
@@ -101,6 +104,13 @@
 	color: var(--plasma);
 }
 
+.revisionNotice {
+	grid-column: 1 / -1;
+	margin: 0;
+	font-size: .7rem;
+	color: var(--accent);
+}
+
 .contextReason {
 	font-size: 0.68rem;
 	color: var(--plasma);
@@ -109,7 +119,7 @@
 .error {
 	margin: 0.3rem;
 	font-size: 0.75rem;
-	color: var(--danger, #ff8ca1);
+	color: var(--danger);
 }
 
 .srOnly {
@@ -123,3 +133,11 @@
 	white-space: nowrap;
 	border: 0;
 }
+
+/* The single search lives in the shared header; results overlay content without moving it. */
+.label, .scopeLabel > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.wrapper > input, .scopeLabel select { height: 34px; padding: .35rem .5rem; font-family: var(--font-mono); font-size: .6875rem; background: var(--bg-1); border-color: var(--line); }
+.results { position: absolute; top: calc(100% + .5rem); inset-inline: 0; z-index: 40; box-shadow: var(--shadow-overlay); max-height: min(65vh, 28rem); }
+.result { font-family: var(--font-reading); font-size: .95rem; min-height: 40px; }
+.sectionHeading, .tableTag { font-family: var(--font-mono); }
+@media (max-width: 600px) { .wrapper { gap: .25rem; } .wrapper > input, .scopeLabel select { height: 44px; } }

@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .db import store_path
 from .embeddings import embed_texts, embedding_status
+from .lifecycle import with_projection_read
 from .schema import KEYWORD_ONLY_TABLES, TABLE_SCHEMAS, decode, table
 
 RRF_K = 60
@@ -65,8 +67,14 @@ def _search_table_channels(
 	query: str,
 	limit: int,
 	query_vector: list[float] | None,
+	*,
+	store_dir: Path | None = None,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
-	target_table = table(repo_root, name)
+	target_table = table(repo_root, name, store_dir=store_dir)
+	if target_table is None:
+		return [], []
+	if target_table is None:
+		return [], []
 	fts_rows = target_table.search(query, query_type="fts").limit(limit).to_list()
 	vector_rows = []
 	if query_vector is not None and name not in KEYWORD_ONLY_TABLES:
@@ -180,6 +188,7 @@ def _result_sort_key(result: dict[str, object]) -> tuple[float, int, str]:
 	return -float(score), TABLE_PRIORITY[str(result["table"])], str(result["id"])
 
 
+@with_projection_read
 def search(
 	repo_root: Path,
 	query: str,
@@ -205,6 +214,7 @@ def search(
 	if not query.strip():
 		return SearchReport((), semantic_mode, semantic_status.model_id, semantic_reason)
 
+	pinned_store = store_path(repo_root)
 	query_text = query.strip()
 	query_vector = embed_texts([query_text])[0] if semantic_enabled else None
 	candidate_limit = max(20, min(limit * 4, 200))
@@ -218,6 +228,7 @@ def search(
 			query_text,
 			candidate_limit,
 			query_vector,
+			store_dir=pinned_store,
 		)
 		for channel_rank, row in enumerate(keyword_rows, start=1):
 			keyword_candidates.append((table_name, row, channel_rank))

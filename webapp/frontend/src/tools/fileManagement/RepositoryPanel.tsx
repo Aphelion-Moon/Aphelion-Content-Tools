@@ -1,7 +1,7 @@
 import { For, Show, createResource, createSignal } from 'solid-js';
 import Card, { cardStyles } from '~/components/Card';
 import { api } from '~/lib/api';
-import { announceError, announceSuccess } from '~/lib/notify';
+import { reportParsec } from '~/lib/parsec/coordinator';
 import { cx } from '~/lib/cx';
 import type { components } from '~/lib/api-schema';
 import { addReference } from '~/lib/references';
@@ -55,12 +55,12 @@ export default function RepositoryPanel(props: RepositoryPanelProps) {
 		try {
 			const result = await action();
 			setMessage(result);
-			announceSuccess(result, 'file-management');
+			reportParsec({ type: 'mutation', phase: 'completed', tool: 'file-management', summary: result });
 			await refreshAll();
 		} catch (error) {
 			const text = error instanceof Error ? error.message : String(error);
 			setMessage(text);
-			announceError(error, 'file-management');
+			reportParsec({ type: 'mutation', phase: 'failed', tool: 'file-management', summary: 'Repository operation failed.', technicalDetail: text });
 		} finally {
 			setBusy(false);
 		}
@@ -264,8 +264,11 @@ function ChangedFile(props: { readonly repository: RepositoryName; readonly path
 							path: props.path,
 							note: props.repository,
 						}).then(
-							() => announceSuccess('Added file to shared references.', 'file-management'),
-							(error: unknown) => announceError(error, 'file-management'),
+							() => reportParsec({ type: 'mutation', phase: 'completed', tool: 'file-management', summary: 'Added file to shared references.' }),
+							(error: unknown) => {
+								const message = error instanceof Error ? error.message : String(error);
+								reportParsec({ type: 'mutation', phase: 'failed', tool: 'file-management', summary: 'Could not add the file to shared references.', technicalDetail: message });
+							},
 						);
 					}}
 				>

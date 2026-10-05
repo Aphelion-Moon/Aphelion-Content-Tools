@@ -1,0 +1,34 @@
+{
+  "crop": [
+    61,
+    240,
+    1947,
+    560
+  ],
+  "destination": "webapp/frontend/src/assets/parsec/source/references/feedback-success-wag.reference.png",
+  "minimumMargin": 16,
+  "occupiedBounds": [
+    77,
+    256,
+    1931,
+    544
+  ],
+  "outputSha256": "55b54cd58e43b1e270ed02b27e14c2baf42e953931580f79db8d818a965c577c",
+  "outputSize": [
+    1886,
+    320
+  ],
+  "retainedMargin": [
+    16,
+    16,
+    16,
+    16
+  ],
+  "source": "webapp/frontend/src/assets/parsec/source/generated/feedback-success-wag.imagegen.png",
+  "sourceSha256": "f1b4010d2c9e57ff73f9b2c0dc1473b6a17d12c7c70055cd4e8c8cc21082c4b5",
+  "sourceSize": [
+    1983,
+    793
+  ],
+  "tool": "manual-reference-trim-v1"
+}

@@ -17,5 +17,8 @@ being changed:
   gates.
 - [Meridian integration](meridian-integration.md) — ownership boundaries between this application,
   Meridian-Rift, Meridian-MCP, and AutoWiki.
+- [Platform life cycle and integrations](platform-lifecycle-and-integrations.md) — workspace snapshots,
+  derived-dataset provenance, search/context contracts, tool capabilities, staged game changes, and
+  local/remote authorization.
 
 The [writer guide](../writer-guide.md) remains the authority for user-facing Lore Editor workflow.

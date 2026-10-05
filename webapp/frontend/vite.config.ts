@@ -16,10 +16,19 @@ export default defineConfig({
 		},
 	},
 	server: {
+		host: '127.0.0.1',
 		port: 5173,
 		proxy: {
-			'/api': { target: BACKEND, changeOrigin: true },
-			'/ws': { target: BACKEND, ws: true, changeOrigin: true },
+			'/api': { target: BACKEND, changeOrigin: true, configure(proxy) {
+				proxy.on('proxyReq', (request, incoming) => {
+					if (!incoming.headers.origin || incoming.headers.origin === `http://${incoming.headers.host}`) request.setHeader('Origin', new URL(BACKEND).origin);
+				});
+			} },
+			'/ws': { target: BACKEND, ws: true, changeOrigin: true, configure(proxy) {
+				proxy.on('proxyReqWs', (request, incoming) => {
+					if (incoming.headers.origin === `http://${incoming.headers.host}`) request.setHeader('Origin', new URL(BACKEND).origin);
+				});
+			} },
 		},
 	},
 	build: {

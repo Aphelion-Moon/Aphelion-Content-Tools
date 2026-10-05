@@ -3,15 +3,20 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+from tools.lore_editor.reconcile import reconcile_projection, scan_canonical_records
+from tools.lore_editor.write_coordinator import repository_write_lock
 from webapp.game_repository import validate_game_repository
 from webapp.git_adapter import repository_revision
 from webapp.json_storage import canonical_json_bytes
 from webapp.manifest_base import sha256_bytes
 from webapp.store import db
-from webapp.store.schema import decode, encode, table
+from webapp.store.generations import staged_projection
+from webapp.store.lifecycle import with_projection_read
+from webapp.store.schema import decode, encode, table, writable_table
 
+from .inputs import GraphInputs, capture_graph_inputs, verify_graph_inputs
 from .manifest import GraphManifest
-from .markers import MarkerEdge
+from .markers import MarkerEdge, parse_markers
 from .models import (
 	ContentGraph,
 	GraphEdge,
@@ -21,12 +26,10 @@ from .models import (
 )
 from .references import find_text_references
 from .scanner import (
-	scan_core_file_texts,
-	scan_core_markers,
-	scan_full_tree,
-	scan_master_files,
-	scan_module_file_texts,
-	scan_modules,
+	CORE_SCAN_ROOT,
+	MARKER_FILE_SUFFIXES,
+	CoreFileContent,
+	ModuleContent,
 )
 
 
@@ -125,16 +128,42 @@ def build_content_graph(game_repo_root: Path) -> ContentGraph:
 	`dir:.` -- so every node has at least one edge, and the full checkout is browsable even where no
 	semantic relationship has been extracted.
 	"""
-	resolved_root = game_repo_root.resolve()
-	modules = scan_modules(resolved_root)
+	return build_content_graph_from_inputs(capture_graph_inputs(game_repo_root))
+
+
+def build_content_graph_from_inputs(inputs: GraphInputs) -> ContentGraph:
+	"""Build from immutable captured bytes so markers and metadata describe the same source."""
+	inventory = inputs.inventory
+	modules = inventory.modules
 	known_module_ids = frozenset(module.id for module in modules)
-	master_files = scan_master_files(resolved_root)
-	markers_by_path = scan_core_markers(resolved_root, known_module_ids)
-
+	master_files = inventory.master_files
+	files = dict(inputs.files)
+	markers_by_path = {}
+	for path in inventory.core_paths:
+		if Path(path).is_relative_to(CORE_SCAN_ROOT) and Path(path).suffix.casefold() in MARKER_FILE_SUFFIXES and path in files:
+			markers = parse_markers(files[path].decode("utf-8", errors="replace"), known_module_ids)
+			if markers:
+				markers_by_path[path] = tuple(markers)
 	core_paths = {master_file.core_path for master_file in master_files} | set(markers_by_path.keys())
-
-	module_contents = scan_module_file_texts(resolved_root, modules)
-	core_contents = scan_core_file_texts(resolved_root, frozenset(core_paths))
+	module_parts: dict[str, list[bytes]] = {}
+	for owner, path in inventory.module_paths:
+		if path in files:
+			module_parts.setdefault(owner, []).append(files[path])
+	module_contents = {}
+	for module in modules:
+		parts = module_parts.get(module.path, [])
+		module_contents[module.path] = ModuleContent(
+			text="\n".join(part.decode("utf-8", errors="replace") for part in parts),
+			file_count=len(parts), total_bytes=sum(len(part) for part in parts),
+		)
+	core_contents = {}
+	for path in core_paths:
+		if path not in files:
+			continue
+		data = files[path]
+		text = data.decode("utf-8", errors="replace")
+		line_count = 0 if not text else text.count("\n") + (0 if text.endswith("\n") else 1)
+		core_contents[path] = CoreFileContent(text, len(data), line_count)
 
 	nodes: list[GraphNode] = []
 	for module in modules:
@@ -149,12 +178,9 @@ def build_content_graph(game_repo_root: Path) -> ContentGraph:
 			"file_count": content.file_count if content else 0,
 			"total_bytes": content.total_bytes if content else 0,
 		})
+	master_sizes = dict(inventory.master_sizes)
 	for master_file in master_files:
-		override_path = resolved_root / master_file.path
-		try:
-			size_bytes = override_path.stat().st_size
-		except OSError:
-			size_bytes = None
+		size_bytes = master_sizes[master_file.path]
 		nodes.append({
 			"id": _master_file_node_id(master_file.owner, master_file.path),
 			"kind": "master_file",
@@ -216,7 +242,7 @@ def build_content_graph(game_repo_root: Path) -> ContentGraph:
 				unresolved_markers.append(_marker_payload(core_path, marker))
 
 	path_to_id = {node["path"]: node["id"] for node in nodes if "path" in node}
-	tracked_paths = scan_full_tree(resolved_root)
+	tracked_paths = inventory.tracked_paths
 	directory_count = _add_full_tree(nodes, edges, path_to_id, tracked_paths)
 
 	reference_count = sum(1 for edge in edges if edge["relation"] in ("module_reference", "core_reference"))
@@ -243,23 +269,25 @@ def _node_text(node: GraphNode) -> str:
 
 
 def scan_and_cache_content_graph(repo_root: Path, game_repo_root: Path) -> GraphManifest:
-	"""Validate the game checkout, scan it, and atomically replace the graph store tables."""
+	"""Validate the game checkout, scan it, and atomically publish the graph projection."""
 	resolved_repo_root = repo_root.resolve()
 	resolved_game_root = game_repo_root.resolve()
 	validate_game_repository(resolved_game_root)
-
-	graph = build_content_graph(resolved_game_root)
-	graph_bytes = canonical_json_bytes(graph)
 
 	try:
 		game_revision = repository_revision(resolved_game_root)
 	except (OSError, ValueError):
 		game_revision = "unknown"
+	inputs = capture_graph_inputs(resolved_game_root)
+	graph = build_content_graph_from_inputs(inputs)
+	graph_bytes = canonical_json_bytes(graph)
 
 	counts = graph["counts"]
 	manifest = GraphManifest(
 		snapshot_sha256=sha256_bytes(graph_bytes),
 		game_repo_revision=game_revision,
+		source_sha256=inputs.source_sha256,
+		source_observation=inputs.inventory.observation,
 		generated_at=datetime.now(UTC).isoformat(),
 		node_count=len(graph["nodes"]),
 		edge_count=len(graph["edges"]),
@@ -276,52 +304,69 @@ def scan_and_cache_content_graph(repo_root: Path, game_repo_root: Path) -> Graph
 			print(f"{label}: embedded {done}/{total} changed row(s)...", flush=True)
 		return report
 
-	db.sync_snapshot(table(resolved_repo_root, "graph_nodes"), "id", [
-		{
-			"id": node["id"],
-			"kind": node.get("kind", ""),
-			"path": node.get("path", ""),
-			"raw_json": encode(node),
-			"text": _node_text(node),
-		}
-		for node in graph["nodes"]
-	], embed=False, on_progress=_print_progress("Nodes"))
-	# Edge/marker ids must be stable across scans for the above diffing to mean anything -- a positional
-	# index (the previous scheme) shifts for every edge/marker whenever an earlier one is added or
-	# removed, which would make nearly everything look "changed" on every scan even when it wasn't. A
-	# content hash of the edge/marker's own fields is stable regardless of list order.
-	db.sync_snapshot(table(resolved_repo_root, "graph_edges"), "id", [
-		{
-			"id": db.content_hash_for(encode(edge))[:24],
-			"source": edge["source"],
-			"target": edge["target"],
-			"relation": edge["relation"],
-			"raw_json": encode(edge),
-			"text": f"{edge['source']} {edge['target']} {edge['relation']}",
-		}
-		for edge in graph["edges"]
-	], embed=False, on_progress=_print_progress("Edges"))
-	db.sync_snapshot(table(resolved_repo_root, "unresolved_markers"), "id", [
-		{
-			"id": db.content_hash_for(encode(marker))[:24],
-			"core_file": marker["core_file"],
-			"raw_json": encode(marker),
-			"text": f"{marker['core_file']} {marker.get('raw_label', '')} {marker.get('original_text', '')}",
-		}
-		for marker in graph["unresolved_markers"]
-	], embed=False, on_progress=_print_progress("Unresolved markers"))
-	db.upsert_rows(table(resolved_repo_root, "manifests"), "id", [{
-		"id": "graph",
-		"raw_json": encode({"manifest": manifest.to_dict(), "counts": counts, "graph": graph}),
-		"text": "",
-	}])
+	with repository_write_lock(resolved_repo_root):
+		reconcile_projection(resolved_repo_root)
+		content_revision = scan_canonical_records(resolved_repo_root).content_revision
+		with staged_projection(resolved_repo_root, content_revision=content_revision, changed_tables={"graph_nodes", "graph_edges", "unresolved_markers", "manifests"}) as staged:
+			db.sync_snapshot(writable_table(resolved_repo_root, "graph_nodes", store_dir=staged.path), "id", [
+				{
+					"id": node["id"],
+					"kind": node.get("kind", ""),
+					"path": node.get("path", ""),
+					"raw_json": encode(node),
+					"text": _node_text(node),
+				}
+				for node in graph["nodes"]
+			], embed=False, on_progress=_print_progress("Nodes"))
+			# Edge/marker ids must be stable across scans for the above diffing to mean anything -- a positional
+			# index (the previous scheme) shifts for every edge/marker whenever an earlier one is added or
+			# removed, which would make nearly everything look "changed" on every scan even when it wasn't. A
+			# content hash of the edge/marker's own fields is stable regardless of list order.
+			db.sync_snapshot(writable_table(resolved_repo_root, "graph_edges", store_dir=staged.path), "id", [
+				{
+					"id": db.content_hash_for(encode(edge))[:24],
+					"source": edge["source"],
+					"target": edge["target"],
+					"relation": edge["relation"],
+					"raw_json": encode(edge),
+					"text": f"{edge['source']} {edge['target']} {edge['relation']}",
+				}
+				for edge in graph["edges"]
+			], embed=False, on_progress=_print_progress("Edges"))
+			db.sync_snapshot(writable_table(resolved_repo_root, "unresolved_markers", store_dir=staged.path), "id", [
+				{
+					"id": db.content_hash_for(encode(marker))[:24],
+					"core_file": marker["core_file"],
+					"raw_json": encode(marker),
+					"text": f"{marker['core_file']} {marker.get('raw_label', '')} {marker.get('original_text', '')}",
+				}
+				for marker in graph["unresolved_markers"]
+			], embed=False, on_progress=_print_progress("Unresolved markers"))
+			db.upsert_rows(writable_table(resolved_repo_root, "manifests", store_dir=staged.path), "id", [{
+				"id": "graph",
+				"raw_json": encode({"manifest": manifest.to_dict(), "counts": counts, "graph": graph}),
+				"text": "",
+			}, {
+				"id": "graph-health",
+				"raw_json": encode(manifest.to_dict()),
+				"text": "",
+			}])
+			verify_graph_inputs(resolved_game_root, inputs)
+			try:
+				current_revision = repository_revision(resolved_game_root)
+			except (OSError, ValueError):
+				current_revision = "unknown"
+			if current_revision != game_revision:
+				raise ValueError("Game source changed during graph generation. Run the scan again.")
 	return manifest
 
 
+@with_projection_read
 def read_graph_cache(repo_root: Path) -> tuple[ContentGraph, GraphManifest] | None:
 	"""Return the cached (graph, manifest) pair, or None if no scan has been run yet."""
 	resolved_root = repo_root.resolve()
-	manifest_row = db.get_row_by_key(table(resolved_root, "manifests"), "id", "graph")
+	pinned_store = db.store_path(resolved_root)
+	manifest_row = db.get_row_by_key(table(resolved_root, "manifests", store_dir=pinned_store), "id", "graph")
 	if manifest_row is None:
 		return None
 	stored = decode(manifest_row)
@@ -336,8 +381,8 @@ def read_graph_cache(repo_root: Path) -> tuple[ContentGraph, GraphManifest] | No
 			raise ValueError("Stored graph snapshot is missing its node, edge, or marker list.")
 		return content_graph_from_cache(stored_nodes, stored_edges, stored_markers, counts), manifest
 
-	nodes: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "graph_nodes"))]
-	edges: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "graph_edges"))]
-	unresolved_markers: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "unresolved_markers"))]
+	nodes: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "graph_nodes", store_dir=pinned_store))]
+	edges: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "graph_edges", store_dir=pinned_store))]
+	unresolved_markers: list[object] = [decode(row) for row in db.all_rows(table(resolved_root, "unresolved_markers", store_dir=pinned_store))]
 	graph = content_graph_from_cache(nodes, edges, unresolved_markers, stored["counts"])
 	return graph, manifest

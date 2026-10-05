@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "file": "meridian-mcp.exe",
+  "sha256": "6931fdb517d456ec98e59e372976dedd4b68462d8b6dbb37d5f3bf230e5958dd",
+  "analyzer_version": "meridian-mcp/0.1.0/authoring-v1",
+  "parser_revision": "351ddc0ffb2439876d4565ce5130bb6b027ee605",
+  "parser_patch_sha256": "3c2ebc4e84ac6a5fe5126d6fa33b88a090b46ab96c6561a05c827cf4a744525a",
+  "platform": "windows-x86_64",
+  "toolchain": "rust-1.95.0",
+  "size_bytes": 19803136
+}

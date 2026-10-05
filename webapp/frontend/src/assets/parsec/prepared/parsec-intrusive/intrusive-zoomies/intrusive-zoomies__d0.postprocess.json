@@ -1,0 +1,55 @@
+{
+  "auxiliaryComponents": false,
+  "baselineY": 88,
+  "clip": "intrusive-zoomies",
+  "clipScale": 0.6484375,
+  "direction": 0,
+  "frameSplit": "equal-panels",
+  "frames": [
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f0.png",
+      "sha256": "73c9e5946abf8d89ed83e3bb93b465c5f56944665f662edb1f2be5d6416fa922"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f1.png",
+      "sha256": "5ea8de12a1d29cd9560f7c7251a37bace59a1cd0618be7eb633b2e39e7458b60"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f2.png",
+      "sha256": "8805586a98803d82e3c66ec99816945ad5139043be434c4479d98ac7aab59d15"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f3.png",
+      "sha256": "bd2bff519f906b80aa80588eef439b79fcc5ad564262a9b917c686b95f9c4b1b"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f4.png",
+      "sha256": "139645b0c554449262334ab5a2f10cf01a84f9e9d7daf2d4f68d27cf24b28cb8"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f5.png",
+      "sha256": "9c707b08a67dcb47940c1394fc437c2a18f3f34ba34bfb33cbae359df725db7f"
+    },
+    {
+      "path": "webapp/frontend/src/assets/parsec/prepared/parsec-intrusive/intrusive-zoomies/intrusive-zoomies__d0__f6.png",
+      "sha256": "cdfb85fe26205db7def56d196648a4c61c1cbd6691eace731d90271a9dcc43dc"
+    }
+  ],
+  "identityPalette": {
+    "anatomicalLeft": "#FBD436",
+    "anatomicalRight": "#FF3CC8"
+  },
+  "logicalCanvas": [
+    96,
+    96
+  ],
+  "maxArtSize": [
+    83,
+    83
+  ],
+  "paletteColors": 64,
+  "scaleMode": "fit-clip",
+  "source": "webapp/frontend/src/assets/parsec/source/regeneration-20261004/strips/intrusive-zoomies.png",
+  "sourceSha256": "5924c113a074b1a2b937743d319de9733e09cdfc69c89a7e13d81ea1ef9b007e",
+  "tool": "generated-strip-v4"
+}

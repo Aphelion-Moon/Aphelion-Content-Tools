@@ -7,14 +7,14 @@ from pathlib import Path
 if __package__ in (None, ""):
 	sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 	from tools.lore_editor.catalog import compute_catalog_drift, read_current_targets, refresh_catalog
-	from tools.lore_editor.catalog_seed import bootstrap_catalog, package_catalog_seed
+	from tools.lore_editor.catalog_seed import bootstrap_catalog, package_catalog_seed, reload_catalog_seed
 	from tools.lore_editor.export import apply_export, prepare_export
 	from tools.lore_editor.generate import write_generated_dm
 	from tools.lore_editor.source import load_corpus
 	from tools.lore_editor.validation import validate_corpus
 else:
 	from .catalog import compute_catalog_drift, read_current_targets, refresh_catalog
-	from .catalog_seed import bootstrap_catalog, package_catalog_seed
+	from .catalog_seed import bootstrap_catalog, package_catalog_seed, reload_catalog_seed
 	from .export import apply_export, prepare_export
 	from .generate import write_generated_dm
 	from .source import load_corpus
@@ -42,6 +42,12 @@ def build_parser() -> argparse.ArgumentParser:
 	bootstrap_parser.add_argument("--game-repo", type=Path)
 	bootstrap_parser.add_argument("--manifest", type=Path)
 	bootstrap_parser.add_argument("--cache-root", type=Path)
+
+	reload_parser = subparsers.add_parser("catalog-reload", help="Replace the catalog with a verified release seed, preserving authoring data.")
+	reload_parser.add_argument("--repo-root", type=Path, required=True)
+	reload_parser.add_argument("--game-repo", type=Path)
+	reload_parser.add_argument("--manifest", type=Path)
+	reload_parser.add_argument("--cache-root", type=Path)
 
 	seed_package_parser = subparsers.add_parser("catalog-seed-package", help="Package the active catalog for a release.")
 	seed_package_parser.add_argument("--repo-root", type=Path, required=True)
@@ -130,6 +136,18 @@ def main(argv: list[str] | None = None) -> int:
 			if result.warning:
 				print(f"warning: {result.warning}", file=sys.stderr)
 			return 0
+		if args.command == "catalog-reload":
+			assert repo_root is not None
+			print("Verifying the release catalog; existing authoring data remains available until activation.", flush=True)
+			result = reload_catalog_seed(
+				repo_root,
+				manifest_path=args.manifest,
+				cache_root=args.cache_root,
+				game_repo_root=args.game_repo,
+				on_progress=lambda done, total: print(f"Indexed {done}/{total} changed target(s)...", flush=True),
+			)
+			print(f"Loaded verified release catalog: {result.source} ({result.target_count} targets).")
+			return 0
 		if args.command == "catalog-seed-package":
 			assert repo_root is not None
 			manifest = package_catalog_seed(
@@ -153,6 +171,8 @@ def main(argv: list[str] | None = None) -> int:
 			return 0
 	except (OSError, ValueError) as exc:
 		print(f"error: {exc}", file=sys.stderr)
+		if args.command == "catalog-reload":
+			print("The existing catalog was kept. Ask a maintainer for a matching release manifest, then retry Load release catalog.", file=sys.stderr)
 		return 1
 
 	return 2

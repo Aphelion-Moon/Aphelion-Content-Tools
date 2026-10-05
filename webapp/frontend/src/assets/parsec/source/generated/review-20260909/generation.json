@@ -1,0 +1,179 @@
+{
+  "tool": "imagegen",
+  "reviewDate": "2026-09-09",
+  "standard": "96px transparent cells; contained husky silhouette; anatomical left yellow and right pink eye; authored action; nearest-neighbor import and dark silhouette boundary",
+  "references": [
+    "parsec-intrusive",
+    "core-idle-seated"
+  ],
+  "rejectedCandidates": {
+    "reconnect-pant": "chest hole",
+    "touch-nose-lick": "lost eye",
+    "toy-ball-refuse": "detached pink streak",
+    "core-walk-diagonal-d3": "wrong yellow eye; repaired before copying",
+    "core-idle-seated": "Too detailed; user rejected style. Replaced with simple flat-color profile."
+  },
+  "clips": [
+    {
+      "clip": "core-idle-sniff",
+      "atlas": "parsec-core",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/core-idle-sniff.png",
+      "sourceSha256": "d0581533c5ad8ba4d171cbc0c938f660aa5ec6021df8cb7e02e470f35634037a",
+      "action": "standing LEFT profile, sniffing the ground: lower head slightly, nose down, sniff with ears attentive, lift nose slightly. Keep full adult body scale, stable planted feet and back."
+    },
+    {
+      "clip": "core-look-cursor",
+      "atlas": "parsec-core",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/core-look-cursor.png",
+      "sourceSha256": "67f60e95f4954a60d8e3b9ad3d9506be32d1e19995cc3aaec7b717065eb24ac1",
+      "action": "sitting LEFT profile, following something with eyes and head: look slightly down-left, level-left, up-left, settle level-left. Keep identical seated body and head proportions."
+    },
+    {
+      "clip": "feedback-success-proud",
+      "atlas": "parsec-feedback",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/feedback-success-proud.png",
+      "sourceSha256": "d85cdd600d2bf286ec302863ba6ad87bfd069807fc001760b769cc950a957a16",
+      "action": "sitting LEFT profile: attentive seat, raise chin a little, lift chest proudly, settle proud upright seat. Stable head and visible pink eye."
+    },
+    {
+      "clip": "feedback-warning-alert",
+      "atlas": "parsec-feedback",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/feedback-warning-alert.png",
+      "sourceSha256": "e65b638ce5adc36741f26ff6ed6ecfb16851dcb13c71e266bdf6999272a12a75",
+      "action": "sitting LEFT profile: relaxed, ears perk and eyes open wider, attentive tall sitting, hold alert seated pose. Do not draw warning symbols; runtime adds the effect separately."
+    },
+    {
+      "clip": "reconnect-pant",
+      "atlas": "parsec-feedback",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/reconnect-pant-repair.png",
+      "sourceSha256": "d1670dbe84856b1d076cea8f3358b7f8fc5a667b820ac8cbb5ea15cc9d16eef4",
+      "action": "sitting LEFT profile, gentle anxious pant cycle: mouth closed, mouth open a little with coral tongue, tongue out slightly, mouth nearly closed. Stable head and body."
+    },
+    {
+      "clip": "touch-nose-lick",
+      "atlas": "parsec-touch",
+      "frames": 5,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/touch-nose-lick-repair.png",
+      "sourceSha256": "971b06dab037267023babb2a3c6cfd027c8033a0fe4f838b4aa1da59bb031ad3",
+      "action": "sitting LEFT profile: mouth closed, tiny tongue emerges, tongue curls onto nose, tongue retracts, mouth closes. Head identical proportions and pink eye stays visible in ALL frames."
+    },
+    {
+      "clip": "touch-landing-bounce",
+      "atlas": "parsec-touch",
+      "frames": 6,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/touch-landing-bounce.png",
+      "sourceSha256": "b511d237f46e36c43d85cd784a3d22a3c13e70999d7ef2042e0bd4fb85d4107f",
+      "action": "left-facing profile gentle landing bounce: descending with tucked legs, paws contact floor, knees flex into crouch, small upward rebound, legs straighten to ground, settled standing. Same dog and skull size, baseline appropriate to jump; do not draw dust or effects."
+    },
+    {
+      "clip": "toy-ball-ready",
+      "atlas": "parsec-toys",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/toy-ball-ready.png",
+      "sourceSha256": "d81b697e6c504609845c2ae593cce6d073880d7fc7feb1a3cbee7affb4de2a09",
+      "action": "left-facing standing profile, playful ready posture: alert standing, front knees bend, slight play bow looking ahead, alert playful stance. No ball in the art: toy is separate."
+    },
+    {
+      "clip": "toy-ball-refuse",
+      "atlas": "parsec-toys",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/toy-ball-refuse-repair.png",
+      "sourceSha256": "fe1913dd3def181694c708711bbd1d89e455961b9c080f07ea0208ee5e482688",
+      "action": "left-facing sitting profile: notice offered toy, glance down, turn head slightly away in dismissive pout but stay profile-left, settle disinterested. No toy in art."
+    },
+    {
+      "clip": "toy-treat-accept",
+      "atlas": "parsec-toys",
+      "frames": 5,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/toy-treat-accept.png",
+      "sourceSha256": "3a52173f5c42820b08520773ff36122cf14b32af0530b6749e1bf065c2978536",
+      "action": "left-facing sitting profile, accepting a treat: attentive, nose reaches forward, mouth opens slightly, chew with tiny coral tongue, content closed-mouth seat. No hand/treat visible, separate object layer. Ears tail and paws NEVER cropped."
+    },
+    {
+      "clip": "toy-whistle-recall",
+      "atlas": "parsec-toys",
+      "frames": 5,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/toy-whistle-recall.png",
+      "sourceSha256": "4bc319d694e0cf94882f968906df53d08f6a4255e0fe0d201b8619850143e4ec",
+      "action": "left-facing profile walking slowly back home then sitting: step left with forepaw forward, opposite forepaw step, slow standing, hips lower to seated, settled upright seat. Stable head and visible pink eye in final frame."
+    },
+    {
+      "clip": "habitat-cage-open-idle",
+      "atlas": "parsec-habitat",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/habitat-cage-open-idle.png",
+      "sourceSha256": "be166be11d511b70b6ed9265ed64d091b23023ac7228e76cc988a7353c2f86cd",
+      "action": "left-facing sitting profile: quiet upright seat, tiny tail sway, ears relax, return quiet seat. Stable face and small clear pink eye. NO cage in artwork, furniture is separate."
+    },
+    {
+      "clip": "habitat-cage-release",
+      "atlas": "parsec-habitat",
+      "frames": 5,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/habitat-cage-release.png",
+      "sourceSha256": "0e24135d04aad05ad48e68ecb53060e931cbf142fd866d38ee70c2e29f7c269a",
+      "action": "left-facing profile exiting cage: seated and alert, lean forward, rise to standing, step left, happy stable standing. NO cage in artwork, no cropping, small clear pink eye."
+    },
+    {
+      "clip": "feedback-success-wag",
+      "atlas": "parsec-feedback",
+      "frames": 5,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/feedback-success-wag.png",
+      "sourceSha256": "966e283a97159e32232e7a6050afa439fc26a14201badcefed3df971ed8135b1",
+      "action": "coherent seated tail wag"
+    },
+    {
+      "clip": "core-walk-diagonal",
+      "atlas": "parsec-core",
+      "frames": 3,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/core-walk-diagonal-d0.png",
+      "sourceSha256": "dea6d6fb0d7d59f32f2efe7bd7f88af31dde0363512998b2022bd9931cea3c55",
+      "action": "three-quarter REAR view heading UP AND RIGHT (north-east), head pointing away into the upper-right, tail nearer viewer. Right screen side profile head shows YELLOW visible anatomical left eye if visible. Three sequential walking footfalls, no rotating between poses."
+    },
+    {
+      "clip": "core-walk-diagonal",
+      "atlas": "parsec-core",
+      "frames": 3,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/core-walk-diagonal-d1.png",
+      "sourceSha256": "b212188f7aba249fc23c35e8092faddceda405e9f1efc5faa12e70718358ff75",
+      "action": "three-quarter FRONT view heading DOWN AND RIGHT (south-east), muzzle points lower-right toward viewer. Mostly YELLOW anatomical left eye visible; any far pink eye must remain tiny on viewer left. Three sequential walking footfalls, no rotating between poses."
+    },
+    {
+      "clip": "core-walk-diagonal",
+      "atlas": "parsec-core",
+      "frames": 3,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/core-walk-diagonal-d2.png",
+      "sourceSha256": "95087d98875c5d7cb5a00fa51873c631d2005e4a1c965450858d305d4d5a1816",
+      "action": "three-quarter FRONT view heading DOWN AND LEFT (south-west), muzzle points lower-left toward viewer. Mostly PINK anatomical right eye visible; any far yellow eye tiny on viewer right. Three sequential walking footfalls, no rotating between poses."
+    },
+    {
+      "clip": "core-walk-diagonal",
+      "atlas": "parsec-core",
+      "frames": 3,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/core-walk-diagonal-d3.png",
+      "sourceSha256": "8de704b0c553346244cbea166278f51b5923ea0ae56cd6ff11682609a9d724c7",
+      "action": "three-quarter REAR view heading UP AND LEFT (north-west), head pointing away into upper-left, tail nearer viewer. PINK anatomical right eye visible only if turned enough to see it. Three sequential walking footfalls, no rotating between poses."
+    },
+    {
+      "clip": "core-idle-seated",
+      "atlas": "parsec-core",
+      "frames": 4,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/core-idle-seated-simple.png",
+      "sourceSha256": "5bebc0234c9d3fca0f01c8f0540af9725328ec1aab6592efdb2729509f064dd0",
+      "action": "simple flat-color seated idle and short blink; standing sprite is the style reference"
+    },
+    {
+      "clip": "touch-scruff-pout",
+      "atlas": "parsec-touch",
+      "frames": 5,
+      "source": "webapp/frontend/src/assets/parsec/source/generated/review-20260909/touch-scruff-pout-clean.png",
+      "sourceSha256": "af29bc98ef1585a2cfeaac4450f5879bb5a24e0bfc13cd246c75b5fc13ece196",
+      "action": "scruff pout without detached motion marks"
+    }
+  ],
+  "intermediateRetention": "Imported staging frames and generated review images removed after production integration; current prepared frames and immutable pixel-patch sources are retained."
+}
